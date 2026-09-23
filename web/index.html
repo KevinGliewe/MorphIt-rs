@@ -1,0 +1,3845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MorphIt</title>
+<!--
+  Import map resolves the bare specifiers used inside urdf-loader's source
+  (which imports `three` and `three/examples/jsm/...`). jsdelivr serves the
+  ES-module build straight from npm — no local build step.
+-->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<!-- highlight.js: XML syntax-highlighting for the URDF output. The
+     atom-one-dark theme covers tag/attribute/value tokens; we override
+     the .hljs background so our existing dark <pre> background shows. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.10.0/styles/atom-one-dark.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11.10.0/highlight.min.js"></script>
+<style>
+  :root {
+    color-scheme: dark;
+    /* Cyber-dark palette. Deep near-black surfaces with a hint of
+       blue, neon cyan primary, magenta secondary used sparingly for
+       highlights (Default pills, hover accents). */
+    --bg: #04060b;
+    --bg-elev: #0b1019;
+    --bg-input: #070b13;
+    --bg-raised: #11182a;       /* tiles, secondary surfaces */
+    --border: #1a2438;
+    --border-strong: #2b3a5e;
+    --text: #d8dde8;
+    --muted: #6f7d9a;
+    --accent: #00e0ff;          /* neon cyan */
+    --accent-hover: #5cf0ff;
+    --accent-fg: #04060b;
+    --accent-2: #ff3da5;        /* neon magenta */
+    --danger: #ff4d6b;
+    --ok: #44eaa1;
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.55);
+    --shadow-md: 0 1px 2px rgb(0 0 0 / 0.55), 0 12px 32px -8px rgb(0 0 0 / 0.6);
+    --shadow-glow: 0 0 0 3px rgb(0 224 255 / 0.22);
+    --glow-accent: 0 0 20px -2px rgb(0 224 255 / 0.45);
+    --glow-accent-2: 0 0 18px -2px rgb(255 61 165 / 0.35);
+    /* Curvier than before — sphere-packing software should *feel* round. */
+    --radius-sm: 12px;
+    --radius-md: 18px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+    --radius-pill: 999px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4rem) 1.25rem 5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+
+  header { margin-bottom: 1.75rem; }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.85rem, 3.5vw, 2.4rem);
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+  .lede { margin: .35rem 0 0; color: var(--muted); font-size: .98rem; }
+
+  .card {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.015), transparent), var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    box-shadow: var(--shadow-md);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+  }
+  .grid > .full { grid-column: 1 / -1; }
+  @media (max-width: 540px) { .grid { grid-template-columns: 1fr; } }
+
+  label.field { display: flex; flex-direction: column; gap: .4rem; }
+  label.field > span {
+    font-size: .82rem;
+    color: var(--muted);
+    font-weight: 500;
+    letter-spacing: .01em;
+  }
+
+  input[type=number],
+  input[type=file],
+  select {
+    font: inherit;
+    color: var(--text);
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: .6rem .75rem;
+    width: 100%;
+    transition: border-color .12s ease, box-shadow .12s ease, background-color .12s ease;
+  }
+  input[type=number]:hover, select:hover, input[type=file]:hover { border-color: var(--border-strong); }
+  input[type=number]:focus, select:focus, input[type=file]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* native file input button */
+  input[type=file] { padding: .45rem .55rem; cursor: pointer; }
+  input[type=file]::file-selector-button {
+    font: inherit;
+    color: var(--text);
+    background: #1d2434;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: .35rem .75rem;
+    margin-right: .75rem;
+    cursor: pointer;
+    transition: background-color .12s ease, border-color .12s ease;
+  }
+  input[type=file]::file-selector-button:hover { background: #242c40; border-color: #3d4866; }
+
+  /* native select arrow */
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path fill='none' stroke='%238a93a6' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' d='M3 4.5l3 3 3-3'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right .8rem center;
+    padding-right: 2rem;
+  }
+
+  .actions {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 1.25rem;
+  }
+
+  .btn {
+    font: inherit;
+    font-weight: 550;
+    border-radius: var(--radius-pill);
+    padding: .7rem 1.4rem;
+    cursor: pointer;
+    transition: background-color .12s ease, border-color .12s ease, transform .08s ease, box-shadow .12s ease, color .12s ease;
+    border: 1px solid transparent;
+    line-height: 1.2;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn:focus-visible { outline: none; box-shadow: var(--shadow-glow); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-fg);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: var(--shadow-sm), var(--glow-accent);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    box-shadow: var(--shadow-sm), 0 0 28px -2px rgb(0 224 255 / 0.6);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+  .btn-ghost:hover:not(:disabled) { background: rgb(255 255 255 / 0.04); border-color: #3d4866; }
+
+  .link-btn {
+    align-self: flex-start;
+    margin-top: .35rem;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--accent);
+    font: inherit;
+    font-size: .85rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: rgb(0 224 255 / 0.4);
+    text-underline-offset: 3px;
+    transition: color .12s ease, text-decoration-color .12s ease;
+  }
+  .link-btn:hover { color: var(--accent-hover); text-decoration-color: var(--accent-hover); }
+  .link-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* ─────────── Library modal (cyber-dark, shares root palette) ─────────── */
+  .library-backdrop {
+    position: fixed;
+    inset: 0;
+    /* Deep dim with a faint cyan/magenta wash to thread the cyber
+       palette through the backdrop. */
+    background:
+      radial-gradient(800px 500px at 20% 0%,  rgb(0 224 255 / 0.10), transparent 65%),
+      radial-gradient(700px 400px at 90% 100%, rgb(255 61 165 / 0.07), transparent 65%),
+      rgba(2, 4, 8, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: clamp(1rem, 4vw, 3rem);
+    animation: libraryBackdropIn 250ms ease-out;
+  }
+  .library-backdrop[hidden] { display: none; }
+
+  .library-panel {
+    background:
+      linear-gradient(180deg, rgb(0 224 255 / 0.04), transparent 30%),
+      var(--bg-elev);
+    color: var(--text);
+    width: 100%;
+    max-width: 1100px;
+    max-height: 85vh;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    box-shadow:
+      0 28px 80px -20px rgb(0 0 0 / 0.75),
+      0 0 0 1px rgb(0 224 255 / 0.08);
+    animation: libraryPanelIn 200ms ease-out;
+  }
+
+  .library-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.75rem 2rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  /* A thin neon-accent line under the header */
+  .library-header::after {
+    content: "";
+    position: absolute;
+    left: 2rem;
+    right: 2rem;
+    bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent) 30%, var(--accent-2) 80%, transparent);
+    opacity: 0.45;
+  }
+
+  .library-title {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+  .library-title::before {
+    content: "● ";
+    color: var(--accent);
+    text-shadow: 0 0 10px rgb(0 224 255 / 0.8), 0 0 4px rgb(0 224 255 / 0.6);
+    margin-right: 0.2rem;
+    font-size: 0.9em;
+    vertical-align: 0.05em;
+  }
+
+  .library-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-input);
+    color: var(--muted);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+  }
+  .library-close:hover {
+    background: rgb(0 224 255 / 0.08);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .library-close:focus-visible { outline: none; box-shadow: var(--shadow-glow); }
+
+  .library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.1rem;
+    padding: 1.5rem 2rem 1.75rem;
+    overflow-y: auto;
+  }
+
+  .library-empty {
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+
+  .library-tile {
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.025), transparent 60%),
+      var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform 120ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  }
+  .library-tile:hover {
+    transform: translateY(-2px);
+    border-color: rgb(0 224 255 / 0.55);
+    box-shadow:
+      0 12px 28px -14px rgb(0 0 0 / 0.6),
+      0 0 22px -4px rgb(0 224 255 / 0.35);
+  }
+  .library-tile:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--shadow-glow), 0 0 24px -4px rgb(0 224 255 / 0.4);
+  }
+
+  .library-tile-thumb {
+    aspect-ratio: 1 / 1;
+    background:
+      linear-gradient(180deg, rgb(0 224 255 / 0.05), transparent 60%),
+      #060a13;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .library-tile-thumb img {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+    /* Subtle cyan-tinted shadow so light PNGs sit nicely on dark. */
+    filter: drop-shadow(0 0 8px rgb(0 224 255 / 0.15));
+  }
+  .library-tile-thumb svg { width: 56%; height: 56%; opacity: 0.4; }
+
+  .library-tile-body { padding: 0.7rem 0.9rem 0.85rem; }
+  .library-tile-name {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--text);
+    margin: 0;
+    line-height: 1.3;
+  }
+  .library-tile-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin: 0.2rem 0 0;
+    line-height: 1.4;
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  .library-tile.is-default::after {
+    content: "DEFAULT";
+    position: absolute;
+    top: 0.55rem;
+    right: 0.55rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #04060b;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    box-shadow: 0 0 14px -2px rgb(0 224 255 / 0.55);
+  }
+
+  /* Robot tiles: same card geometry, no thumbnail, name fills the top. */
+  .library-tile.is-robot { min-height: 220px; }
+  .library-tile.is-robot .library-tile-body {
+    padding: 1.25rem 1.1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+  .library-tile.is-robot .library-tile-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  @keyframes libraryPanelIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.985); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes libraryBackdropIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .status { color: var(--muted); font-size: .9rem; }
+  .status.err { color: var(--danger); white-space: pre-wrap; }
+  .status.ok { color: var(--ok); }
+
+  .output-wrap { position: relative; margin-top: 1.25rem; }
+
+  .output {
+    margin: 0;
+    background: #0a0d14;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow-sm);
+    overflow: auto;
+    max-height: 60vh;
+    font: 13px/1.55 ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    color: #cbd2e0;
+    white-space: pre;
+  }
+
+  /* Let our <pre> background/padding stay; hljs only colors the tokens. */
+  .output .hljs { background: transparent !important; padding: 0 !important; }
+
+  .output-actions {
+    position: absolute;
+    top: .55rem;
+    /* sit clear of the <pre>'s right scrollbar (~15px on Win/Linux) */
+    right: 1.25rem;
+    z-index: 1;
+    display: flex;
+    gap: .4rem;
+  }
+
+  .copy-btn {
+    font: inherit;
+    font-size: .76rem;
+    font-weight: 550;
+    letter-spacing: .02em;
+    padding: .3rem .7rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: rgb(20 25 35 / 0.85);
+    color: var(--muted);
+    cursor: pointer;
+    transition: color .12s ease, background-color .12s ease, border-color .12s ease;
+    backdrop-filter: blur(4px);
+  }
+  .copy-btn:hover:not(:disabled) {
+    color: var(--text);
+    background: rgb(35 40 55 / 0.9);
+    border-color: #3d4866;
+  }
+  .copy-btn.copied {
+    color: var(--ok);
+    border-color: rgb(95 211 148 / 0.5);
+    background: rgb(95 211 148 / 0.08);
+  }
+  .copy-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  .mode-tabs {
+    display: inline-flex;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    gap: 2px;
+    margin-bottom: 1.25rem;
+  }
+  .mode-tab {
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 550;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    padding: .42rem .95rem;
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+  }
+  .mode-tab:hover:not(:disabled):not(.active) { color: var(--text); }
+  .mode-tab.active {
+    background: var(--accent);
+    color: var(--accent-fg);
+    box-shadow: var(--shadow-sm);
+  }
+  .mode-tab:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+  }
+  .mode-tab .wip {
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-left: .35rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.06);
+    color: var(--muted);
+    vertical-align: 1px;
+  }
+
+  urdf-viewer {
+    display: block;
+    width: 100%;
+    height: 520px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #eef1f6;  /* keep a light backdrop so the lit spheres pop */
+    box-shadow: var(--shadow-sm);
+  }
+  urdf-viewer[hidden] { display: none; }
+
+  /* Viewer container. In robot mode shows two panes side-by-side
+     (original collision geometry left, sphere approximation right);
+     in object mode collapses to a single full-width pane. The
+     original-viewer pane uses data-mode-only="robot" to disappear in
+     object mode, and the column count switches to 1fr via the
+     body[data-mode] rule below. */
+  .viewers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin-top: 1.25rem;
+  }
+  body[data-mode="object"] .viewers { grid-template-columns: 1fr; }
+  .viewers[hidden] { display: none; }
+  .viewer-pane { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+  .viewer-pane .pane-title {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  body[data-mode="robot"] .viewers .viewer-pane > urdf-viewer { height: 460px; }
+  /* Object-mode error heatmap opens as a second pane so the colored
+     mesh does not overlap the spheres. */
+  body[data-mode="object"] .viewers.heat-open { grid-template-columns: 1fr 1fr; }
+  #heat-pane[hidden] { display: none; }
+  .heat-canvas {
+    display: block;
+    width: 100%;
+    height: 520px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: #eef1f6;
+    box-shadow: var(--shadow-sm);
+  }
+  /* Sits below the viewer panes; contributes no margin while hidden. */
+  #analyze-btn { display: block; margin-top: 1rem; }
+  /* Convergence curves: two-column grid of small loss plots. */
+  .convergence-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .6rem;
+  }
+  .conv-plot {
+    display: block;
+    width: 100%;
+    height: 120px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  /* A lone plot (object mode) spans both columns. */
+  .convergence-grid .conv-plot:only-child { grid-column: 1 / -1; }
+  /* On narrow screens the side-by-side gets squeezed; stack instead. */
+  @media (max-width: 720px) {
+    .viewers { grid-template-columns: 1fr !important; }
+    .convergence-grid { grid-template-columns: 1fr; }
+  }
+
+  /* mode-conditional fields. The off-mode rule is body+attribute (0,2,1)
+     so it beats `label.field { display: flex }` (0,1,1). The matching-mode
+     element keeps whatever display value its own class assigns (flex). */
+  body[data-mode="object"] [data-mode-only="robot"]  { display: none; }
+  body[data-mode="robot"]  [data-mode-only="object"] { display: none; }
+
+  /* Defensive: HTML's [hidden] is just `display: none` in the UA stylesheet,
+     which loses to any author rule that sets display (e.g. `.field`).
+     Forcing !important guarantees JS-toggled `hidden` actually hides. */
+  [hidden] { display: none !important; }
+
+  /* Info icon next to a label: hovers to reveal a tooltip carrying
+     longer help text. Replaces the inline <small class="hint"> blocks
+     so the form stays uncluttered while details are one cursor away. */
+  .info {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    margin-left: .35em;
+    border-radius: 50%;
+    background: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+    font: 600 9px ui-sans-serif, system-ui, sans-serif;
+    cursor: help;
+    position: relative;
+    user-select: none;
+    vertical-align: 1px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .info:hover { color: var(--text); border-color: var(--accent); }
+  .info::before { content: 'i'; }
+  .info::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 280px;
+    padding: 8px 10px;
+    background: #0a0d14;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    color: var(--text);
+    font: 400 12px/1.4 ui-sans-serif, system-ui, sans-serif;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: normal;
+    white-space: normal;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .12s ease;
+    z-index: 10;
+  }
+  .info:hover::after { opacity: 1; }
+  /* Make sure the tooltip doesn't clip inside scroll containers; we
+     don't expect this to happen because tooltips are short, but still. */
+  .field, fieldset, details, body { overflow: visible; }
+
+  /* Collapsible <details> blocks for Advanced / Visuals. */
+  details.section {
+    margin-top: 1rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0;
+    /* `overflow: hidden` would clip the absolutely-positioned ::after
+       tooltips emitted by `.info` icons inside Advanced settings. With
+       overflow visible, tooltips can escape the section box; the rounded
+       corners remain visually clean because nothing inside the section
+       extends past its padding. */
+    overflow: visible;
+  }
+  details.section[open] { padding-bottom: 1rem; }
+  details.section > summary {
+    padding: .85rem 1.1rem;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  details.section > summary::-webkit-details-marker { display: none; }
+  details.section > summary::before {
+    content: "›";
+    color: var(--muted);
+    font-size: 1rem;
+    transition: transform .15s ease;
+    display: inline-block;
+  }
+  details.section[open] > summary::before { transform: rotate(90deg); }
+  details.section > summary:hover { background: rgb(255 255 255 / 0.02); }
+  details.section .section-body { padding: 0 1.1rem; }
+  details.section fieldset {
+    border: 0;
+    margin: 0 0 1rem;
+    padding: 0;
+  }
+  details.section fieldset:last-child { margin-bottom: 0; }
+  details.section legend {
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 0;
+    margin-bottom: .35rem;
+  }
+  details.section .group-hint {
+    font-size: .82rem;
+    color: var(--muted);
+    margin: 0 0 .6rem;
+  }
+  details.section .field small.hint {
+    font-size: .76rem;
+    color: var(--muted);
+    margin-top: .15rem;
+    line-height: 1.35;
+    display: block;
+  }
+  /* checkbox row in Advanced */
+  label.field.check {
+    flex-direction: row;
+    align-items: center;
+    gap: .5rem;
+  }
+  label.field.check input[type=checkbox] {
+    width: auto;
+    margin: 0;
+    accent-color: var(--accent);
+  }
+  label.field.check > span { margin: 0; }
+  /* color picker normalizes height with other inputs */
+  input[type=color] {
+    height: 2.4rem;
+    padding: .15rem;
+    cursor: pointer;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    padding: 0;
+    height: 24px;
+  }
+  input[type=range]::-webkit-slider-runnable-track { height: 3px; background: var(--border-strong); border-radius: 999px; }
+  input[type=range]::-moz-range-track { height: 3px; background: var(--border-strong); border-radius: 999px; }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent); margin-top: -5.5px;
+  }
+  input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); border: none; }
+
+  /* The inspection content lives inside a <details class="section">
+     wrapper now, so the card styling (padding, border, background) is
+     provided by .section. Keep just typography here. */
+  .inspection {
+    font-size: .9rem;
+    line-height: 1.5;
+  }
+  /* Title is in <summary>; suppress the legacy in-content <h3>. */
+  .inspection h3 { display: none; }
+  .ins-urdf {
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-size: .9rem;
+    color: var(--text);
+    margin-bottom: .9rem;
+    padding-bottom: .7rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ins-section { margin-bottom: .9rem; padding-left: .85rem; border-left: 3px solid var(--border-strong); }
+  .ins-section:last-child { margin-bottom: 0; }
+  .ins-section.pack { border-left-color: var(--accent); }
+  .ins-section.err  { border-left-color: var(--danger); }
+
+  .ins-section-head {
+    display: flex; align-items: baseline; gap: .55rem; flex-wrap: wrap;
+  }
+  .ins-section-head strong { font-size: .92rem; color: var(--text); font-weight: 600; }
+  .ins-count {
+    font-size: .74rem;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.05);
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .ins-section.pack .ins-count { background: rgb(0 224 255 / 0.16); color: var(--accent); }
+  .ins-section.err  .ins-count { background: rgb(255 107 107 / 0.15); color: var(--danger); }
+
+  .ins-desc {
+    font-size: .82rem;
+    color: var(--muted);
+    margin: .2rem 0 .35rem;
+  }
+
+  .ins-list { list-style: none; padding: 0; margin: 0; }
+  .ins-list li {
+    font-size: .82rem;
+    padding: .12rem 0;
+    color: var(--text);
+    display: flex;
+    align-items: baseline;
+    gap: .55rem;
+    flex-wrap: wrap;
+  }
+  .ins-list code {
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-size: .82rem;
+    color: var(--text);
+  }
+  .ins-arrow { color: var(--muted); }
+  .ins-mesh  { color: var(--muted); font-family: ui-monospace, monospace; font-size: .8rem; }
+  .ins-geom  {
+    color: var(--muted);
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: rgb(255 255 255 / 0.04);
+  }
+  /* Per-link sphere counts panel. Each PACK item renders as a small
+     card: link name + source mesh on the left, a − / + stepper on the
+     right. A blank count inherits the global "Number of spheres",
+     whose current value is mirrored into the input placeholder; a card
+     with an explicit override gets an accent edge so customized links
+     are scannable at a glance. */
+  #per-link-list {
+    list-style: none; margin: 0; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: .55rem;
+  }
+  #per-link-list li {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: .7rem; min-width: 0;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: .5rem .55rem .5rem .8rem;
+    transition: border-color .12s ease;
+  }
+  #per-link-list li:hover { border-color: var(--border-strong); }
+  #per-link-list li.overridden { border-color: rgb(0 224 255 / .45); }
+  .pl-info { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+  .pl-name {
+    font-size: .84rem; font-weight: 600; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pl-mesh {
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-size: .7rem; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .pl-count { display: flex; align-items: center; gap: .3rem; flex-shrink: 0; }
+  .pl-step {
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    font: inherit; font-size: .95rem; line-height: 1;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: color .12s ease, border-color .12s ease;
+  }
+  .pl-step:hover { color: var(--accent); border-color: var(--border-strong); }
+  #per-link-list .ins-spheres {
+    width: 3.4rem;
+    padding: .3rem .25rem;
+    font-size: .84rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    border-radius: var(--radius-pill);
+    appearance: textfield;
+    -moz-appearance: textfield;
+    cursor: text;
+    /* Recessed well so the field reads as editable, not as a static
+       counter between the stepper buttons. */
+    box-shadow: inset 0 1px 3px rgb(0 0 0 / .5);
+  }
+  #per-link-list .ins-spheres::-webkit-outer-spin-button,
+  #per-link-list .ins-spheres::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  #per-link-list .ins-spheres::placeholder { color: var(--muted); opacity: .55; }
+  .pl-toolbar {
+    display: flex; align-items: center; gap: .5rem;
+    margin-bottom: .65rem;
+  }
+  .pl-toolbar .btn { padding: .32rem .75rem; font-size: .8rem; }
+
+  /* Packing-analysis card: per-link quality metrics + error heatmap.
+     Mirrors the details.section card chrome so it reads as a sibling
+     of the form sections. */
+  .analysis-card {
+    margin-top: 1rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.15rem;
+  }
+  .analysis-head {
+    display: flex; align-items: center; gap: .8rem; flex-wrap: wrap;
+    margin-bottom: .8rem;
+  }
+  .analysis-title { font-weight: 600; font-size: .95rem; color: var(--text); }
+  .analysis-head .btn { padding: .32rem .75rem; font-size: .8rem; }
+  .heat-legend {
+    display: flex; align-items: center; gap: .45rem;
+    margin-left: auto;
+  }
+  .heat-legend-bar {
+    width: 130px; height: 8px; border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    /* background gradient is generated from HEAT_STOPS in the JS. */
+  }
+  .heat-legend-label {
+    font-size: .72rem; color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .analysis-table-wrap { overflow-x: auto; }
+  .analysis-table {
+    width: 100%; border-collapse: collapse;
+    font-size: .84rem;
+  }
+  .analysis-table th {
+    text-align: right;
+    font-size: .7rem; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .06em;
+    padding: .3rem .6rem .45rem;
+    border-bottom: 1px solid var(--border-strong);
+    white-space: nowrap;
+  }
+  .analysis-table th:first-child { text-align: left; padding-left: .1rem; }
+  .analysis-table td {
+    padding: .38rem .6rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .analysis-table td:first-child {
+    text-align: left; padding-left: .1rem;
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-size: .8rem;
+    overflow: hidden; text-overflow: ellipsis; max-width: 240px;
+  }
+  .analysis-table tr:hover td { background: rgb(255 255 255 / 0.02); }
+  .analysis-table tr.overall td {
+    border-top: 2px solid var(--border-strong);
+    border-bottom: none;
+    font-weight: 600;
+  }
+  .cov-wrap { display: inline-flex; align-items: center; gap: .5rem; }
+  .cov-bar {
+    width: 56px; height: 6px; border-radius: 4px;
+    background: rgb(255 255 255 / 0.06);
+    overflow: hidden;
+  }
+  .cov-fill {
+    display: block; height: 100%;
+    border-radius: 4px;
+    background: var(--accent);
+  }
+  .analysis-foot {
+    margin: .7rem 0 0; font-size: .74rem; color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .progress {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+  }
+  .progress .bar {
+    height: 6px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    transition: width .25s ease;
+  }
+  .progress .label { font-size: .85rem; color: var(--muted); }
+  /* Live convergence sparkline (robot mode): total loss vs iteration
+     for the link currently being packed, log-scaled y. */
+  .loss-plot {
+    width: 100%; height: 76px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  /* Joint controls — shown only when the loaded URDF has movable joints. */
+  .joint-controls {
+    margin-top: 1rem;
+    padding: 1rem 1.1rem;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+  }
+  .joint-controls .jc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .75rem;
+  }
+  .joint-controls h3 {
+    margin: 0;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .joint-controls .jc-reset {
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 550;
+    padding: .25rem .65rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color .12s ease, border-color .12s ease;
+  }
+  .joint-controls .jc-reset:hover { color: var(--text); border-color: #3d4866; }
+
+  /* Mini pill toggle: Animate / Manual. Reuses the look of .mode-tabs. */
+  .jc-toggle {
+    display: inline-flex;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .jc-toggle button {
+    font: inherit;
+    font-size: .76rem;
+    font-weight: 550;
+    color: var(--muted);
+    background: transparent;
+    border: none;
+    border-radius: 999px;
+    padding: .25rem .7rem;
+    cursor: pointer;
+    transition: background-color .15s ease, color .15s ease;
+  }
+  .jc-toggle button:hover:not(.active) { color: var(--text); }
+  .jc-toggle button.active {
+    background: var(--accent);
+    color: var(--accent-fg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Animate mode hides per-joint rows + the reset button (nothing to reset
+     while it's auto-driving). Slider rows are still in the DOM so flipping
+     to manual is a no-op CSS change with current values intact. */
+  .joint-controls[data-jc-mode="animate"] .jc-row { display: none; }
+  .joint-controls[data-jc-mode="animate"] .jc-reset { display: none; }
+  .joint-controls .jc-row {
+    display: grid;
+    grid-template-columns: 9rem 1fr 4rem;
+    gap: .75rem;
+    align-items: center;
+    padding: .25rem 0;
+  }
+  .joint-controls .jc-row > label {
+    font-size: .82rem;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .joint-controls input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+  }
+  .joint-controls input[type=range]::-webkit-slider-runnable-track {
+    height: 3px; background: var(--border-strong); border-radius: 999px;
+  }
+  .joint-controls input[type=range]::-moz-range-track {
+    height: 3px; background: var(--border-strong); border-radius: 999px;
+  }
+  .joint-controls input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent); border: none; margin-top: -5.5px;
+    transition: background-color .12s ease;
+  }
+  .joint-controls input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--accent); border: none;
+  }
+  .joint-controls input[type=range]:hover::-webkit-slider-thumb { background: var(--accent-hover); }
+  .joint-controls input[type=range]:hover::-moz-range-thumb     { background: var(--accent-hover); }
+  .joint-controls .jc-val {
+    font-size: .78rem;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    color: var(--muted);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Citation footer at the bottom of the page. Subtle, scrolled into
+     view only after the user has played with the tool. */
+  .cite {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: .9rem;
+    line-height: 1.55;
+  }
+  .cite p { margin: 0 0 .65rem; }
+  .cite a { color: var(--accent); text-decoration: underline; text-decoration-color: rgb(0 224 255 / 0.4); text-underline-offset: 3px; }
+  .cite a:hover { color: var(--accent-hover); text-decoration-color: var(--accent-hover); }
+  /* Wrapper sets up positioning context for the absolutely-placed copy
+     button, mirroring the pattern used by the URDF .output-wrap. */
+  .cite-wrap { position: relative; margin-top: .5rem; }
+  .cite-wrap > .copy-btn {
+    position: absolute;
+    top: .55rem;
+    right: 1.25rem;
+    z-index: 1;
+  }
+  .cite pre.bib {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    background: #0a0d14;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: auto;
+    font: 12.5px/1.55 ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    color: #cbd2e0;
+    white-space: pre;
+  }
+
+  /* simple shimmer when running */
+  .running .btn-primary {
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 50%, var(--accent) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+</head>
+<body data-mode="robot">
+
+<div class="wrap">
+  <header>
+    <h1>MorphIt</h1>
+    <p class="lede">Approximate an object's geometry as a set of spheres, exported as a URDF.</p>
+  </header>
+
+  <form id="f" class="card" novalidate>
+    <div class="mode-tabs" role="tablist" aria-label="Mode">
+      <button id="mode-object" type="button" class="mode-tab" role="tab" aria-selected="false">Object</button>
+      <button id="mode-robot" type="button" class="mode-tab active" role="tab" aria-selected="true">Robot</button>
+    </div>
+
+    <div class="grid">
+      <label class="field full" data-mode-only="object">
+        <span>Mesh file <span class="info" data-tip="Triangle mesh you want to approximate as spheres. Supported formats: .obj, .stl, .ply. Larger meshes take a little longer to load but pack the same."></span></span>
+        <input id="mesh-input" type="file" name="mesh" accept=".obj,.stl,.ply">
+        <button id="open-object-library" type="button" class="link-btn library-btn">
+          <span aria-hidden="true">📚</span> Pick from library
+        </button>
+      </label>
+
+      <label class="field full" data-mode-only="robot">
+        <span>Robot description <span class="info" data-tip="Drop the package root folder (e.g. franka_description). The folder should contain a URDF and the meshes it references. URDFs that use package:// URIs need the parent of the package folder to be present too."></span></span>
+        <input id="folder-input" type="file" webkitdirectory directory multiple>
+        <button id="open-robot-library" type="button" class="link-btn library-btn">
+          <span aria-hidden="true">📚</span> Pick from library
+        </button>
+      </label>
+
+      <label class="field full" id="urdf-picker-wrap" data-mode-only="robot" hidden>
+        <span>URDF <span class="info" data-tip="Multiple URDFs were found in the upload. Pick which one to process. Most robot description packages ship just one."></span></span>
+        <select id="urdf-picker"></select>
+      </label>
+
+      <!-- Variant selector temporarily hidden; the run defaults to MorphIt-B
+           via the hidden input below. To bring it back, swap the hidden
+           input out for the commented-out <label> + <select> block. -->
+      <input type="hidden" name="variant" value="MorphIt-B">
+      <!--
+      <label class="field full">
+        <span>Variant</span>
+        <select name="variant">
+          <option value="MorphIt-B" selected>MorphIt-B (balanced)</option>
+          <option value="MorphIt-V">MorphIt-V (volume)</option>
+          <option value="MorphIt-S">MorphIt-S (surface)</option>
+        </select>
+      </label>
+      -->
+      <!-- /variant -->
+      <label class="field">
+        <span>Number of spheres <span class="info" data-tip="Target sphere count for the packing. More spheres means a tighter fit but each step costs more (training time scales roughly linearly with count). Typical values: 10 to 30 per link for robots, 15 to 50 for objects. In robot mode, individual links can override this in the ‘Per-link sphere counts’ panel below."></span></span>
+        <input type="number" name="num_spheres" min="1" max="200" value="20">
+      </label>
+    </div>
+
+    <!-- Per-link overrides. Populated by renderPerLinkSpheres() once a
+         robot is inspected; hidden whenever there is no PACK list. -->
+    <details class="section" id="per-link-details" data-mode-only="robot" hidden>
+      <summary>Per-link sphere counts <span class="ins-count" id="per-link-total" title="Total spheres across all packed links" hidden></span></summary>
+      <div class="section-body">
+        <div class="inspection">
+          <div class="ins-desc">Override the global “Number of spheres” for individual links. Click a count to type a value, or use the − / + steppers; blank counts use the global value, shown grayed out.</div>
+          <div class="pl-toolbar">
+            <button type="button" id="auto-fill-btn" class="btn btn-ghost">Auto-fill counts</button>
+            <button type="button" id="clear-counts-btn" class="btn btn-ghost">Clear</button>
+            <span class="info" data-tip="Distributes the total budget (global count × number of links) across links using classical covering theory. Each link's sphere demand at gap ε is max(volume covering: Θ₃V⁄(4∕3·πε³), surface covering: Θ₂A⁄(πε²)) with Θ₃≈1.464 (Bambah 1954, BCC ball covering) and Θ₂≈1.209 (Kershner 1939, optimal disk covering); ε is solved by bisection so the demands sum to the budget. Equalizing ε across links minimizes the worst-case boundary gap for a fixed budget: bulky links scale with volume, thin links (fingers, shells) with surface area."></span>
+          </div>
+          <ul id="per-link-list"></ul>
+        </div>
+      </div>
+    </details>
+
+    <details class="section" id="advanced-section">
+      <summary>Advanced settings</summary>
+      <div class="section-body">
+
+        <fieldset>
+          <legend>Training <span class="info" data-tip="How long the optimizer runs per mesh. More iterations means a tighter packing but training time scales linearly."></span></legend>
+          <div class="grid">
+            <label class="field">
+              <span>Iterations <span class="info" data-tip="Gradient steps per mesh. 200 is fast and usually good enough; 300 to 500 sharpens convergence; above 500 yields diminishing returns."></span></span>
+              <input type="number" name="iterations" min="1" max="1000" value="300">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Sample counts <span class="info" data-tip="Surface and interior sample budgets used by the loss functions. Defaults of 5000 each work well for typical robot links and small objects; bump both for very large or fine-detail meshes at the cost of slower iterations."></span></legend>
+          <div class="grid">
+            <label class="field">
+              <span>Inside samples <span class="info" data-tip="Points inside the mesh; drives the coverage and containment losses. Increase if the mesh is large or has thin features the spheres miss."></span></span>
+              <input type="number" name="num_inside_samples" min="100" max="50000" step="500" value="5000">
+            </label>
+            <label class="field">
+              <span>Surface samples <span class="info" data-tip="Points sampled on the mesh surface; drives the surface, boundary, and SQEM losses. Increase to better resolve fine surface detail."></span></span>
+              <input type="number" name="num_surface_samples" min="100" max="50000" step="500" value="5000">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Mesh preparation <span class="info" data-tip="Before packing, closed bodies that overlap (parts exported into one file) are merged into their boolean union, so their overlap does not read as hollow. Open or non-overlapping meshes are used as they are. Turn off to pack the mesh exactly as loaded."></span></legend>
+          <label class="field check">
+            <input type="checkbox" name="union_overlapping_bodies" checked>
+            <span>Merge overlapping bodies <span class="info" data-tip="On by default. Analysis scores against the same mesh the packing used. The API reports what was done in the X-Morphit-Mesh-Prep header."></span></span>
+          </label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Density control <span class="info" data-tip="Periodic re-pack pass that culls low-value or escaped spheres and re-seeds at the worst-covered interior gaps. Annealed: each pass replaces a smaller fraction than the last."></span></legend>
+          <label class="field check">
+            <input type="checkbox" name="density_control_enabled" checked>
+            <span>Enabled <span class="info" data-tip="When off, sphere positions never get reshuffled; spheres that collapse or drift outside the mesh stay there. Recommended on."></span></span>
+          </label>
+          <div class="grid">
+            <label class="field">
+              <span>Min interval <span class="info" data-tip="Minimum iterations between density-control passes. Trigger too late and bad spheres linger; too early and the loss never settles. Rule of thumb: pick a value just past iters/2 so the last pass fires with plenty of optimizer time afterwards for the new spheres to settle. Example: 300 iters with interval 160 fires once around iter 160 and leaves 140 iters of settling. Long runs (1000+ iters) can afford 3 or 4 passes."></span></span>
+              <input type="number" name="density_control_min_interval" min="10" max="2000" value="160">
+            </label>
+            <label class="field">
+              <span>Cooling factor <span class="info" data-tip="Each pass replaces (current × cooling) of the pack. 1.0 = constant, 0.5 = aggressive cool-down. Higher cooling keeps later passes more disruptive; lower lets the optimizer commit faster."></span></span>
+              <input type="number" name="density_control_cooling_factor" min="0.1" max="1.0" step="0.05" value="0.85">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Loss weights <span class="info" data-tip="Auto-filled from the chosen variant. The first six are the paper's core losses; hausdorff and mesh_containment are off by default and useful for tail-error reduction or strict outside-mesh suppression."></span></legend>
+          <div class="grid">
+            <label class="field">
+              <span>coverage_weight <span class="info" data-tip="Pulls spheres to fill the interior of the mesh. Higher means denser interior coverage. Dominant in MorphIt-V."></span></span>
+              <input type="number" name="coverage_weight" step="any" value="1500">
+            </label>
+            <label class="field">
+              <span>overlap_weight <span class="info" data-tip="Penalizes spheres that overlap each other. Higher pushes spheres apart, lower lets them stack."></span></span>
+              <input type="number" name="overlap_weight" step="any" value="0.3">
+            </label>
+            <label class="field">
+              <span>boundary_weight <span class="info" data-tip="Penalizes any sphere surface that crosses the mesh boundary, in either direction (symmetric). Dominant in MorphIt-S."></span></span>
+              <input type="number" name="boundary_weight" step="any" value="1.0">
+            </label>
+            <label class="field">
+              <span>surface_weight <span class="info" data-tip="Pulls sphere surfaces toward the mesh surface (mean absolute gap). Higher gives a tighter surface fit."></span></span>
+              <input type="number" name="surface_weight" step="any" value="50">
+            </label>
+            <label class="field">
+              <span>containment_weight <span class="info" data-tip="Sphere-in-sphere penalty: discourages one sphere being fully inside another. Note: this is NOT a mesh-containment term — see mesh_containment_weight for that."></span></span>
+              <input type="number" name="containment_weight" step="any" value="1.0">
+            </label>
+            <label class="field">
+              <span>sqem_weight <span class="info" data-tip="Squared quadric-error metric: aligns sphere surfaces with the local surface normals of the mesh. Helps the spheres ride flat or curved surfaces neatly."></span></span>
+              <input type="number" name="sqem_weight" step="any" value="3000">
+            </label>
+            <label class="field">
+              <span>hausdorff_weight <span class="info" data-tip="Soft Hausdorff loss: penalizes the worst 15% of surface samples (the tail of the error distribution). Useful when you care about max-error rather than mean-error. Off (0) by default."></span></span>
+              <input type="number" name="hausdorff_weight" step="any" value="0">
+            </label>
+            <label class="field">
+              <span>mesh_containment_weight <span class="info" data-tip="Asymmetric 'stay inside the mesh' gradient: penalizes only spheres whose surface protrudes outside the mesh. Useful when spheres tend to escape (e.g. high boundary_weight in MorphIt-S). Off (0) by default."></span></span>
+              <input type="number" name="mesh_containment_weight" step="any" value="0">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Reproducibility <span class="info" data-tip="Whether each run draws a fresh random initial sphere placement, or reproduces a deterministic packing from a fixed seed."></span></legend>
+          <div class="grid">
+            <label class="field check">
+              <input type="checkbox" name="seed_random" checked>
+              <span>Random seed (different result each run) <span class="info" data-tip="When checked, no seed is sent to the server, so each run starts from a fresh random initialization. Uncheck to lock to the fixed seed below for reproducible runs."></span></span>
+            </label>
+            <label class="field">
+              <span>Fixed seed (when not random) <span class="info" data-tip="Integer seed for the random number generator. Two runs with the same seed and the same parameters produce the same packing. Only used when 'Random seed' is unchecked."></span></span>
+              <input type="number" name="seed" min="0" max="2147483647" value="42">
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    </details>
+
+    <details class="section" id="visuals-section">
+      <summary>Visuals</summary>
+      <div class="section-body">
+        <div class="grid">
+          <label class="field">
+            <span>Base color <span class="info" data-tip="Color used for the spheres in the output URDF. In robot mode this is the midpoint of the per-link variation (each link gets a slightly different hue centered on this color). In object mode there is only one link, so every sphere gets this exact color."></span></span>
+            <input type="color" name="base_color" value="#3399ff">
+          </label>
+          <label class="field">
+            <span>Variation across links <span id="variation-display" style="color:var(--muted);font-variant-numeric:tabular-nums">0.30</span> <span class="info" data-tip="Hue spread applied across packed links so each one is visually distinguishable in the output URDF. 0 means every link gets the base color exactly; higher values give each link a slightly different hue (max about ±54° at 1.0). Robot-mode only: object mode has just one link, so this has no effect."></span></span>
+            <input type="range" name="color_variation" min="0" max="1" step="0.05" value="0.3">
+          </label>
+        </div>
+      </div>
+    </details>
+
+    <details class="section" id="inspection-details" data-mode-only="robot" hidden>
+      <summary>Inspection</summary>
+      <div class="section-body">
+        <div id="inspection" class="inspection"></div>
+      </div>
+    </details>
+
+    <div id="progress" class="progress" hidden>
+      <div class="bar"><div id="progress-fill" class="fill"></div></div>
+      <div id="progress-label" class="label"></div>
+      <canvas id="loss-plot" class="loss-plot" data-mode-only="robot"></canvas>
+    </div>
+
+    <div class="actions">
+      <button id="go" type="submit" class="btn btn-primary">Run MorphIt</button>
+      <span id="status" class="status"></span>
+    </div>
+
+    <!-- Convergence curves for the last run. Opens by default once
+         packing finishes; collapsible like the other tabs. -->
+    <details class="section" id="convergence-details" hidden>
+      <summary>Convergence</summary>
+      <div class="section-body">
+        <div class="inspection">
+          <div class="ins-desc">Total training loss per iteration for each packed part, log scale. Curves are recorded every iteration and downsampled to at most 150 points.</div>
+          <div id="convergence-grid" class="convergence-grid"></div>
+        </div>
+      </div>
+    </details>
+  </form>
+
+  <div id="library-modal" class="library-backdrop" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="library-title">
+    <div class="library-panel" role="document">
+      <header class="library-header">
+        <h2 id="library-title" class="library-title">Library</h2>
+        <button id="library-close" type="button" class="library-close" aria-label="Close library">×</button>
+      </header>
+      <div id="library-grid" class="library-grid">
+        <!-- tiles injected by JS -->
+      </div>
+      <p id="library-empty" class="library-empty" hidden>No items in library yet.</p>
+    </div>
+  </div>
+
+  <div id="viewers" class="viewers" hidden>
+    <div class="viewer-pane" data-mode-only="robot">
+      <span class="pane-title">Original collision geometry</span>
+      <urdf-viewer id="viewer-original"
+                   up="Z+"
+                   display-shadow
+                   auto-redraw
+                   ambient-color="#444"
+                   highlight-color="#ffaa00"></urdf-viewer>
+    </div>
+    <div class="viewer-pane">
+      <span class="pane-title">Sphere approximation</span>
+      <urdf-viewer id="viewer"
+                   up="Z+"
+                   display-shadow
+                   auto-redraw
+                   ambient-color="#444"
+                   highlight-color="#ffaa00"></urdf-viewer>
+    </div>
+    <!-- Object-mode error heatmap gets its own pane: overlaying the
+         heat-colored mesh on the spheres collapses everything into one
+         volume, so it renders side by side instead. -->
+    <div class="viewer-pane" id="heat-pane" data-mode-only="object" hidden>
+      <span class="pane-title">Error heatmap</span>
+      <canvas id="heat-canvas" class="heat-canvas"></canvas>
+    </div>
+  </div>
+
+  <button id="analyze-btn" type="button" class="btn btn-primary" hidden>Analyze packing</button>
+
+  <div id="analysis-card" class="analysis-card" hidden>
+    <div class="analysis-head">
+      <span class="analysis-title">Packing analysis</span>
+      <button id="heatmap-btn" type="button" class="btn btn-ghost">Show error heatmap</button>
+      <div class="heat-legend" id="heat-legend" hidden>
+        <span class="heat-legend-label">0 mm</span>
+        <span class="heat-legend-bar"></span>
+        <span class="heat-legend-label" id="heat-legend-max"></span>
+      </div>
+    </div>
+    <div class="analysis-table-wrap">
+      <table class="analysis-table" id="analysis-table"></table>
+    </div>
+    <p class="analysis-foot">
+      Surface error is the unsigned distance from mesh-surface sample points to the
+      nearest sphere surface (8,000 samples per part), the paper's boundary-fidelity
+      metric. Coverage is the fraction of mesh-interior Monte Carlo samples inside the
+      sphere union, the paper's spatial-occupancy (inside) ratio. In robot mode the
+      overall row is area-weighted for distances and volume-weighted for coverage.
+      The heatmap colors the original geometry by surface error on a light-to-dark
+      single-hue scale.
+    </p>
+  </div>
+
+  <div id="joint-controls" class="joint-controls" hidden></div>
+
+  <div id="out-wrap" class="output-wrap" hidden>
+    <div class="output-actions">
+      <button id="dl" type="button" class="copy-btn" aria-label="Download URDF" disabled>Download</button>
+      <button id="copy" type="button" class="copy-btn" aria-label="Copy URDF to clipboard" disabled>Copy</button>
+    </div>
+    <pre class="output"><code id="out-code" class="language-xml"></code></pre>
+  </div>
+
+  <footer class="cite">
+    <p>If you use MorphIt in your research, please cite the
+      <a href="https://arxiv.org/abs/2507.14061">paper</a>:</p>
+    <div class="cite-wrap">
+      <button id="cite-copy" type="button" class="copy-btn" aria-label="Copy citation">Copy</button>
+      <pre class="bib" id="cite-bib">@misc{nechyporenko2025morphit,
+  title         = {MorphIt: Flexible Spherical Approximation of Robot Morphology for Representation-driven Adaptation},
+  author        = {Nataliya Nechyporenko and Yutong Zhang and Sean Campbell and Alessandro Roncone},
+  year          = {2025},
+  eprint        = {2507.14061},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.RO},
+  url           = {https://arxiv.org/abs/2507.14061},
+}</pre>
+    </div>
+  </footer>
+</div>
+
+<!--
+  Side-effect import: registers the <urdf-viewer> custom element. We use
+  the manipulator subclass for parity with the official demo
+  (https://gkjohnson.github.io/urdf-loaders/javascript/example/bundle/);
+  for our fixed-joint URDF the manipulator behavior is a no-op but it
+  costs nothing.
+-->
+<script type="module">
+  import URDFManipulator from "https://cdn.jsdelivr.net/npm/urdf-loader@0.12.5/src/urdf-manipulator-element.js";
+  if (!customElements.get('urdf-viewer')) {
+    customElements.define('urdf-viewer', URDFManipulator);
+  }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
+import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
+import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+const f = document.getElementById('f');
+const outWrap = document.getElementById('out-wrap');
+const outCode = document.getElementById('out-code');
+const status = document.getElementById('status');
+const go = document.getElementById('go');
+const dl = document.getElementById('dl');
+const copy = document.getElementById('copy');
+const libraryModal = document.getElementById('library-modal');
+const libraryTitle = document.getElementById('library-title');
+const libraryGrid  = document.getElementById('library-grid');
+const libraryEmpty = document.getElementById('library-empty');
+const libraryClose = document.getElementById('library-close');
+
+let libraryState = { kind: null, onSelect: null, currentName: null };
+
+function openLibrary({ kind, title, currentName, onSelect }) {
+  libraryState = { kind, onSelect, currentName };
+  libraryTitle.textContent = title;
+  libraryGrid.innerHTML = '';
+  libraryEmpty.hidden = true;
+  libraryModal.hidden = false;
+  libraryModal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  // Defer focus so the open animation doesn't fight it.
+  setTimeout(() => libraryClose.focus(), 50);
+}
+
+function closeLibrary() {
+  libraryModal.hidden = true;
+  libraryModal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  libraryState = { kind: null, onSelect: null, currentName: null };
+}
+
+libraryClose.addEventListener('click', closeLibrary);
+libraryModal.addEventListener('click', (e) => {
+  // Backdrop click closes; panel clicks don't bubble out of the panel.
+  if (e.target === libraryModal) closeLibrary();
+});
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !libraryModal.hidden) closeLibrary();
+});
+
+const SILHOUETTE_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="#a8a098" aria-hidden="true">
+  <path d="M32 8c-9.94 0-18 8.06-18 18 0 6.6 3.55 12.36 8.85 15.5L22 56h20l-.85-14.5C46.45 38.36 50 32.6 50 26c0-9.94-8.06-18-18-18z"/>
+</svg>`;
+
+function renderObjectTile(item) {
+  const tile = document.createElement('button');
+  tile.type = 'button';
+  tile.className = 'library-tile' + (item.default ? ' is-default' : '');
+  tile.setAttribute('aria-label', `Load ${item.filename}`);
+  const thumbInner = item.has_thumbnail
+    ? `<img src="/api/example/${encodeURIComponent(item.name)}/thumbnail" alt="">`
+    : SILHOUETTE_SVG;
+  tile.innerHTML = `
+    <div class="library-tile-thumb">${thumbInner}</div>
+    <div class="library-tile-body">
+      <p class="library-tile-name">${item.filename}</p>
+    </div>`;
+  tile.addEventListener('click', () => {
+    const onSelect = libraryState.onSelect;
+    const isSame = item.name === libraryState.currentName;
+    closeLibrary();
+    if (!isSame && onSelect) onSelect(item.name);
+  });
+  return tile;
+}
+
+async function openObjectLibrary() {
+  openLibrary({
+    kind: 'object',
+    title: 'Object library',
+    currentName: currentObjectName,
+    onSelect: (name) => loadExampleByName(name).then(() => { currentObjectName = name; }),
+  });
+  try {
+    const r = await fetch('/api/examples');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const list = await r.json();
+    if (!Array.isArray(list) || list.length === 0) {
+      libraryEmpty.hidden = false;
+      return;
+    }
+    libraryGrid.innerHTML = '';
+    list.forEach(item => libraryGrid.appendChild(renderObjectTile(item)));
+  } catch (err) {
+    console.error('[library] fetch failed:', err);
+    libraryEmpty.textContent = 'Could not load library.';
+    libraryEmpty.hidden = false;
+  }
+}
+
+document.getElementById('open-object-library')
+  .addEventListener('click', openObjectLibrary);
+
+function renderRobotTile(item) {
+  const tile = document.createElement('button');
+  tile.type = 'button';
+  tile.className = 'library-tile is-robot' + (item.default ? ' is-default' : '');
+  tile.setAttribute('aria-label', `Load ${item.label}`);
+  tile.innerHTML = `
+    <div class="library-tile-body">
+      <p class="library-tile-name">${item.label}</p>
+      <p class="library-tile-sub">${item.urdf}</p>
+    </div>`;
+  tile.addEventListener('click', () => {
+    const onSelect = libraryState.onSelect;
+    const isSame = item.name === libraryState.currentName;
+    closeLibrary();
+    if (!isSame && onSelect) onSelect(item.name);
+  });
+  return tile;
+}
+
+let currentRobotName = null;
+
+async function loadRobotByName(name) {
+  // Prep robot-mode state and show the inspection panel. Start it
+  // collapsed — the report is still one click away via the summary,
+  // but the default view leads with the packed result, not the report.
+  inspectionDetails.hidden = false;
+  inspectionDetails.open = false;
+  inspectionEl.innerHTML = `Inspecting…`;
+  hidePerLinkSpheres();
+  resetAnalysis();
+  urdfPickerWrap.hidden = true;
+  robotFolderFiles = [];        // not a user upload
+  robotChosenUrdf = null;
+
+  // Bootstrap a session from the bundled robot.
+  const r = await fetch(`/api/robot/example/${encodeURIComponent(name)}`, {
+    method: 'POST',
+  });
+  if (!r.ok) {
+    const text = await r.text();
+    inspectionEl.innerHTML =
+      `<span class="badge err">Failed</span> ${escapeHtml(text)}`;
+    throw new Error(`session create failed: ${r.status} ${text}`);
+  }
+  const report = await r.json();
+  robotSessionId = report.session_id;
+  robotReport = report;
+  renderInspection(report);
+
+  // If a pre-baked spherical URDF exists, render it now so the user
+  // sees a packed result with no clicks. Populate the left "Original
+  // collision geometry" viewer too, mirroring what Run MorphIt does
+  // after assemble — otherwise the left pane sits empty next to a
+  // pre-loaded right pane.
+  const sph = await fetch(`/api/robot/example/${encodeURIComponent(name)}/spherical`);
+  if (sph.ok) {
+    const urdfText = await sph.text();
+    renderUrdf(urdfText, { filename: `${name}_spherical.urdf` });
+    viewerOriginal.urdf =
+      `/api/robot/file?session_id=${encodeURIComponent(robotSessionId)}` +
+      `&path=${encodeURIComponent(report.urdf_path)}`;
+  }
+  currentRobotName = name;
+}
+
+async function openRobotLibrary() {
+  openLibrary({
+    kind: 'robot',
+    title: 'Robot library',
+    currentName: currentRobotName,
+    onSelect: (name) => loadRobotByName(name).catch(err => {
+      status.classList.add('err');
+      status.textContent = String(err);
+    }),
+  });
+  try {
+    const r = await fetch('/api/robot/examples');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const list = await r.json();
+    if (!Array.isArray(list) || list.length === 0) {
+      libraryEmpty.hidden = false;
+      return;
+    }
+    libraryGrid.innerHTML = '';
+    list.forEach(item => libraryGrid.appendChild(renderRobotTile(item)));
+  } catch (err) {
+    console.error('[robot library] fetch failed:', err);
+    libraryEmpty.textContent = 'Could not load robot library.';
+    libraryEmpty.hidden = false;
+  }
+}
+
+document.getElementById('open-robot-library')
+  .addEventListener('click', openRobotLibrary);
+const viewer = document.getElementById('viewer');
+const viewerOriginal = document.getElementById('viewer-original');
+const viewersEl = document.getElementById('viewers');
+const fileInput = document.getElementById('mesh-input');         // object mode
+const folderInput = document.getElementById('folder-input');     // robot mode
+const urdfPickerWrap = document.getElementById('urdf-picker-wrap');
+const urdfPicker = document.getElementById('urdf-picker');
+const inspectionEl = document.getElementById('inspection');
+const inspectionDetails = document.getElementById('inspection-details');
+const perLinkDetails = document.getElementById('per-link-details');
+const perLinkList = document.getElementById('per-link-list');
+const perLinkTotal = document.getElementById('per-link-total');
+
+// Analysis / live-view elements and state. Declared early (not next to
+// the functions that use them further down) because the robot preload
+// can call resetAnalysis() during initial script evaluation.
+const analyzeBtn = document.getElementById('analyze-btn');
+const analysisCard = document.getElementById('analysis-card');
+const analysisTable = document.getElementById('analysis-table');
+const heatmapBtn = document.getElementById('heatmap-btn');
+const heatLegend = document.getElementById('heat-legend');
+const heatLegendMax = document.getElementById('heat-legend-max');
+const convergenceDetails = document.getElementById('convergence-details');
+const convergenceGrid = document.getElementById('convergence-grid');
+const heatPane = document.getElementById('heat-pane');
+const heatCanvas = document.getElementById('heat-canvas');
+let heatRenderer = null, heatScene = null, heatCamera = null,
+    heatControls = null, heatRoot = null;
+let lastAnalysis = null;
+let heatmapOn = false;
+let liveOverlays = new Map();  // "link|ci" -> { group, meshes: [] }
+const progressEl = document.getElementById('progress');
+const progressFill = document.getElementById('progress-fill');
+const progressLabel = document.getElementById('progress-label');
+const modeObjectBtn = document.getElementById('mode-object');
+const modeRobotBtn  = document.getElementById('mode-robot');
+const jointControlsEl = document.getElementById('joint-controls');
+// Track which example is currently loaded so picking the same one is a no-op.
+let currentObjectName = null;
+
+// Load an example by name: stage its source mesh on the file input
+// (so a subsequent Run MorphIt re-packs the right thing) and, if the
+// server has a pre-baked URDF for it, render the result immediately
+// without spending compute. The helper looks up its own metadata from
+// /api/examples so it works whether called from the modal, the
+// page-load preload, or any future caller.
+async function loadExampleByName(name) {
+  let list;
+  try {
+    const r = await fetch('/api/examples');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    list = await r.json();
+  } catch (err) {
+    throw new Error(`could not look up example ${name}: ${err}`);
+  }
+  const item = list.find(e => e.name === name);
+  if (!item) throw new Error(`example ${name} not in /api/examples`);
+
+  const meshResp = await fetch(`/api/example/${encodeURIComponent(name)}`);
+  if (!meshResp.ok) throw new Error(`mesh fetch failed: ${meshResp.status}`);
+  const blob = await meshResp.blob();
+  // DataTransfer is the only way to programmatically populate
+  // <input type=file> — supported in all current browsers.
+  const dt = new DataTransfer();
+  dt.items.add(new File([blob], item.filename, {
+    type: blob.type || 'application/octet-stream',
+  }));
+  fileInput.files = dt.files;
+  fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+  resetAnalysis();
+  if (!item.has_packed) return;
+  const packedResp = await fetch(`/api/example/${encodeURIComponent(name)}/packed`);
+  if (!packedResp.ok) return;
+  const urdfText = await packedResp.text();
+  const centroidHdr = packedResp.headers.get('X-Morphit-Centroid');
+  if (centroidHdr) lastCentroid = centroidHdr.split(',').map(parseFloat);
+  const baseName = item.filename.replace(/\.[^.]+$/, '');
+  renderUrdf(urdfText, { filename: `${baseName}.urdf` });
+  // Pre-baked URDF + fetched mesh file: analysis is available.
+  analyzeBtn.hidden = false;
+}
+
+// Object-library preload. Picks whichever entry the server flags as
+// default (falls back to the first). Lazy + guarded: it runs on page
+// load only if object is the default mode, otherwise on the first
+// Object tab click — so it never competes with the robot preload for
+// the shared viewer.
+let objectPreloadAttempted = false;
+async function attemptObjectPreload() {
+  if (objectPreloadAttempted) return;
+  objectPreloadAttempted = true;
+  try {
+    const r = await fetch('/api/examples');
+    if (!r.ok) return;
+    const list = await r.json();
+    if (!Array.isArray(list) || list.length === 0) return;
+    const def = list.find(e => e.default) ?? list[0];
+    currentObjectName = def.name;
+    await loadExampleByName(def.name);
+  } catch (err) {
+    console.warn('[example] default load failed:', err);
+    objectPreloadAttempted = false;  // allow a retry on the next Object tab click
+  }
+}
+
+let lastBlobUrl = null;
+let lastFilename = 'morphit.urdf';
+let lastCentroid = null;       // [x, y, z] of the URDF base, for mesh alignment
+let currentWireframe = null;   // three.Object3D currently overlaid on the scene
+
+// Robot-mode session state.
+let robotSessionId = null;
+let robotReport = null;
+let robotFolderFiles = [];     // File[] from the folder picker
+let robotChosenUrdf = null;    // basename of URDF to send on /inspect
+
+function currentMode() {
+  return document.body.dataset.mode || 'object';
+}
+
+// --------------------------------------------------------------------
+// Mode switching
+// --------------------------------------------------------------------
+
+function setMode(mode) {
+  if (mode !== 'object' && mode !== 'robot') return;
+  document.body.dataset.mode = mode;
+  modeObjectBtn.classList.toggle('active', mode === 'object');
+  modeRobotBtn.classList.toggle('active',  mode === 'robot');
+  modeObjectBtn.setAttribute('aria-selected', String(mode === 'object'));
+  modeRobotBtn.setAttribute('aria-selected',  String(mode === 'robot'));
+  // Clear any stale state when switching: the form below is mode-specific.
+  resetOutputs();
+  inspectionDetails.hidden = true;
+  inspectionEl.innerHTML = '';
+  hidePerLinkSpheres();
+  urdfPickerWrap.hidden = true;
+  progressEl.hidden = true;
+  status.textContent = '';
+  status.classList.remove('err', 'ok');
+}
+
+modeObjectBtn.addEventListener('click', () => {
+  setMode('object');
+  attemptObjectPreload();
+});
+modeRobotBtn.addEventListener('click', () => {
+  setMode('robot');
+  attemptRobotPreload();
+});
+
+let robotPreloadAttempted = false;
+
+async function attemptRobotPreload() {
+  if (robotPreloadAttempted) return;
+  robotPreloadAttempted = true;
+  try {
+    const r = await fetch('/api/robot/examples');
+    if (!r.ok) return;
+    const list = await r.json();
+    if (!Array.isArray(list) || list.length === 0) return;
+    const def = list.find(e => e.default) ?? list[0];
+    await loadRobotByName(def.name);
+  } catch (err) {
+    console.warn('[robot preload] failed:', err);
+    // Allow a retry on the next tab click if the first attempt failed.
+    robotPreloadAttempted = false;
+  }
+}
+
+// Kick off the preload for whichever mode the page opens in. Placed
+// after both attempt*Preload functions and their `let` guard flags are
+// initialized — calling earlier would hit the flags' temporal dead
+// zone (ReferenceError) and silently swallow the load. Robot is the
+// default (see <body data-mode="robot">), so the bundled robot shows up
+// packed with no clicks; object mode preloads lazily on the first
+// Object tab click.
+if (currentMode() === 'robot') attemptRobotPreload();
+else attemptObjectPreload();
+
+function resetOutputs() {
+  outWrap.hidden = true;
+  outCode.textContent = '';
+  outCode.removeAttribute('data-highlighted');
+  viewersEl.hidden = true;
+  // Any displayed result is now stale, and so is everything derived
+  // from it: the analysis card/heatmap and the live packing overlay.
+  resetAnalysis();
+  clearLiveOverlays();
+  // Intentionally NOT clearing the viewers' `urdf` attribute here:
+  //   - `viewer.urdf = null` becomes setAttribute('urdf', 'null') ⇒ 404 on /null.
+  //   - removeAttribute still fires attributeChangedCallback with a
+  //     null URL ⇒ loader errors the same way.
+  // The next renderUrdf() swaps in a fresh blob URL, replacing the old
+  // scene in-place. Until then `viewersEl.hidden=true` keeps the panes
+  // offscreen.
+  clearWireframe();
+  lastCentroid = null;
+  dl.disabled = true;
+  copy.disabled = true;
+  copy.classList.remove('copied');
+  copy.textContent = 'Copy';
+  stopJointAnimation();
+  jointControlsEl.hidden = true;
+  jointControlsEl.innerHTML = '';
+  if (lastBlobUrl) { URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; }
+}
+
+// --------------------------------------------------------------------
+// Joint animation: sine-wave wiggle per movable joint so the loaded
+// robot doesn't sit motionless. Amplitude is ~0.6 rad (~34°) or 40%
+// of range, whichever is smaller — visibly active but not theatrical.
+// Per-joint period and phase are staggered to avoid synchronization.
+// --------------------------------------------------------------------
+let movableJoints = [];   // [[name, URDFJoint], ...]
+let animSpecs = [];       // matching [{name, center, amp, period, phase}]
+let animRafId = null;
+let animStart = null;
+
+function buildAnimSpecs(movable) {
+  return movable.map(([name, joint], i) => {
+    const continuous = joint.jointType === 'continuous';
+    const lower = (!continuous && joint.limit && joint.limit.lower != null)
+      ? joint.limit.lower : -Math.PI;
+    const upper = (!continuous && joint.limit && joint.limit.upper != null)
+      ? joint.limit.upper : Math.PI;
+
+    let center, amp;
+    if (joint.jointType === 'prismatic') {
+      // prismatic: wiggle around the rest pose (0, clamped into range)
+      // rather than mid-range, and cap the travel at 5 cm. A mobile-base
+      // or gantry DOF can declare a range of hundreds of metres; without
+      // these caps the sine wiggle flings the whole robot out of frame
+      // (e.g. Fetch's planar base_joint2). Small lifts/grippers still get
+      // a visible few-cm motion.
+      center = Math.min(Math.max(0, lower), upper);
+      amp = Math.min((upper - lower) * 0.4, 0.05);
+    } else {
+      // revolute/continuous: 40% of range, capped at 0.6 rad (~34°) so
+      // wide-range arm joints don't swing wildly while narrow-range
+      // wrists still get a meaningful arc.
+      center = 0;
+      amp = Math.min(0.6, (upper - lower) * 0.4);
+    }
+
+    // Period 4–6 s, phases evenly spaced around the unit circle so joints
+    // peak at different times.
+    const period = 4 + (i % 3);
+    const phase = (i * 2 * Math.PI) / Math.max(1, movable.length);
+    return { name, center, amp, period, phase };
+  });
+}
+
+function animFrame(t) {
+  if (animStart === null) animStart = t;
+  const elapsed = (t - animStart) / 1000;
+  for (const a of animSpecs) {
+    const v = a.center + a.amp * Math.sin(2 * Math.PI * elapsed / a.period + a.phase);
+    viewer.setJointValue(a.name, v);
+    _mirrorJoint(a.name, v);  // mirror animation to the original viewer
+  }
+  animRafId = requestAnimationFrame(animFrame);
+}
+
+function startJointAnimation() {
+  if (animRafId !== null) return;
+  animStart = null;
+  animRafId = requestAnimationFrame(animFrame);
+}
+
+function stopJointAnimation() {
+  if (animRafId !== null) {
+    cancelAnimationFrame(animRafId);
+    animRafId = null;
+  }
+}
+
+function syncSlidersToCurrentAngles() {
+  for (const [name, joint] of movableJoints) {
+    const slider = jointControlsEl.querySelector(
+      `input[data-joint="${CSS.escape(name)}"]`
+    );
+    if (!slider) continue;
+    const v = (joint.angle != null) ? joint.angle : 0;
+    slider.value = String(v);
+    const valEl = slider.nextElementSibling;
+    if (valEl) valEl.textContent = v.toFixed(2);
+  }
+}
+
+function setJointMode(mode) {
+  jointControlsEl.dataset.jcMode = mode;
+  jointControlsEl.querySelectorAll('.jc-toggle button').forEach(b => {
+    b.classList.toggle('active', b.dataset.jcMode === mode);
+  });
+  if (mode === 'animate') {
+    startJointAnimation();
+  } else {
+    stopJointAnimation();
+    syncSlidersToCurrentAngles();
+  }
+}
+
+// --------------------------------------------------------------------
+// Joint sliders — built fresh from `viewer.robot.joints` whenever a new
+// URDF finishes loading. Panel auto-hides if every joint is fixed
+// (object mode), shows up with one row per movable joint otherwise.
+// --------------------------------------------------------------------
+function buildJointControls() {
+  stopJointAnimation();
+  jointControlsEl.innerHTML = '';
+  jointControlsEl.hidden = true;
+  movableJoints = [];
+  animSpecs = [];
+
+  const robot = viewer.robot;
+  if (!robot || !robot.joints) return;
+
+  const movable = Object.entries(robot.joints).filter(
+    ([, j]) => j.jointType && j.jointType !== 'fixed'
+  );
+  if (movable.length === 0) return;
+
+  movableJoints = movable;
+  animSpecs = buildAnimSpecs(movable);
+
+  const head = document.createElement('div');
+  head.className = 'jc-head';
+  const title = document.createElement('h3');
+  title.textContent = `Joints (${movable.length})`;
+  head.appendChild(title);
+
+  // Animate / Manual toggle. Default is animate so the robot starts
+  // wiggling as soon as the URDF lands.
+  const toggle = document.createElement('div');
+  toggle.className = 'jc-toggle';
+  for (const m of ['animate', 'manual']) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.jcMode = m;
+    btn.textContent = m === 'animate' ? 'Animate' : 'Manual';
+    btn.addEventListener('click', () => setJointMode(m));
+    toggle.appendChild(btn);
+  }
+  head.appendChild(toggle);
+
+  const resetBtn = document.createElement('button');
+  resetBtn.type = 'button';
+  resetBtn.className = 'jc-reset';
+  resetBtn.textContent = 'Reset';
+  head.appendChild(resetBtn);
+  jointControlsEl.appendChild(head);
+
+  // One slider per movable joint. Limits come from <joint><limit lower= upper=>;
+  // continuous joints get a -π..+π default since they have no spec'd limits.
+  for (const [name, joint] of movable) {
+    const continuous = joint.jointType === 'continuous';
+    const lower = (!continuous && joint.limit && joint.limit.lower != null)
+      ? joint.limit.lower : -Math.PI;
+    const upper = (!continuous && joint.limit && joint.limit.upper != null)
+      ? joint.limit.upper : Math.PI;
+    const value = (joint.angle != null) ? joint.angle : 0;
+
+    const row = document.createElement('div');
+    row.className = 'jc-row';
+
+    const label = document.createElement('label');
+    label.title = name;
+    label.textContent = name;
+    row.appendChild(label);
+
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = String(lower);
+    slider.max = String(upper);
+    slider.step = '0.001';
+    slider.value = String(value);
+    slider.dataset.joint = name;
+    row.appendChild(slider);
+
+    const val = document.createElement('span');
+    val.className = 'jc-val';
+    val.textContent = Number(value).toFixed(2);
+    row.appendChild(val);
+
+    slider.addEventListener('input', () => {
+      const v = parseFloat(slider.value);
+      viewer.setJointValue(name, v);
+      _mirrorJoint(name, v);  // mirror to the original-collision viewer
+      val.textContent = v.toFixed(2);
+    });
+
+    jointControlsEl.appendChild(row);
+  }
+
+  resetBtn.addEventListener('click', () => {
+    for (const [name] of movable) {
+      viewer.setJointValue(name, 0);
+      _mirrorJoint(name, 0);
+      const slider = jointControlsEl.querySelector(
+        `input[data-joint="${CSS.escape(name)}"]`
+      );
+      if (slider) {
+        slider.value = '0';
+        const valEl = slider.nextElementSibling;
+        if (valEl) valEl.textContent = '0.00';
+      }
+    }
+  });
+
+  jointControlsEl.hidden = false;
+  // Default to animate so the user sees motion immediately. They can flip
+  // to manual to stop and adjust with sliders.
+  setJointMode('animate');
+}
+
+// --------------------------------------------------------------------
+// Mesh -> wireframe overlay helpers
+// --------------------------------------------------------------------
+
+const WIREFRAME_MATERIAL = new THREE.MeshBasicMaterial({
+  color: 0x222222,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.25,
+  depthWrite: false,
+});
+
+async function loadMeshAsWireframe(file) {
+  // Returns a THREE.Object3D whose vertices are in the mesh's original
+  // coordinate frame. Caller is responsible for translating it into
+  // URDF-base frame (i.e. subtracting the centroid).
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (ext === 'obj') {
+    const text = await file.text();
+    const group = new OBJLoader().parse(text);
+    group.traverse(c => { if (c.isMesh) c.material = WIREFRAME_MATERIAL; });
+    return group;
+  }
+  const buf = await file.arrayBuffer();
+  if (ext === 'stl') {
+    const geom = new STLLoader().parse(buf);
+    return new THREE.Mesh(geom, WIREFRAME_MATERIAL);
+  }
+  if (ext === 'ply') {
+    const geom = new PLYLoader().parse(buf);
+    return new THREE.Mesh(geom, WIREFRAME_MATERIAL);
+  }
+  return null;
+}
+
+function disposeObject(obj) {
+  obj.traverse(c => {
+    if (c.geometry) c.geometry.dispose();
+    // material is shared — don't dispose
+  });
+}
+
+function clearWireframe() {
+  if (!currentWireframe) return;
+  currentWireframe.parent && currentWireframe.parent.remove(currentWireframe);
+  disposeObject(currentWireframe);
+  currentWireframe = null;
+}
+
+// --------------------------------------------------------------------
+// Camera framing — viewer's default zoom is too generous for small
+// objects. After URDF + wireframe are in the scene, fit the camera to
+// the combined bounding box at a closer distance.
+// --------------------------------------------------------------------
+// Position `camera` so `bbox`'s bounding *sphere* (radius = half the
+// bbox diagonal) fits the frustum. The sphere makes the fit
+// orientation-independent — whichever way we look at the box, the
+// whole thing stays on screen.
+//
+// A sphere of radius r fits a symmetric perspective frustum of
+// half-angle θ when the camera sits at distance d = r / sin(θ). We
+// take the *tighter* of the vertical and horizontal FOVs so a wide
+// pane (large aspect ⇒ small vertical FOV) can't crop the top/bottom.
+// This is the failure the old fixed-multiple heuristic hit: it ignored
+// FOV/aspect and clipped tall meshes once the panes widened.
+// Shared by the URDF viewers and the object heatmap pane; returns the
+// camera distance so callers can derive near/far planes.
+function fitCameraTo(camera, controls, bbox) {
+  const center = bbox.getCenter(new THREE.Vector3());
+  const radius = Math.max(bbox.getSize(new THREE.Vector3()).length() / 2, 1e-3);
+  const vFov = camera.fov * Math.PI / 180;                 // vertical FOV (rad)
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+  const fitFov = Math.min(vFov, hFov);                     // constraining axis
+  const margin = 1.15;                                     // ~15% breathing room
+  const distance = (radius / Math.sin(fitFov / 2)) * margin;
+  const dir = new THREE.Vector3(1, 1, 0.6).normalize().multiplyScalar(distance);
+  camera.position.copy(center).add(dir);
+  controls.target.copy(center);
+  controls.update();
+  return distance;
+}
+
+function fitCameraToScene() {
+  if (!viewer.robot) return;
+  const bbox = new THREE.Box3().setFromObject(viewer.robot);
+  if (currentWireframe) bbox.expandByObject(currentWireframe);
+  if (bbox.isEmpty()) return;
+  fitCameraTo(viewer.camera, viewer.controls, bbox);
+  viewer.redraw();
+}
+
+// Whenever either viewer finishes loading a URDF, rebind the camera-sync
+// listeners — three.js may have swapped controls instances on reload, and
+// stale handlers would point at dead controls.
+viewerOriginal.addEventListener('urdf-processed', () => {
+  rebindCameraSync();
+});
+
+viewer.addEventListener('urdf-processed', async () => {
+  clearWireframe();
+  rebindCameraSync();
+
+  // Overlay the original mesh as a faint wireframe so the user can see
+  // how the spheres pack inside it. Translation by -centroid puts the
+  // mesh in the same frame as the URDF (whose sphere centers are
+  // emitted relative to that centroid).
+  const meshFile = fileInput.files[0];
+  if (meshFile && lastCentroid) {
+    try {
+      const wf = await loadMeshAsWireframe(meshFile);
+      if (wf) {
+        wf.position.set(-lastCentroid[0], -lastCentroid[1], -lastCentroid[2]);
+        // viewer.world inherits the up-axis transform; matches the robot.
+        (viewer.world || viewer.scene).add(wf);
+        currentWireframe = wf;
+      }
+    } catch (err) {
+      console.warn('wireframe overlay failed:', err);
+    }
+  }
+
+  fitCameraToScene();
+  buildJointControls();
+});
+
+// Packed-output viewer (right pane / object mode): skip ALL <mesh>
+// references. Our generated URDFs only contain <sphere> primitives, but
+// in robot mode the visual <mesh> elements are passed through verbatim
+// (we don't strip them). Returning null means "render nothing for this
+// mesh"; the spheres still render fine.
+viewer.loadMeshFunc = (path, manager, done) => done(null);
+
+// Original-collision viewer (left pane, robot mode only): render the
+// link's <collision> meshes, not its <visual> meshes. The viewer
+// fetches each mesh via the session-scoped file endpoint.
+viewerOriginal.setAttribute('parse-visual', 'false');
+viewerOriginal.setAttribute('parse-collision', 'true');
+viewerOriginal.setAttribute('show-collision', 'true');
+
+// The shared collision material's two opacities: the normal look, and
+// the faint ghost the live packing overlay drops to so growing spheres
+// read inside the meshes.
+const COLLISION_OPACITY_NORMAL = 0.85;
+const COLLISION_OPACITY_GHOST  = 0.14;
+
+// urdf-viewer's built-in collision material is very see-through
+// (MeshPhongMaterial at opacity 0.35), which makes the original collision
+// geometry read as a faint ghost next to the solid sphere pane. Bump it so
+// the collision shapes are clearly visible. The material is shared and
+// re-applied to every collider on each visibility update, so setting it
+// once here sticks. Guarded in case the element isn't upgraded yet.
+if (viewerOriginal._collisionMaterial) {
+  viewerOriginal._collisionMaterial.opacity = COLLISION_OPACITY_NORMAL;
+}
+
+// --------------------------------------------------------------------
+// Live packing overlay — animates the optimizer's sphere state inside
+// the original-collision viewer while /api/robot/pack-link runs. States
+// arrive over the /api/robot/pack-live websocket in the collision mesh
+// frame; each link's overlay group composes the collision <origin> so
+// the spheres land on the robot exactly where assemble will put them.
+// --------------------------------------------------------------------
+const LIVE_SPHERE_GEOM = new THREE.SphereGeometry(1, 20, 14);
+const LIVE_SPHERE_MAT = new THREE.MeshPhongMaterial({
+  color: 0x00b8d4,             // accent cyan, slightly deepened for the light scene
+  transparent: true,
+  opacity: 0.9,
+  shininess: 80,
+});
+
+// While spheres animate, the collision meshes drop to a faint ghost so
+// the growth is visible inside them. One shared material = one knob.
+function setOriginalGhost(on) {
+  if (viewerOriginal._collisionMaterial) {
+    viewerOriginal._collisionMaterial.opacity =
+      on ? COLLISION_OPACITY_GHOST : COLLISION_OPACITY_NORMAL;
+  }
+}
+
+function clearLiveOverlays() {
+  liveOverlays.forEach(ov => {
+    if (ov.group.parent) ov.group.parent.remove(ov.group);
+  });
+  liveOverlays = new Map();
+  setOriginalGhost(false);
+  if (viewerOriginal.redraw) viewerOriginal.redraw();
+}
+
+function liveSphereUpdate(msg) {
+  const robot = viewerOriginal.robot;
+  if (!robot || !robot.links || !robot.links[msg.link_name]) return;
+  setOriginalGhost(true);
+
+  const key = `${msg.link_name}|${msg.collision_index}`;
+  let ov = liveOverlays.get(key);
+  if (!ov) {
+    const group = new THREE.Group();
+    const item = (robotReport ? robotReport.collisions : []).find(c =>
+      c.link_name === msg.link_name &&
+      c.collision_index === msg.collision_index);
+    if (item) {
+      group.position.set(...item.origin_xyz);
+      // URDF rpy is fixed-axis roll/pitch/yaw: R = Rz(y)·Ry(p)·Rx(r),
+      // which is three.js Euler order 'ZYX' with (x=r, y=p, z=y).
+      group.rotation.set(item.origin_rpy[0], item.origin_rpy[1],
+                         item.origin_rpy[2], 'ZYX');
+      group.scale.set(...item.mesh_scale);
+    }
+    robot.links[msg.link_name].add(group);
+    ov = { group, meshes: [] };
+    liveOverlays.set(key, ov);
+  }
+
+  // Sphere-mesh pool: grow on demand (density control can change the
+  // count mid-run), hide the surplus.
+  const n = msg.centers.length;
+  while (ov.meshes.length < n) {
+    const m = new THREE.Mesh(LIVE_SPHERE_GEOM, LIVE_SPHERE_MAT);
+    ov.group.add(m);
+    ov.meshes.push(m);
+  }
+  for (let i = 0; i < ov.meshes.length; i++) {
+    const m = ov.meshes[i];
+    if (i < n) {
+      m.visible = true;
+      m.position.set(msg.centers[i][0], msg.centers[i][1], msg.centers[i][2]);
+      const r = Math.max(msg.radii[i], 1e-6);
+      m.scale.set(r, r, r);
+    } else {
+      m.visible = false;
+    }
+  }
+  if (viewerOriginal.redraw) viewerOriginal.redraw();
+}
+
+// --------------------------------------------------------------------
+// Live convergence sparkline: total loss vs iteration for the link
+// currently being packed, log-scaled y (convergence spans orders of
+// magnitude). Fed by the same websocket frames as the sphere overlay.
+// --------------------------------------------------------------------
+const lossPlot = document.getElementById('loss-plot');
+let lossHistory = [];   // [iteration, total loss] for the current link
+let lossKey = null;     // "link|ci" whose history is being drawn
+// Full-resolution per-link histories for the convergence section,
+// filled from pack-link responses (robot) or the X-Morphit-Loss header
+// (object). Map key -> {label, total, points: [[iteration, loss]]}.
+let runLossHistories = new Map();
+
+function resetLossPlot() {
+  lossHistory = [];
+  lossKey = null;
+  runLossHistories = new Map();
+  const ctx = lossPlot.getContext('2d');
+  ctx.clearRect(0, 0, lossPlot.width, lossPlot.height);
+}
+
+// Live sparkline only: the convergence section uses the full histories
+// returned with each pack response, not these sampled frames.
+function lossPlotUpdate(msg) {
+  const key = `${msg.link_name}|${msg.collision_index}`;
+  if (key !== lossKey) { lossKey = key; lossHistory = []; }
+  lossHistory.push([msg.iteration, msg.loss]);
+  drawLossCurve(lossPlot, lossHistory, msg.total_iterations,
+                `total loss (log scale) · ${msg.link_name}`);
+}
+
+// Shared renderer for the live sparkline and the per-link convergence
+// grid: iteration on x, total loss on log-scaled y, caption and latest
+// value in text ink (never the series color).
+function drawLossCurve(canvas, points, totalIters, caption) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h || points.length === 0) return;
+  if (canvas.width !== Math.round(w * dpr)) {
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const PAD_L = 8, PAD_R = 8, PAD_T = 18, PAD_B = 8;
+  const pw = w - PAD_L - PAD_R, ph = h - PAD_T - PAD_B;
+
+  // Log y when possible (total loss is a sum of non-negative terms, so
+  // in practice always); plain linear as the degenerate fallback.
+  const vals = points.map(p => p[1]);
+  const tf = vals.every(v => v > 0) ? Math.log10 : (v => v);
+  let lo = Infinity, hi = -Infinity;
+  for (const v of vals) {
+    const t = tf(v);
+    if (t < lo) lo = t;
+    if (t > hi) hi = t;
+  }
+  if (hi - lo < 1e-9) { hi += 0.5; lo -= 0.5; }
+
+  const total = Math.max(totalIters, 2);
+  const xAt = it => PAD_L + (it / (total - 1)) * pw;
+  const yAt = v => PAD_T + (1 - (tf(v) - lo) / (hi - lo)) * ph;
+
+  ctx.beginPath();
+  points.forEach(([it, v], i) => {
+    if (i === 0) ctx.moveTo(xAt(it), yAt(v));
+    else ctx.lineTo(xAt(it), yAt(v));
+  });
+  ctx.strokeStyle = '#00e0ff';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  const latest = vals[vals.length - 1];
+  ctx.font = '11px ui-monospace, Menlo, monospace';
+  ctx.fillStyle = '#6f7d9a';
+  ctx.fillText(caption, PAD_L, 12);
+  const valText = latest.toExponential(2);
+  ctx.fillStyle = '#d8dde8';
+  ctx.fillText(valText, w - PAD_R - ctx.measureText(valText).width, 12);
+}
+
+// Build the post-run convergence section: one small plot per packed
+// link, two columns, opened by default (the <details> stays closable).
+function renderConvergence() {
+  convergenceGrid.innerHTML = '';
+  if (runLossHistories.size === 0) {
+    convergenceDetails.hidden = true;
+    return;
+  }
+  const cells = [];
+  runLossHistories.forEach(rec => {
+    const c = document.createElement('canvas');
+    c.className = 'conv-plot';
+    convergenceGrid.appendChild(c);
+    cells.push([c, rec]);
+  });
+  convergenceDetails.hidden = false;
+  convergenceDetails.open = true;
+  // Draw on the next frame: canvases need layout for clientWidth.
+  requestAnimationFrame(() => {
+    cells.forEach(([c, rec]) =>
+      drawLossCurve(c, rec.points, rec.total, rec.label));
+  });
+}
+
+function hideConvergence() {
+  convergenceDetails.hidden = true;
+  convergenceGrid.innerHTML = '';
+}
+
+// --------------------------------------------------------------------
+// Packing analysis — metrics table + per-vertex error heatmap.
+// Metrics come from /api/robot/analyze (definitions follow the paper's
+// boundary-fidelity / spatial-occupancy metrics); the heatmap is
+// computed client-side on the viewer's own geometry, so there is no
+// vertex-correspondence problem with the server.
+// --------------------------------------------------------------------
+// Single-hue sequential ramp for error magnitude (ColorBrewer "Reds",
+// light -> dark). Single source of truth: the legend bar's CSS
+// gradient is generated from these stops right below.
+const HEAT_STOPS = [
+  [1.000, 0.961, 0.941],   // #fff5f0
+  [0.988, 0.682, 0.569],   // #fcae91
+  [0.937, 0.396, 0.282],   // #ef6548
+  [0.600, 0.000, 0.051],   // #99000d
+];
+document.querySelector('.heat-legend-bar').style.background =
+  `linear-gradient(90deg, ${HEAT_STOPS.map(([r, g, b]) =>
+    `rgb(${Math.round(r * 255)} ${Math.round(g * 255)} ${Math.round(b * 255)})`
+  ).join(', ')})`;
+
+function heatColor(t) {
+  const x = Math.min(1, Math.max(0, t)) * (HEAT_STOPS.length - 1);
+  const i = Math.min(HEAT_STOPS.length - 2, Math.floor(x));
+  const f = x - i;
+  const a = HEAT_STOPS[i], b = HEAT_STOPS[i + 1];
+  return [a[0] + (b[0] - a[0]) * f,
+          a[1] + (b[1] - a[1]) * f,
+          a[2] + (b[2] - a[2]) * f];
+}
+
+// Paint one mesh's vertices by unsigned distance to the nearest sphere
+// surface (mesh-local frame on both sides), then swap in a
+// vertex-colored material tagged `morphitHeat` so clearing can find it
+// without per-mesh bookkeeping.
+function heatPaintMesh(child, sph, dMax, coloredGeoms) {
+  if (!child.isMesh || !child.geometry ||
+      !child.geometry.attributes.position) return;
+  // Loaders may share one geometry between identical meshes on
+  // different links (e.g. two fingers): clone before coloring so each
+  // link gets its own error field. Clones are tagged and kept, so
+  // repeated apply/hide cycles reuse them instead of accumulating.
+  if (coloredGeoms.has(child.geometry) &&
+      !child.geometry.userData.morphitHeatClone) {
+    const clone = child.geometry.clone();
+    clone.userData = { ...clone.userData, morphitHeatClone: true };
+    child.geometry = clone;
+  }
+  const pos = child.geometry.attributes.position;
+
+  // Reuse the color attribute across repeated applies — replacing it
+  // would strand the previous attribute's GPU buffer.
+  let attr = child.geometry.attributes.color;
+  if (!attr || attr.count !== pos.count) {
+    attr = new THREE.BufferAttribute(new Float32Array(pos.count * 3), 3);
+    child.geometry.setAttribute('color', attr);
+  }
+  const colors = attr.array;
+
+  // Flat copies of the sphere set keep the inner loop free of nested
+  // array dereferences (it runs vertices × spheres times).
+  const K = sph.radii.length;
+  const cs = new Float64Array(3 * K);
+  for (let k = 0; k < K; k++) {
+    cs[3 * k] = sph.centers[k][0];
+    cs[3 * k + 1] = sph.centers[k][1];
+    cs[3 * k + 2] = sph.centers[k][2];
+  }
+  const rs = Float64Array.from(sph.radii);
+
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+    let d = Infinity;
+    for (let k = 0; k < K; k++) {
+      const dx = x - cs[3 * k], dy = y - cs[3 * k + 1], dz = z - cs[3 * k + 2];
+      const dd = Math.abs(Math.sqrt(dx * dx + dy * dy + dz * dz) - rs[k]);
+      if (dd < d) d = dd;
+    }
+    const [r, g, b] = heatColor(d / dMax);
+    colors[3 * i] = r; colors[3 * i + 1] = g; colors[3 * i + 2] = b;
+  }
+  attr.needsUpdate = true;
+  coloredGeoms.add(child.geometry);
+  const mat = new THREE.MeshPhongMaterial({ vertexColors: true, shininess: 10 });
+  mat.userData.morphitHeat = true;
+  child.material = mat;
+}
+
+function applyHeatmap(analysis) {
+  const dMax = Math.max(analysis.overall.d_max, 1e-9);
+  const coloredGeoms = new Set();
+
+  if (currentMode() === 'robot') {
+    const robot = viewerOriginal.robot;
+    if (!robot || !robot.links) {
+      throw new Error('Original robot is not loaded in the left viewer.');
+    }
+    // Pool sphere sets per link (a link with several packed collisions
+    // is colored against the union of its spheres).
+    const perLink = new Map();
+    for (const l of analysis.links) {
+      if (!perLink.has(l.link_name)) {
+        perLink.set(l.link_name, { centers: [], radii: [] });
+      }
+      const p = perLink.get(l.link_name);
+      p.centers.push(...l.spheres.centers);
+      p.radii.push(...l.spheres.radii);
+    }
+    // Color only meshes inside URDFCollider nodes. The left pane also
+    // holds the (hidden) visual meshes; touching them broke restore.
+    perLink.forEach((sph, linkName) => {
+      const link = robot.links[linkName];
+      if (!link) return;
+      link.traverse(node => {
+        if (!node.isURDFCollider) return;
+        node.traverse(child => heatPaintMesh(child, sph, dMax, coloredGeoms));
+      });
+    });
+  } else {
+    // Object mode: the heat-colored mesh opens in its own side pane.
+    // Overlaying it on the sphere view collapses mesh, spheres, and
+    // heat colors into one volume where nothing reads clearly.
+    if (!currentWireframe) {
+      throw new Error('Original mesh overlay is not loaded in the viewer.');
+    }
+    showObjectHeatPane(analysis.links[0].spheres, dMax);
+  }
+
+  heatmapOn = true;
+  heatmapBtn.textContent = 'Hide error heatmap';
+  heatLegendMax.textContent = `${(dMax * 1000).toFixed(1)} mm`;
+  heatLegend.hidden = false;
+  if (viewerOriginal.redraw) viewerOriginal.redraw();
+  if (viewer.redraw) viewer.redraw();
+}
+
+// --------------------------------------------------------------------
+// Object-mode heatmap side pane: a minimal three.js viewer that shows
+// the heat-colored source mesh next to the sphere view. Lazy-built on
+// first use; renders on demand (orbit interaction), not a loop.
+// --------------------------------------------------------------------
+function ensureHeatViewer() {
+  if (heatRenderer) return;
+  heatRenderer = new THREE.WebGLRenderer({ canvas: heatCanvas, antialias: true });
+  heatScene = new THREE.Scene();
+  heatScene.background = new THREE.Color(0xeef1f6);   // match urdf-viewer panes
+  heatCamera = new THREE.PerspectiveCamera(45, 1, 0.001, 100);
+  heatCamera.up.set(0, 0, 1);   // match the URDF viewers' Z-up
+  heatScene.add(new THREE.AmbientLight(0xffffff, 0.75));
+  const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+  dir.position.set(1, 1.5, 2);
+  heatScene.add(dir);
+  heatControls = new OrbitControls(heatCamera, heatCanvas);
+  heatControls.addEventListener('change', renderHeatPane);
+  window.addEventListener('resize', () => {
+    if (!heatPane.hidden) renderHeatPane();
+  });
+}
+
+function renderHeatPane() {
+  if (!heatRenderer) return;
+  const w = heatCanvas.clientWidth, h = heatCanvas.clientHeight;
+  if (!w || !h) return;
+  heatRenderer.setSize(w, h, false);
+  heatRenderer.setPixelRatio(window.devicePixelRatio || 1);
+  heatCamera.aspect = w / h;
+  heatCamera.updateProjectionMatrix();
+  heatRenderer.render(heatScene, heatCamera);
+}
+
+function showObjectHeatPane(sph, dMax) {
+  ensureHeatViewer();
+  disposeHeatRoot();
+  heatRoot = new THREE.Group();
+  const coloredGeoms = new Set();
+  currentWireframe.traverse(child => {
+    if (!child.isMesh || !child.geometry ||
+        !child.geometry.attributes.position) return;
+    // Clone so the in-scene wireframe overlay keeps its own geometry.
+    const geom = child.geometry.clone();
+    const holder = new THREE.Mesh(geom, WIREFRAME_MATERIAL);
+    heatPaintMesh(holder, sph, dMax, coloredGeoms);
+    heatRoot.add(holder);
+  });
+  heatScene.add(heatRoot);
+
+  // Reveal the pane first, then fit on the next frame: the canvas
+  // needs layout before its aspect ratio is known.
+  heatPane.hidden = false;
+  viewersEl.classList.add('heat-open');
+  requestAnimationFrame(() => {
+    heatCamera.aspect =
+      (heatCanvas.clientWidth || 1) / (heatCanvas.clientHeight || 1);
+    const bbox = new THREE.Box3().setFromObject(heatRoot);
+    const distance = fitCameraTo(heatCamera, heatControls, bbox);
+    heatCamera.near = distance / 100;
+    heatCamera.far = distance * 100;
+    heatCamera.updateProjectionMatrix();
+    renderHeatPane();
+  });
+}
+
+function disposeHeatRoot() {
+  if (!heatRoot) return;
+  heatRoot.traverse(c => {
+    if (c.isMesh) {
+      c.geometry.dispose();
+      if (c.material.userData && c.material.userData.morphitHeat) {
+        c.material.dispose();
+      }
+    }
+  });
+  if (heatScene) heatScene.remove(heatRoot);
+  heatRoot = null;
+}
+
+function hideObjectHeatPane() {
+  disposeHeatRoot();
+  heatPane.hidden = true;
+  viewersEl.classList.remove('heat-open');
+}
+
+// Restore is intentionally stateless: find every mesh wearing a
+// `morphitHeat` material and hand it back the material the pane owns
+// (the viewer's shared collision material in robot mode). The object
+// heatmap lives in its own pane, so clearing just closes that pane.
+function clearHeatmap() {
+  const restoreIn = (root, ownerMaterial) => {
+    if (!root) return;
+    root.traverse(c => {
+      if (c.isMesh && c.material && c.material.userData &&
+          c.material.userData.morphitHeat) {
+        c.material.dispose();
+        c.material = ownerMaterial;
+      }
+    });
+  };
+  restoreIn(viewerOriginal.robot, viewerOriginal._collisionMaterial);
+  hideObjectHeatPane();
+  heatmapOn = false;
+  heatmapBtn.textContent = 'Show error heatmap';
+  heatLegend.hidden = true;
+  if (viewerOriginal.redraw) viewerOriginal.redraw();
+  if (viewer.redraw) viewer.redraw();
+}
+
+const fmtMm = m => (m * 1000).toFixed(2);
+
+function renderAnalysis(analysis) {
+  const row = (l, cls) =>
+    `<tr class="${cls}">` +
+    `<td title="${escapeHtml(l.link_name || '')}">${escapeHtml(l.label)}</td>` +
+    `<td>${l.num_spheres}</td>` +
+    `<td>${fmtMm(l.d_min)}</td>` +
+    `<td>${fmtMm(l.d_mean)}</td>` +
+    `<td>${fmtMm(l.d_max)}</td>` +
+    `<td><span class="cov-wrap"><span class="cov-bar">` +
+    `<span class="cov-fill" style="width:${(l.coverage * 100).toFixed(1)}%"></span>` +
+    `</span>${(l.coverage * 100).toFixed(1)}%</span></td>` +
+    `</tr>`;
+
+  // Object mode has a single row, so an Overall duplicate adds nothing.
+  const single = analysis.links.length === 1;
+  const nameHeader = currentMode() === 'robot' ? 'Link' : 'Object';
+  analysisTable.innerHTML =
+    `<thead><tr><th>${nameHeader}</th><th>Spheres</th>` +
+    `<th>d min (mm)</th><th>d mean (mm)</th><th>d max (mm)</th>` +
+    `<th>Coverage</th></tr></thead><tbody>` +
+    analysis.links.map(l => row({ ...l, label: l.link_name }, '')).join('') +
+    (single ? '' :
+      row({ ...analysis.overall, label: 'Overall', link_name: '' }, 'overall')) +
+    `</tbody>`;
+
+  analysisCard.hidden = false;
+}
+
+async function runAnalysis() {
+  analyzeBtn.disabled = true;
+  const prevLabel = analyzeBtn.textContent;
+  analyzeBtn.textContent = 'Analyzing…';
+  try {
+    let r;
+    if (currentMode() === 'robot') {
+      if (!robotSessionId) return;
+      const fd = new FormData();
+      fd.append('session_id', robotSessionId);
+      r = await fetchWithTimeout(
+        '/api/robot/analyze', { method: 'POST', body: fd }, 120_000);
+    } else {
+      // Object mode is stateless: send the source mesh and the packed
+      // URDF back; the server recovers the spheres from the URDF.
+      const meshFile = fileInput.files[0];
+      const urdfText = outCode.textContent;
+      if (!meshFile || !urdfText) {
+        throw new Error('Run MorphIt or load a library object first.');
+      }
+      const fd = new FormData();
+      fd.append('mesh', meshFile);
+      fd.append('urdf', urdfText);
+      fd.append('union_overlapping_bodies', meshPrepField());
+      r = await fetchWithTimeout(
+        '/api/morph/analyze', { method: 'POST', body: fd }, 120_000);
+    }
+    const text = await r.text();
+    if (!r.ok) throw new Error(`analysis failed (HTTP ${r.status}): ${text}`);
+    clearHeatmap();
+    lastAnalysis = JSON.parse(text);
+    renderAnalysis(lastAnalysis);
+  } catch (err) {
+    status.textContent = err.message;
+    status.classList.add('err');
+  } finally {
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = prevLabel;
+  }
+}
+
+analyzeBtn.addEventListener('click', runAnalysis);
+
+heatmapBtn.addEventListener('click', () => {
+  if (heatmapOn) { clearHeatmap(); return; }
+  if (!lastAnalysis) return;
+  try {
+    applyHeatmap(lastAnalysis);
+  } catch (err) {
+    status.textContent = err.message;
+    status.classList.add('err');
+  }
+});
+
+// Any state that invalidates the current packing (new robot, new
+// inspection, mode switch, new run) also invalidates its analysis.
+function resetAnalysis() {
+  clearHeatmap();
+  lastAnalysis = null;
+  analysisCard.hidden = true;
+  analysisTable.innerHTML = '';
+  analyzeBtn.hidden = true;
+  hideConvergence();
+}
+
+// A reloaded left-pane robot replaces every mesh, taking any heatmap
+// materials and live overlays with it; both resets are no-op-safe
+// against the freshly loaded robot.
+viewerOriginal.addEventListener('urdf-processed', () => {
+  clearHeatmap();
+  clearLiveOverlays();
+});
+
+// urdf-loader strips the `package://` scheme before handing us the URL
+// (when its `packages` setting is empty, which is our case — we own
+// resolution end-to-end via the session API). A reference like
+// `package://kinova_description/meshes/arm_mico.dae` arrives here as
+// `/kinova_description/meshes/arm_mico.dae`. We reverse that so the
+// server's resolve_mesh_path() gets the original URI shape, which is
+// the only path that hits the package-aware resolver.
+function _restorePackageUri(rawUrl) {
+  if (rawUrl.startsWith('package://')) return rawUrl;
+  if (rawUrl.startsWith('/') && !rawUrl.startsWith('//')) {
+    return 'package://' + rawUrl.slice(1);
+  }
+  return rawUrl;
+}
+
+function _sessionFileUrl(rawUrl) {
+  // The original URDF references meshes via `package://X/...` (and
+  // sometimes plain relative paths). The server's /api/robot/file
+  // applies the same package-resolution that inspect did, scoped to
+  // the session sandbox.
+  const requestPath = _restorePackageUri(rawUrl);
+  return `/api/robot/file?session_id=${encodeURIComponent(robotSessionId)}` +
+         `&path=${encodeURIComponent(requestPath)}`;
+}
+
+// Custom loader for the original viewer. The viewer hands us each
+// mesh URL as the URDF specifies it (we leave urdf-loader's `package`
+// map empty so we own the resolution end-to-end). We pick a three.js
+// loader by extension and produce an Object3D for the viewer.
+viewerOriginal.loadMeshFunc = (rawUrl, manager, done) => {
+  if (!robotSessionId) { done(null); return; }
+  const ext = (rawUrl.split(/[?#]/)[0].split('.').pop() || '').toLowerCase();
+  const url = _sessionFileUrl(rawUrl);
+  const onErr = err => {
+    console.warn('[viewer-original] mesh load failed:', rawUrl, err);
+    done(null);
+  };
+
+  if (ext === 'stl') {
+    new STLLoader(manager).load(url, geom => {
+      done(new THREE.Mesh(geom, new THREE.MeshPhongMaterial({
+        color: 0x9aa3b8, flatShading: true,
+      })));
+    }, undefined, onErr);
+  } else if (ext === 'obj') {
+    new OBJLoader(manager).load(url, obj => done(obj), undefined, onErr);
+  } else if (ext === 'ply') {
+    new PLYLoader(manager).load(url, geom => {
+      done(new THREE.Mesh(geom, new THREE.MeshPhongMaterial({
+        color: 0x9aa3b8, flatShading: true,
+      })));
+    }, undefined, onErr);
+  } else if (ext === 'dae') {
+    new ColladaLoader(manager).load(url, result => done(result.scene), undefined, onErr);
+  } else {
+    done(null);
+  }
+};
+
+// --------------------------------------------------------------------
+// Master/slave camera sync between the two viewers. Either can be
+// dragged; the other follows. The `_syncing` flag breaks the otherwise
+// infinite "A's change fires B's change fires A's change" loop.
+// --------------------------------------------------------------------
+function _bindCameraSync(master, slave) {
+  let syncing = false;
+  if (!master.controls) {
+    // controls aren't ready yet — bail; we rebind after each load.
+    return null;
+  }
+  const handler = () => {
+    if (syncing || !slave.camera || !slave.controls) return;
+    // Only sync between panes that are actually laid out. In object mode
+    // the original-collision viewer is display:none → 0×0 with a NaN
+    // camera aspect; feeding its OrbitControls (and copying the result
+    // back into the master every frame) pitches the master camera off
+    // its target, so the framed object renders low and clipped. Skip if
+    // either side has no size.
+    if (!master.clientWidth || !master.clientHeight) return;
+    if (!slave.clientWidth || !slave.clientHeight) return;
+    syncing = true;
+    slave.camera.position.copy(master.camera.position);
+    slave.controls.target.copy(master.controls.target);
+    slave.camera.up.copy(master.camera.up);
+    slave.controls.update();
+    slave.redraw && slave.redraw();
+    syncing = false;
+  };
+  master.controls.addEventListener('change', handler);
+  return () => master.controls.removeEventListener('change', handler);
+}
+
+let _cameraSyncTeardown = [];
+function rebindCameraSync() {
+  // Tear down old listeners before binding fresh ones (e.g. after a
+  // viewer reloads, three.js may swap controls instances).
+  for (const off of _cameraSyncTeardown) off && off();
+  _cameraSyncTeardown = [
+    _bindCameraSync(viewer, viewerOriginal),
+    _bindCameraSync(viewerOriginal, viewer),
+  ];
+}
+
+// Mirror joint values from the packed viewer to the original viewer.
+// Both share the same kinematic structure (we only modified collisions),
+// so any joint named X in `viewer.robot.joints` should also exist in
+// `viewerOriginal.robot.joints`.
+function _mirrorJoint(name, value) {
+  if (viewerOriginal.robot && viewerOriginal.robot.joints &&
+      viewerOriginal.robot.joints[name]) {
+    viewerOriginal.setJointValue(name, value);
+  }
+}
+
+// --------------------------------------------------------------------
+// Common URDF rendering: blob URL, hljs highlight, viewer, button enable.
+// Both object and robot modes funnel through here once they have URDF text.
+// --------------------------------------------------------------------
+function renderUrdf(text, { filename } = {}) {
+  outCode.textContent = text;
+  outCode.removeAttribute('data-highlighted');
+  if (window.hljs) hljs.highlightElement(outCode);
+  outWrap.hidden = false;
+
+  if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+  lastBlobUrl = URL.createObjectURL(new Blob([text], { type: 'application/xml' }));
+  if (filename) lastFilename = filename;
+  dl.disabled = false;
+  copy.disabled = false;
+
+  viewersEl.hidden = false;
+  viewer.urdf = lastBlobUrl;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Sphere-count helpers shared by the per-link panel, auto-fill, and the
+// run paths. The [1, 200] clamp mirrors the API's validation range.
+function globalSphereCount() {
+  return parseInt(f.querySelector('[name=num_spheres]').value, 10) || 20;
+}
+function clampSphereCount(v) {
+  return Math.min(200, Math.max(1, v));
+}
+
+// PACK items of an inspection report, in packing order. Every consumer
+// (panel render, run loop, auto-fill) must enumerate identically so
+// row indexes line up.
+function packItems(report) {
+  return report.collisions.filter(c => c.action === 'pack');
+}
+
+function meshBasename(c) {
+  return (c.mesh_path || '').split('/').pop();
+}
+
+// --------------------------------------------------------------------
+// Advanced settings: per-variant loss weight defaults (mirrors
+// LOSS_WEIGHT_CONFIGS in src/config.py). Switching the Variant select
+// repopulates these inputs so the user starts from the canonical
+// preset and can tweak from there.
+// --------------------------------------------------------------------
+const VARIANT_DEFAULTS = {
+  'MorphIt-V': {
+    coverage_weight: 5000.0, overlap_weight: 0.01, boundary_weight: 1.0,
+    surface_weight: 1.0, containment_weight: 1.0, sqem_weight: 1.0,
+    hausdorff_weight: 0.0, mesh_containment_weight: 0.0,
+  },
+  'MorphIt-S': {
+    coverage_weight: 0.01, overlap_weight: 0.01, boundary_weight: 5000.0,
+    surface_weight: 100.0, containment_weight: 1.0, sqem_weight: 1000.0,
+    hausdorff_weight: 0.0, mesh_containment_weight: 0.0,
+  },
+  'MorphIt-B': {
+    coverage_weight: 1500.0, overlap_weight: 0.3, boundary_weight: 1.0,
+    surface_weight: 50.0, containment_weight: 1.0, sqem_weight: 3000.0,
+    hausdorff_weight: 0.0, mesh_containment_weight: 0.0,
+  },
+};
+
+const variantSelect = f.querySelector('[name=variant]');
+
+function applyVariantDefaults(variant) {
+  const defaults = VARIANT_DEFAULTS[variant];
+  if (!defaults) return;
+  for (const [name, value] of Object.entries(defaults)) {
+    const input = f.querySelector(`[name="${name}"]`);
+    if (input) input.value = value;
+  }
+}
+
+variantSelect.addEventListener('change', () => applyVariantDefaults(variantSelect.value));
+applyVariantDefaults(variantSelect.value);  // populate on first load
+
+// Keep the slider's numeric badge in sync as the user drags.
+const variationInput = f.querySelector('[name=color_variation]');
+const variationDisplay = document.getElementById('variation-display');
+if (variationInput && variationDisplay) {
+  const updateVarLabel = () => {
+    variationDisplay.textContent = parseFloat(variationInput.value).toFixed(2);
+  };
+  variationInput.addEventListener('input', updateVarLabel);
+  updateVarLabel();
+}
+
+// --------------------------------------------------------------------
+// Helpers to gather form fields into the API payload shape.
+// --------------------------------------------------------------------
+
+// Keys we tunnel through the `advanced` JSON form-field. Server-side
+// allow-list (ADVANCED_OVERRIDE_MAP in main.py) silently drops anything
+// that isn't recognized.
+const ADVANCED_KEYS = [
+  'num_inside_samples', 'num_surface_samples',
+  'density_control_enabled',
+  'density_control_min_interval', 'density_control_cooling_factor',
+  'coverage_weight', 'overlap_weight', 'boundary_weight', 'surface_weight',
+  'containment_weight', 'sqem_weight',
+  'hausdorff_weight', 'mesh_containment_weight',
+];
+
+// Mesh preparation switch (its own form field; default on).
+function meshPrepField() {
+  const el = f.querySelector('[name="union_overlapping_bodies"]');
+  return el && !el.checked ? 'false' : 'true';
+}
+
+function gatherAdvanced() {
+  const out = {};
+  for (const key of ADVANCED_KEYS) {
+    const el = f.querySelector(`[name="${key}"]`);
+    if (!el) continue;
+    if (el.type === 'checkbox') {
+      out[key] = el.checked;
+    } else {
+      const v = el.value.trim();
+      if (v === '') continue;
+      const n = Number(v);
+      out[key] = Number.isFinite(n) ? n : v;
+    }
+  }
+  return out;
+}
+
+function gatherSeed() {
+  const randomEl = f.querySelector('[name=seed_random]');
+  if (randomEl && randomEl.checked) return null;
+  const seedEl = f.querySelector('[name=seed]');
+  return seedEl ? seedEl.value : null;
+}
+
+function gatherVisuals() {
+  return {
+    base_color:      (f.querySelector('[name=base_color]') || {}).value || '#3399ff',
+    color_variation: (f.querySelector('[name=color_variation]') || {}).value || '0.3',
+  };
+}
+
+// --------------------------------------------------------------------
+// Robot mode: folder upload -> inspect -> render report
+// --------------------------------------------------------------------
+
+folderInput.addEventListener('change', () => {
+  // Snap to robot mode if the user picked a folder before clicking the
+  // Robot tab — otherwise the submit dispatcher routes to runObject and
+  // 422s on the missing mesh file. setMode() clears the inspection panel
+  // and outputs, which is fine because we're about to start a new run.
+  if (currentMode() !== 'robot') setMode('robot');
+
+  robotFolderFiles = Array.from(folderInput.files);
+  robotSessionId = null;
+  robotReport = null;
+  if (robotFolderFiles.length === 0) {
+    inspectionDetails.hidden = true;
+    hidePerLinkSpheres();
+    resetAnalysis();
+    urdfPickerWrap.hidden = true;
+    return;
+  }
+
+  // Detect .urdf files in the upload to decide whether the user needs
+  // to disambiguate. The server would tell us this too, but we save a
+  // round trip and surface the picker before kicking off inspection.
+  const urdfPaths = robotFolderFiles
+    .map(f => f.webkitRelativePath || f.name)
+    .filter(p => /\.urdf$/i.test(p));
+
+  if (urdfPaths.length === 0) {
+    inspectionDetails.hidden = false;
+    inspectionDetails.open = true;
+    inspectionEl.innerHTML =
+      `<span class="badge err">No URDF found in upload</span>`;
+    urdfPickerWrap.hidden = true;
+    return;
+  }
+
+  if (urdfPaths.length === 1) {
+    urdfPickerWrap.hidden = true;
+    robotChosenUrdf = urdfPaths[0].split('/').pop();
+  } else {
+    urdfPicker.innerHTML = '';
+    for (const p of urdfPaths) {
+      const opt = document.createElement('option');
+      opt.value = p.split('/').pop();
+      opt.textContent = p;
+      urdfPicker.appendChild(opt);
+    }
+    urdfPickerWrap.hidden = false;
+    robotChosenUrdf = urdfPicker.value;
+  }
+  runInspection();
+});
+
+urdfPicker.addEventListener('change', () => {
+  robotChosenUrdf = urdfPicker.value;
+  runInspection();
+});
+
+async function runInspection() {
+  inspectionDetails.hidden = false;
+  inspectionDetails.open = true;
+  inspectionEl.innerHTML = `Inspecting…`;
+  hidePerLinkSpheres();
+  resetAnalysis();
+  robotSessionId = null;
+  robotReport = null;
+
+  const fd = new FormData();
+  for (const file of robotFolderFiles) {
+    // Preserve relative path so the server reconstructs the tree.
+    fd.append('files', file, file.webkitRelativePath || file.name);
+  }
+  if (robotChosenUrdf) fd.append('urdf', robotChosenUrdf);
+
+  try {
+    const r = await fetch('/api/robot/inspect', { method: 'POST', body: fd });
+    if (!r.ok) {
+      throw new Error(await r.text());
+    }
+    const report = await r.json();
+    robotSessionId = report.session_id;
+    robotReport = report;
+    renderInspection(report);
+  } catch (err) {
+    inspectionEl.innerHTML =
+      `<span class="badge err">Failed</span> ${escapeHtml(err.message)}`;
+  }
+}
+
+function renderInspection(report) {
+  const pack    = packItems(report);
+  const rmPri   = report.collisions.filter(c => c.action === 'remove-primitive');
+  const rmSph   = report.collisions.filter(c => c.action === 'remove-already-sphere');
+  const errs    = report.collisions.filter(c => c.action === 'error');
+  const urdfBase = (report.urdf_path || '').split('/').pop();
+
+  // Per-section row formatters keep the markup compact and consistent.
+  const rowPack = c => {
+    const meshBase = meshBasename(c);
+    return `<li><code>${escapeHtml(c.link_name)}</code>` +
+           ` <span class="ins-arrow">←</span>` +
+           ` <span class="ins-mesh">${escapeHtml(meshBase)}</span></li>`;
+  };
+  const rowSkip = c =>
+    `<li><code>${escapeHtml(c.link_name)}[${c.collision_index}]</code>` +
+    ` <span class="ins-geom">${escapeHtml(c.geometry_type)}</span></li>`;
+  const rowErr = c =>
+    `<li><code>${escapeHtml(c.link_name)}[${c.collision_index}]</code>` +
+    ` <span class="ins-geom">${escapeHtml(c.geometry_type)}</span>` +
+    ` <span style="color:var(--danger)">${escapeHtml(c.warning || '')}</span></li>`;
+
+  // Section builder: header + count badge + plain-language description + item list.
+  function section(klass, title, count, desc, rows) {
+    if (count === 0) return '';
+    return `<div class="ins-section ${klass}">` +
+      `<div class="ins-section-head"><strong>${escapeHtml(title)}</strong>` +
+      ` <span class="ins-count">${count}</span></div>` +
+      `<div class="ins-desc">${desc}</div>` +
+      (rows ? `<ul class="ins-list">${rows}</ul>` : '') +
+      `</div>`;
+  }
+
+  // Group remove-primitive by geometry type so the user sees "8 cylinders,
+  // 2 capsules" rather than just "10 primitives".
+  const primCounts = {};
+  for (const c of rmPri) {
+    primCounts[c.geometry_type] = (primCounts[c.geometry_type] || 0) + 1;
+  }
+  const primSummary = Object.entries(primCounts)
+    .map(([g, n]) => `${n} ${g}${n > 1 ? 's' : ''}`)
+    .join(', ');
+
+  // Title lives in the <summary> of the wrapping <details>, so the
+  // content starts directly with the URDF filename.
+  let html = `<div class="ins-urdf">${escapeHtml(urdfBase)}</div>`;
+
+  // Top-level errors (e.g. xacro detected, malformed XML, no URDFs) come
+  // back in `report.errors` and apply to the whole file, not a single
+  // collision. Render them prominently up top so the user knows why the
+  // pipeline cannot proceed before they hunt through per-collision lists.
+  if ((report.errors || []).length > 0) {
+    html += `<div class="ins-section err">`;
+    html += `<div class="ins-section-head"><strong>This URDF cannot be processed</strong>` +
+            ` <span class="ins-count">${report.errors.length}</span></div>`;
+    html += `<div class="ins-desc">The pipeline stopped before reading any collisions for the reason(s) below. Run will be blocked until this is resolved.</div>`;
+    html += `<ul class="ins-list">`;
+    for (const e of report.errors) {
+      html += `<li><span style="color:var(--danger)">${escapeHtml(e)}</span></li>`;
+    }
+    html += `</ul></div>`;
+  }
+
+  // No top-level error, but no PACK items either: explain *why* the user
+  // can't run MorphIt on this URDF (so they don't stare at a "Run" button
+  // that does nothing). Different copy depending on which bucket every
+  // collision fell into.
+  if (pack.length === 0 && (report.errors || []).length === 0) {
+    let why;
+    if (rmPri.length + rmSph.length > 0 && errs.length === 0) {
+      why = `Every collision in this URDF is a primitive (${primSummary || 'box / cylinder / sphere / capsule'}), not a &lt;mesh&gt;. MorphIt only sphere-packs mesh-based collisions for now; primitive packing is on the roadmap. There is nothing to optimize here, so the pipeline cannot produce a spherical URDF for this robot.`;
+    } else if (errs.length > 0 && rmPri.length + rmSph.length === 0) {
+      why = `Every &lt;mesh&gt; collision in this URDF errored during inspection (see the Errors section below). The pipeline cannot proceed until those are resolved.`;
+    } else if (rmPri.length + rmSph.length + errs.length > 0) {
+      why = `This URDF has no usable &lt;mesh&gt; collisions to pack: ${rmPri.length} primitives, ${rmSph.length} existing spheres, and ${errs.length} errored items. See the per-section breakdown below.`;
+    } else {
+      why = `This URDF has zero &lt;collision&gt; elements at all. There is nothing for MorphIt to operate on.`;
+    }
+    html += `<div class="ins-section err">`;
+    html += `<div class="ins-section-head"><strong>Nothing to pack</strong></div>`;
+    html += `<div class="ins-desc">${why}</div>`;
+    html += `</div>`;
+  }
+
+  html += section(
+    'pack',
+    'Will be sphere-packed',
+    pack.length,
+    'Each collision mesh runs through MorphIt and is replaced by a set of spheres attached to its parent link in the output URDF.',
+    pack.map(rowPack).join(''),
+  );
+
+  html += section(
+    'skip',
+    'Primitive collisions removed',
+    rmPri.length,
+    `The mesh collisions you just packed are the new collision elements, so any other ` +
+    `&lt;collision&gt; primitives (${primSummary || 'box / cylinder / capsule'}) on those or sibling ` +
+    `links are stripped from the output URDF to avoid double collision geometry.`,
+    rmPri.map(rowSkip).join(''),
+  );
+
+  html += section(
+    'skip',
+    'Existing spheres removed',
+    rmSph.length,
+    'These &lt;sphere&gt; collisions in the source URDF are also redundant once the mesh-derived spheres are in place, so they are stripped from the output URDF.',
+    rmSph.map(rowSkip).join(''),
+  );
+
+  html += section(
+    'skip',
+    'Visual meshes preserved',
+    report.visual_count,
+    'Visual geometry is never modified or packed. Every &lt;visual&gt; element (the .dae / .stl files referenced by the original URDF) is passed through to the output URDF byte-for-byte.',
+    '',  // visuals not enumerated; backend only counts them
+  );
+
+  html += section(
+    'err',
+    'Errors',
+    errs.length,
+    'These items could not be processed; the run will skip them.',
+    errs.map(rowErr).join(''),
+  );
+
+  inspectionEl.innerHTML = html;
+  // The per-link sphere panel always reflects the same report as the
+  // inspection view, so they render (and go stale) together.
+  renderPerLinkSpheres(report);
+}
+
+// --------------------------------------------------------------------
+// Per-link sphere counts panel. One row per PACK item, each with a
+// number input; blank means "use the global Number of spheres". Row
+// order matches report.collisions filtered to PACK, which is exactly
+// the order runRobot() packs in (see packSphereCounts).
+// --------------------------------------------------------------------
+function renderPerLinkSpheres(report) {
+  const pack = packItems(report);
+  if (pack.length === 0) { hidePerLinkSpheres(); return; }
+  const globalSpheres = globalSphereCount();
+  perLinkList.innerHTML = pack.map(c => {
+    const meshBase = meshBasename(c);
+    const safeName = escapeHtml(c.link_name).replace(/"/g, '&quot;');
+    return `<li>` +
+           `<span class="pl-info">` +
+           `<span class="pl-name" title="${safeName}">${escapeHtml(c.link_name)}</span>` +
+           `<span class="pl-mesh">${escapeHtml(meshBase)}</span>` +
+           `</span>` +
+           `<span class="pl-count">` +
+           `<button type="button" class="pl-step" data-step="-1" aria-label="Fewer spheres for ${safeName}">−</button>` +
+           `<input type="number" class="ins-spheres" min="1" max="200"` +
+           ` placeholder="${globalSpheres}"` +
+           ` title="Sphere count for this link. Blank uses the global Number of spheres."` +
+           ` aria-label="Sphere count for ${safeName}">` +
+           `<button type="button" class="pl-step" data-step="1" aria-label="More spheres for ${safeName}">+</button>` +
+           `</span></li>`;
+  }).join('');
+  perLinkDetails.hidden = false;
+  updatePerLinkTotal();
+}
+
+function hidePerLinkSpheres() {
+  perLinkDetails.hidden = true;
+  perLinkList.innerHTML = '';
+  perLinkTotal.hidden = true;
+}
+
+// Live total across all links (override or global per row), shown as a
+// badge in the section summary. Useful because training time scales
+// with the total sphere count.
+function updatePerLinkTotal() {
+  const inputs = perLinkList.querySelectorAll('.ins-spheres');
+  if (inputs.length === 0) { perLinkTotal.hidden = true; return; }
+  const globalCount = globalSphereCount();
+  let total = 0;
+  inputs.forEach(el => {
+    const v = parseInt(el.value, 10);
+    total += Number.isFinite(v) ? clampSphereCount(v) : globalCount;
+  });
+  perLinkTotal.textContent = `Σ ${total}`;
+  perLinkTotal.hidden = false;
+}
+
+// Stepper buttons: adjust the row's count from its current effective
+// value (override if set, else the global), clamped to [1, 200].
+perLinkList.addEventListener('click', (e) => {
+  const btn = e.target.closest('.pl-step');
+  if (!btn) return;
+  const input = btn.parentElement.querySelector('.ins-spheres');
+  const globalCount = globalSphereCount();
+  const current = parseInt(input.value, 10);
+  const base = Number.isFinite(current) ? current : globalCount;
+  input.value = clampSphereCount(base + Number(btn.dataset.step));
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+});
+
+// Focus selects the current value so typing replaces it in place —
+// the field accepts typed counts, not just the − / + steppers.
+perLinkList.addEventListener('focusin', (e) => {
+  if (e.target.classList.contains('ins-spheres')) e.target.select();
+});
+
+// Overridden-card accent edge + total badge track every count edit,
+// whether typed or stepped.
+perLinkList.addEventListener('input', (e) => {
+  if (!e.target.classList.contains('ins-spheres')) return;
+  e.target.closest('li').classList.toggle('overridden', e.target.value !== '');
+  updatePerLinkTotal();
+});
+
+// Keep the per-link placeholders in sync with the global "Number of
+// spheres" field so a blank override always shows the value it inherits.
+f.querySelector('[name=num_spheres]').addEventListener('input', () => {
+  const v = globalSphereCount();
+  perLinkList.querySelectorAll('.ins-spheres')
+    .forEach(el => { el.placeholder = v; });
+  updatePerLinkTotal();
+});
+
+// Resolve the sphere count for each PACK item: the row's override if
+// set, else the global count. Input order matches the packItems()
+// order because renderPerLinkSpheres enumerates the same way.
+function packSphereCounts(items, globalCount) {
+  const inputs = perLinkList.querySelectorAll('.ins-spheres');
+  return items.map((_, i) => {
+    const v = parseInt(inputs[i] && inputs[i].value, 10);
+    if (!Number.isFinite(v)) return globalCount;
+    return clampSphereCount(v);
+  });
+}
+
+// --------------------------------------------------------------------
+// Auto-fill: allocate the total sphere budget across links by classical
+// covering theory rather than uniformly.
+//
+// Model: to cover a solid of volume V with balls of common radius ε the
+// best lattice covering (BCC) needs   N_vol(ε)  = Θ₃·V / (4/3·π·ε³),
+// Θ₃ = 5√5π/24 ≈ 1.4635  [Bambah, "On the geometry of numbers", 1954].
+// A link thinner than ε degenerates to covering its surface A with
+// disks of radius ε:                  N_surf(ε) = Θ₂·A / (π·ε²),
+// Θ₂ = 2π/√27 ≈ 1.2092   [Kershner, Amer. J. Math 61, 1939].
+// A link's demand is max(N_vol, N_surf): the surface term takes over
+// exactly when ε exceeds the link's thickness scale ~ 2V/A, so thin
+// parts (fingers, shells) are budgeted by area, bulky parts by volume.
+//
+// Allocation: solve Σᵢ Nᵢ(ε) = N_total for the common gap ε (demand is
+// strictly decreasing in ε — geometric bisection). Equalizing ε across
+// links minimizes the worst-case boundary gap achievable with a fixed
+// budget; rounding to integers uses largest-remainder apportionment so
+// the counts sum exactly to the budget.
+// --------------------------------------------------------------------
+const THETA3 = 5 * Math.sqrt(5) * Math.PI / 24;   // ≈ 1.4635
+const THETA2 = 2 * Math.PI / Math.sqrt(27);       // ≈ 1.2092
+
+function allocateSphereBudget(stats, totalBudget) {
+  const demandOne = (s, eps) => Math.max(
+    THETA3 * (s.volume || 0) / ((4 / 3) * Math.PI * eps ** 3),
+    THETA2 * (s.area || 0) / (Math.PI * eps ** 2),
+  );
+  const demand = eps => stats.reduce((t, s) => t + demandOne(s, eps), 0);
+
+  // Geometric bisection over ε ∈ [1 µm, 100 m] — spans every plausible
+  // robot scale, and demand() is monotone across it. 48 halvings of an
+  // 8-decade range resolve ε far below count-rounding granularity.
+  let lo = 1e-6, hi = 100;
+  for (let i = 0; i < 48; i++) {
+    const mid = Math.sqrt(lo * hi);
+    if (demand(mid) > totalBudget) lo = mid; else hi = mid;
+  }
+  const eps = Math.sqrt(lo * hi);
+
+  // Largest-remainder rounding with a floor of 1 and the API cap of 200.
+  const raw = stats.map(s => demandOne(s, eps));
+  const counts = raw.map(r => Math.max(1, Math.min(200, Math.floor(r))));
+  let remaining = totalBudget - counts.reduce((a, b) => a + b, 0);
+  const order = raw
+    .map((r, i) => ({ i, frac: r - Math.floor(r) }))
+    .sort((a, b) => b.frac - a.frac);
+  for (let k = 0; remaining > 0 && k < order.length * 200; k++) {
+    const idx = order[k % order.length].i;
+    if (counts[idx] < 200) { counts[idx] += 1; remaining -= 1; }
+  }
+  return counts;
+}
+
+async function autoFillCounts() {
+  if (!robotSessionId || !robotReport) return;
+  const items = packItems(robotReport);
+  if (items.length === 0) return;
+
+  autoFillBtn.disabled = true;
+  const prevLabel = autoFillBtn.textContent;
+  autoFillBtn.textContent = 'Measuring meshes…';
+  try {
+    const r = await fetchWithTimeout(
+      `/api/robot/mesh-stats?session_id=${encodeURIComponent(robotSessionId)}`,
+      {}, 60_000);
+    const text = await r.text();
+    if (!r.ok) throw new Error(`mesh-stats failed (HTTP ${r.status}): ${text}`);
+    const byKey = new Map();
+    for (const s of JSON.parse(text).items) {
+      byKey.set(`${s.link_name}|${s.collision_index}`, s);
+    }
+    const stats = items.map(it =>
+      byKey.get(`${it.link_name}|${it.collision_index}`) || {});
+    const counts = allocateSphereBudget(
+      stats, globalSphereCount() * items.length);
+
+    const inputs = perLinkList.querySelectorAll('.ins-spheres');
+    counts.forEach((n, i) => {
+      if (!inputs[i]) return;
+      inputs[i].value = n;
+      inputs[i].dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  } catch (err) {
+    status.textContent = err.message;
+    status.classList.add('err');
+  } finally {
+    autoFillBtn.disabled = false;
+    autoFillBtn.textContent = prevLabel;
+  }
+}
+
+const autoFillBtn = document.getElementById('auto-fill-btn');
+autoFillBtn.addEventListener('click', autoFillCounts);
+
+document.getElementById('clear-counts-btn').addEventListener('click', () => {
+  perLinkList.querySelectorAll('.ins-spheres').forEach(el => {
+    el.value = '';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+});
+
+// --------------------------------------------------------------------
+// Per-mode run handlers
+// --------------------------------------------------------------------
+
+// Estimated training duration in ms for object mode. /api/morph is a
+// single sync POST so we can't get true iteration progress; this gives
+// a visually-sensible bar that fills proportional to the work the
+// optimizer is doing. The constants are empirical-ish from CPU runs:
+//   per-iter cost ≈ (2ms baseline + 0.5ms × num_spheres)
+// plus a fixed ~500ms for mesh load + voxel init + sample gen.
+function estimateMorphMs(iterations, numSpheres) {
+  return 500 + iterations * (2 + numSpheres * 0.5);
+}
+
+// Animate progressEl from 0 to 95% over `estimatedMs`. Returns a stop
+// function the caller invokes once the actual response arrives so we
+// can snap to 100% and clean up the timer.
+function startObjectProgress(estimatedMs, totalIters) {
+  progressEl.hidden = false;
+  progressFill.style.width = '0%';
+  progressLabel.textContent = `Optimizing iter 0 / ${totalIters}`;
+  const t0 = performance.now();
+  const id = setInterval(() => {
+    const elapsed = performance.now() - t0;
+    // Cap at 95% so we don't claim "done" before the response lands.
+    // The remaining 5% is reserved for the snap-to-100 on completion.
+    const pct = Math.min(95, (elapsed / estimatedMs) * 100);
+    progressFill.style.width = `${pct}%`;
+    const iter = Math.min(totalIters, Math.floor(elapsed / estimatedMs * totalIters));
+    progressLabel.textContent = `Optimizing iter ~${iter} / ${totalIters}`;
+  }, 100);
+  return () => clearInterval(id);
+}
+
+async function runObject() {
+  const meshFile = fileInput.files[0];
+  if (!meshFile) throw new Error('Pick a mesh file first.');
+
+  const visuals = gatherVisuals();
+  const seed = gatherSeed();
+
+  const numIters = parseInt(f.querySelector('[name=iterations]').value, 10) || 300;
+  const numSpheres = globalSphereCount();
+
+  const fd = new FormData();
+  fd.append('mesh', meshFile);
+  fd.append('variant',     f.querySelector('[name=variant]').value);
+  fd.append('num_spheres', String(numSpheres));
+  fd.append('iterations',  String(numIters));
+  fd.append('advanced',    JSON.stringify(gatherAdvanced()));
+  fd.append('base_color',  visuals.base_color);
+  fd.append('union_overlapping_bodies', meshPrepField());
+  if (seed !== null) fd.append('seed', String(seed));
+
+  status.textContent = '';
+
+  const stopProgress = startObjectProgress(
+    estimateMorphMs(numIters, numSpheres), numIters,
+  );
+
+  let r, text;
+  try {
+    r = await fetch('/api/morph', { method: 'POST', body: fd });
+    text = await r.text();
+  } finally {
+    stopProgress();
+  }
+  if (!r.ok) {
+    progressEl.hidden = true;
+    throw new Error(`Error ${r.status}: ${text}`);
+  }
+
+  // Snap the bar to full and label "Done", then auto-hide after a beat.
+  progressFill.style.width = '100%';
+  progressLabel.textContent = `Optimized ${numIters} iterations`;
+  setTimeout(() => { progressEl.hidden = true; }, 1500);
+
+  // Centroid header tells the wireframe overlay how to align with the URDF.
+  const centroidHdr = r.headers.get('X-Morphit-Centroid');
+  if (centroidHdr) lastCentroid = centroidHdr.split(',').map(parseFloat);
+
+  const baseName = meshFile.name.replace(/\.[^.]+$/, '');
+  renderUrdf(text, { filename: `${baseName}.urdf` });
+  // Mesh + packed URDF are both in hand: analysis is available.
+  analyzeBtn.hidden = false;
+
+  // Convergence curve for this run, recorded server-side and returned
+  // in a header (object mode has no live stream to sample from).
+  const lossHdr = r.headers.get('X-Morphit-Loss');
+  if (lossHdr) {
+    try {
+      const points = JSON.parse(lossHdr);
+      runLossHistories = new Map([[baseName, {
+        label: baseName, total: numIters, points,
+      }]]);
+      renderConvergence();
+    } catch (err) {
+      console.warn('[convergence] bad loss header:', err);
+    }
+  }
+}
+
+// fetch with an abort timeout — if a request hangs, the user gets a
+// clear error instead of a permanently-spinning UI. Pack steps need a
+// generous limit (one mesh × iterations can take tens of seconds at
+// MorphIt-B/500); assemble is essentially instant on the server side.
+async function fetchWithTimeout(url, opts, timeoutMs) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...opts, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function runRobot() {
+  if (!robotSessionId || !robotReport) {
+    throw new Error('Drop a robot folder and wait for inspection to finish.');
+  }
+  const items = packItems(robotReport);
+  if (items.length === 0) {
+    throw new Error('Inspection found no collision meshes to pack.');
+  }
+
+  const variant     = f.querySelector('[name=variant]').value;
+  const numSpheres  = globalSphereCount();
+  const sphereCounts = packSphereCounts(items, numSpheres);
+  const iterations  = f.querySelector('[name=iterations]').value;
+  const advancedJson = JSON.stringify(gatherAdvanced());
+  const seed = gatherSeed();
+  const visuals = gatherVisuals();
+
+  progressEl.hidden = false;
+  progressFill.style.width = '0%';
+  progressLabel.textContent = `Starting: ${items.length} link(s)…`;
+  status.textContent = '';
+
+  // Live view: show the left pane with the original robot before
+  // packing starts (the upload flow used to load it only after
+  // assemble), then stream optimizer states onto it via websocket.
+  // The submit dispatcher's resetOutputs() already cleared the
+  // previous run's overlays and analysis.
+  resetLossPlot();
+  viewersEl.hidden = false;
+  const originalUrl =
+    `/api/robot/file?session_id=${encodeURIComponent(robotSessionId)}` +
+    `&path=${encodeURIComponent(robotReport.urdf_path)}`;
+  if (viewerOriginal.urdf !== originalUrl) viewerOriginal.urdf = originalUrl;
+
+  // Live view is progressive enhancement: if the socket cannot
+  // connect, no frames arrive and packing proceeds without animation.
+  let packLabel = '';
+  const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(
+    `${wsProto}://${location.host}/api/robot/pack-live` +
+    `?session_id=${encodeURIComponent(robotSessionId)}`);
+  ws.onmessage = ev => {
+    try {
+      const msg = JSON.parse(ev.data);
+      liveSphereUpdate(msg);
+      lossPlotUpdate(msg);
+      progressLabel.textContent =
+        `${packLabel} · iter ${msg.iteration + 1}/${msg.total_iterations}`;
+    } catch (err) {
+      console.warn('[live] bad frame:', err);
+    }
+  };
+
+  try {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      packLabel =
+        `Packing ${i + 1}/${items.length}: ${item.link_name} (${sphereCounts[i]} spheres)`;
+      progressLabel.textContent = packLabel;
+
+      const fdPack = new FormData();
+      fdPack.append('session_id',      robotSessionId);
+      fdPack.append('link_name',       item.link_name);
+      fdPack.append('collision_index', String(item.collision_index));
+      fdPack.append('variant',         variant);
+      fdPack.append('num_spheres',     String(sphereCounts[i]));
+      fdPack.append('iterations',      String(iterations));
+      fdPack.append('advanced',        advancedJson);
+      fdPack.append('union_overlapping_bodies', meshPrepField());
+      if (seed !== null) fdPack.append('seed', String(seed));
+
+      console.log(`[robot] pack ${i + 1}/${items.length}: ${item.link_name}`);
+      const rPack = await fetchWithTimeout(
+        '/api/robot/pack-link', { method: 'POST', body: fdPack }, 5 * 60_000,
+      );
+      if (!rPack.ok) {
+        const errText = await rPack.text();
+        throw new Error(
+          `pack failed for ${item.link_name}[${item.collision_index}] ` +
+          `(HTTP ${rPack.status}): ${errText}`
+        );
+      }
+      // The pack response carries the full-resolution loss curve for
+      // the convergence tab (the websocket only feeds the live view).
+      const packResult = await rPack.json();
+      if (packResult.loss_history) {
+        runLossHistories.set(`${item.link_name}|${item.collision_index}`, {
+          label: item.collision_index > 0
+            ? `${item.link_name}[${item.collision_index}]` : item.link_name,
+          total: parseInt(iterations, 10) || 200,
+          points: packResult.loss_history,
+        });
+      }
+      progressFill.style.width = `${((i + 1) / items.length) * 100}%`;
+    }
+
+    progressLabel.textContent = 'Assembling URDF…';
+    console.log('[robot] assemble: starting');
+
+    const fdAsm = new FormData();
+    fdAsm.append('session_id',      robotSessionId);
+    fdAsm.append('base_color',      visuals.base_color);
+    fdAsm.append('color_variation', visuals.color_variation);
+    const rAsm = await fetchWithTimeout(
+      '/api/robot/assemble', { method: 'POST', body: fdAsm }, 60_000,
+    );
+    console.log(`[robot] assemble: HTTP ${rAsm.status} ${rAsm.headers.get('content-type')}`);
+    const text = await rAsm.text();
+    console.log(`[robot] assemble: got ${text.length} bytes`);
+    if (!rAsm.ok) throw new Error(`assemble failed (HTTP ${rAsm.status}): ${text}`);
+
+    const urdfBase = (robotReport.urdf_path || 'robot.urdf')
+      .split('/').pop().replace(/\.urdf$/i, '');
+    renderUrdf(text, { filename: `${urdfBase}_spherical.urdf` });
+
+    // The session now holds packed sphere JSONs — analysis is available.
+    analyzeBtn.hidden = false;
+    // Show the per-link convergence curves collected over the run.
+    renderConvergence();
+  } finally {
+    ws.close();
+    clearLiveOverlays();
+  }
+
+  // Hide the progress bar shortly after completion to declutter.
+  setTimeout(() => { progressEl.hidden = true; }, 2000);
+}
+
+// --------------------------------------------------------------------
+// Submit dispatcher
+// --------------------------------------------------------------------
+
+f.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  resetOutputs();
+  status.textContent = '';
+  status.classList.remove('err', 'ok');
+  go.disabled = true;
+  f.classList.add('running');
+
+  try {
+    if (currentMode() === 'robot') {
+      await runRobot();
+    } else {
+      await runObject();
+    }
+  } catch (err) {
+    status.classList.add('err');
+    if (err.name === 'AbortError') {
+      status.textContent = 'Request timed out. Check the server / console for details.';
+    } else {
+      status.textContent = err.message || String(err);
+    }
+    console.error('[morphit] run failed:', err);
+    progressEl.hidden = true;
+  } finally {
+    go.disabled = false;
+    f.classList.remove('running');
+  }
+});
+
+dl.addEventListener('click', () => {
+  if (!lastBlobUrl) return;
+  const a = document.createElement('a');
+  a.href = lastBlobUrl;
+  a.download = lastFilename;
+  a.click();
+});
+
+// Citation Copy: copies the bibtex block in the footer. Same UX pattern
+// as the URDF copy button — text swap + green tint for 1.5s on success.
+const citeCopyBtn = document.getElementById('cite-copy');
+const citeBibEl = document.getElementById('cite-bib');
+if (citeCopyBtn && citeBibEl) {
+  citeCopyBtn.addEventListener('click', async () => {
+    const text = citeBibEl.textContent;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      citeCopyBtn.classList.add('copied');
+      citeCopyBtn.textContent = 'Copied';
+      setTimeout(() => {
+        citeCopyBtn.classList.remove('copied');
+        citeCopyBtn.textContent = 'Copy';
+      }, 1500);
+    } catch (err) {
+      console.error('citation copy failed:', err);
+    }
+  });
+}
+
+copy.addEventListener('click', async () => {
+  // Read the *raw* URDF text, not innerText — hljs has rewritten the DOM
+  // with token spans, but their concatenated textContent is still the
+  // exact original source.
+  const text = outCode.textContent;
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    copy.classList.add('copied');
+    copy.textContent = 'Copied';
+    setTimeout(() => {
+      copy.classList.remove('copied');
+      copy.textContent = 'Copy';
+    }, 1500);
+  } catch (err) {
+    status.classList.add('err');
+    status.textContent = `Copy failed: ${err}`;
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+{
+ "link0": {
+  "file": "link0.obj",
+  "report": {
+   "action": "unchanged",
+   "reason": "single body",
+   "n_bodies": 1,
+   "n_closed": 0,
+   "n_open": 0,
+   "n_degenerate_dropped": 0,
+   "overlapping": false,
+   "faces_before": 200,
+   "faces_after": 200,
+   "volume_before": 0.0029964693753239025,
+   "volume_after": 0.0029964693753239025,
+   "warnings": []
+  }
+ },
+ "groups_box": {
+  "file": "mesh_prep/groups_box.obj",
+  "report": {
+   "action": "unchanged",
+   "reason": "single body",
+   "n_bodies": 1,
+   "n_closed": 0,
+   "n_open": 0,
+   "n_degenerate_dropped": 0,
+   "overlapping": false,
+   "faces_before": 12,
+   "faces_after": 12,
+   "volume_before": 1.0,
+   "volume_after": 1.0,
+   "warnings": []
+  }
+ },
+ "sliver": {
+  "file": "mesh_prep/sliver.obj",
+  "report": {
+   "action": "unchanged",
+   "reason": "single body",
+   "n_bodies": 1,
+   "n_closed": 0,
+   "n_open": 0,
+   "n_degenerate_dropped": 1,
+   "overlapping": false,
+   "faces_before": 14,
+   "faces_after": 14,
+   "volume_before": 1.0,
+   "volume_after": 1.0,
+   "warnings": []
+  }
+ },
+ "disjoint": {
+  "file": "mesh_prep/disjoint.obj",
+  "report": {
+   "action": "unchanged",
+   "reason": "2 disjoint bodies",
+   "n_bodies": 2,
+   "n_closed": 2,
+   "n_open": 0,
+   "n_degenerate_dropped": 0,
+   "overlapping": false,
+   "faces_before": 24,
+   "faces_after": 24,
+   "volume_before": 2.0,
+   "volume_after": 2.0,
+   "warnings": []
+  }
+ },
+ "open_overlap": {
+  "file": "mesh_prep/open_overlap.obj",
+  "report": {
+   "action": "skipped",
+   "reason": "1 of 2 overlapping bodies are open",
+   "n_bodies": 2,
+   "n_closed": 1,
+   "n_open": 1,
+   "n_degenerate_dropped": 0,
+   "overlapping": true,
+   "faces_before": 23,
+   "faces_after": 23,
+   "volume_before": 1.95,
+   "volume_after": 1.95,
+   "warnings": [
+    "mesh has 2 overlapping bodies but 1 are not closed; packing the raw mesh. The overlap region will be treated as outside. Export the part as a single solid to fix this."
+   ]
+  }
+ },
+ "two_overlapping": {
+  "file": "mesh_prep/two_overlapping.obj",
+  "report": {
+   "action": "unioned",
+   "reason": "2 overlapping closed bodies unioned",
+   "n_bodies": 2,
+   "n_closed": 2,
+   "n_open": 0,
+   "n_degenerate_dropped": 0,
+   "overlapping": true,
+   "faces_before": 24,
+   "faces_after": 36,
+   "volume_before": 2.0,
+   "volume_after": 1.5679999970793717,
+   "warnings": []
+  },
+  "union": {
+   "volume": 1.5679999970793717,
+   "faces": 36,
+   "vertices": 20,
+   "watertight": true
+  }
+ },
+ "three_bodies": {
+  "file": "mesh_prep/three_bodies.obj",
+  "report": {
+   "action": "unioned",
+   "reason": "3 overlapping closed bodies unioned",
+   "n_bodies": 3,
+   "n_closed": 3,
+   "n_open": 0,
+   "n_degenerate_dropped": 0,
+   "overlapping": true,
+   "faces_before": 36,
+   "faces_after": 48,
+   "volume_before": 3.0,
+   "volume_after": 2.5679999970793723,
+   "warnings": []
+  },
+  "union": {
+   "volume": 2.5679999970793723,
+   "faces": 48,
+   "vertices": 28,
+   "watertight": true
+  }
+ },
+ "inward_inner_shell": {
+  "file": "mesh_prep/inward_inner_shell.obj",
+  "report": {
+   "action": "unioned",
+   "reason": "2 overlapping closed bodies unioned",
+   "n_bodies": 2,
+   "n_closed": 2,
+   "n_open": 0,
+   "n_degenerate_dropped": 0,
+   "overlapping": true,
+   "faces_before": 24,
+   "faces_after": 28,
+   "volume_before": 0.973,
+   "volume_after": 1.0045000009834766,
+   "warnings": []
+  },
+  "union": {
+   "volume": 1.0045000009834766,
+   "faces": 28,
+   "vertices": 16,
+   "watertight": true
+  }
+ }
+}

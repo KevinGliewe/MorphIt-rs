@@ -1,0 +1,36 @@
+[package]
+name = "morphit-cli"
+description = "Command-line interface for the MorphIt sphere-packing optimizer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[[bin]]
+name = "morphit"
+path = "src/main.rs"
+doc = false
+
+[features]
+default = ["gpu", "union", "parallel"]
+parallel = ["morphit/parallel", "morphit-robot/parallel"]
+gpu = ["morphit/gpu", "morphit-robot/gpu"]
+union = ["morphit/union", "morphit-robot/union"]
+
+[dependencies]
+morphit = { workspace = true, default-features = false }
+morphit-robot = { workspace = true, default-features = false }
+clap.workspace = true
+rayon.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+
+[dev-dependencies]
+assert_cmd.workspace = true
+tempfile.workspace = true

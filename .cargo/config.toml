@@ -1,0 +1,8 @@
+[target.wasm32-unknown-unknown]
+# getrandom 0.3 reads OS entropy through crypto.getRandomValues in the browser.
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
+runner = "wasm-bindgen-test-runner"
+
+[alias]
+# Every native suite except the Bevy app (heavy to build).
+t = "test --workspace --exclude morphit-studio"

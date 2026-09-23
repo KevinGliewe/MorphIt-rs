@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MorphIt WebAssembly</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: light dark; --fg: #1d2330; --bg: #f6f7f9; --panel: #fff; --line: #d7dbe3; --accent: #3399ff; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #e4e7ee; --bg: #14171d; --panel: #1c2028; --line: #2d3340; } }
+  body { margin: 0; font: 14px/1.4 system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+  main { display: grid; grid-template-columns: 300px 1fr; gap: 16px; padding: 16px; max-width: 1200px; margin: auto; }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  label { display: block; margin: 8px 0 2px; }
+  input, select, button { width: 100%; box-sizing: border-box; padding: 6px; font: inherit; }
+  button { margin-top: 10px; cursor: pointer; }
+  canvas { width: 100%; background: var(--bg); border-radius: 6px; display: block; }
+  #status { margin-top: 10px; font-variant-numeric: tabular-nums; white-space: pre-wrap; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+</style>
+</head>
+<body>
+<main>
+  <section>
+    <h3 style="margin-top:0">MorphIt in the browser</h3>
+    <label>Mesh (.obj, .stl, .ply, .dae)<input id="file" type="file" accept=".obj,.stl,.ply,.dae"></label>
+    <label>Preset<select id="preset"></select></label>
+    <div class="row">
+      <label>Spheres<input id="spheres" type="number" value="20" min="1" max="200"></label>
+      <label>Iterations<input id="iters" type="number" value="200" min="1" max="1000"></label>
+    </div>
+    <label>Device<select id="device"><option value="cpu">cpu</option></select></label>
+    <button id="run" disabled>Pack</button>
+    <div class="row">
+      <button id="json" disabled>Result JSON</button>
+      <button id="urdf" disabled>URDF</button>
+      <button id="mjcf" disabled>MJCF</button>
+    </div>
+    <div id="status">Loading…</div>
+  </section>
+  <section>
+    <canvas id="view" width="800" height="560"></canvas>
+    <canvas id="loss" width="800" height="160" style="margin-top:12px"></canvas>
+  </section>
+</main>
+<script type="module" src="main.js"></script>
+</body>
+</html>

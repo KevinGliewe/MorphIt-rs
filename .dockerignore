@@ -1,0 +1,11 @@
+# Only the workspace sources and web/ are needed to build and run the server.
+.git
+.github
+target/
+build/
+docs/
+tools/
+**/*.rs.bk
+**/__pycache__
+.playwright-mcp/
+/out.json

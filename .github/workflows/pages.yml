@@ -1,0 +1,47 @@
+name: Pages
+
+# MorphIt Studio (web build) at the site root, the morphit-wasm example page at /wasm/.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          wasm-tools: "true"
+          cache-key: web
+      - name: Build the site
+        run: bash tools/build_pages.sh
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: target/pages
+
+  deploy:
+    needs: build
+    # Local act runs (event file with "act": true) stop after the build.
+    if: ${{ !github.event.act }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

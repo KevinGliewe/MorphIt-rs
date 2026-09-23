@@ -1,0 +1,16 @@
+/target
+**/*.rs.bk
+/tools/.venv/
+/tools/pyext_build/
+/tools/out/
+__pycache__/
+*.pyc
+/out.json
+/build/
+/crates/morphit-wasm/www/pkg/
+# Local scripts that regenerate the Python-parity fixtures from a clone of the
+# Python reference; the fixtures they produced are checked in.
+/tools/py_*.py
+/tools/setup_python_env.ps1
+# Written by CI for the browser tests.
+webdriver.json

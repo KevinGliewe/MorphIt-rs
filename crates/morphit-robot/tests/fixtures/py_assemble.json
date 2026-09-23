@@ -1,0 +1,469 @@
+{
+ "kinova": {
+  "folder": "kinova_description",
+  "urdf": "m1n4s200_standalone.urdf",
+  "color": "#3399ff",
+  "variation": 0.3,
+  "summary": {
+   "collisions": {
+    "root": 0,
+    "world": 0,
+    "m1n4s200_link_base": 0,
+    "m1n4s200_link_1": 0,
+    "m1n4s200_link_2": 0,
+    "m1n4s200_link_3": 0,
+    "m1n4s200_link_4": 0,
+    "m1n4s200_end_effector": 0,
+    "m1n4s200_link_finger_1": 0,
+    "m1n4s200_link_finger_tip_1": 0,
+    "m1n4s200_link_finger_2": 0,
+    "m1n4s200_link_finger_tip_2": 0,
+    "m1n4s200_link_base_sphere1": 1,
+    "m1n4s200_link_base_sphere2": 1,
+    "m1n4s200_link_1_sphere1": 1,
+    "m1n4s200_link_1_sphere2": 1,
+    "m1n4s200_link_2_sphere1": 1,
+    "m1n4s200_link_2_sphere2": 1,
+    "m1n4s200_link_3_sphere1": 1,
+    "m1n4s200_link_3_sphere2": 1,
+    "m1n4s200_link_4_sphere1": 1,
+    "m1n4s200_link_4_sphere2": 1,
+    "m1n4s200_link_finger_1_sphere1": 1,
+    "m1n4s200_link_finger_1_sphere2": 1,
+    "m1n4s200_link_finger_tip_1_sphere1": 1,
+    "m1n4s200_link_finger_tip_1_sphere2": 1,
+    "m1n4s200_link_finger_2_sphere1": 1,
+    "m1n4s200_link_finger_2_sphere2": 1,
+    "m1n4s200_link_finger_tip_2_sphere1": 1,
+    "m1n4s200_link_finger_tip_2_sphere2": 1
+   },
+   "links": [
+    {
+     "name": "m1n4s200_link_base_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_base_sphere1",
+     "rgba": "0.200000 0.816000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_base_sphere2",
+     "radius": "0.020000",
+     "material": "color_m1n4s200_link_base_sphere2",
+     "rgba": "0.200000 0.816000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_1_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_1_sphere1",
+     "rgba": "0.200000 0.762000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_1_sphere2",
+     "radius": "0.021000",
+     "material": "color_m1n4s200_link_1_sphere2",
+     "rgba": "0.200000 0.762000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_2_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_2_sphere1",
+     "rgba": "0.200000 0.708000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_2_sphere2",
+     "radius": "0.022000",
+     "material": "color_m1n4s200_link_2_sphere2",
+     "rgba": "0.200000 0.708000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_3_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_3_sphere1",
+     "rgba": "0.200000 0.654000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_3_sphere2",
+     "radius": "0.023000",
+     "material": "color_m1n4s200_link_3_sphere2",
+     "rgba": "0.200000 0.654000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_4_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_4_sphere1",
+     "rgba": "0.200000 0.600000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_4_sphere2",
+     "radius": "0.024000",
+     "material": "color_m1n4s200_link_4_sphere2",
+     "rgba": "0.200000 0.600000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_finger_1_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_finger_1_sphere1",
+     "rgba": "0.200000 0.546000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_finger_1_sphere2",
+     "radius": "0.025000",
+     "material": "color_m1n4s200_link_finger_1_sphere2",
+     "rgba": "0.200000 0.546000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_finger_tip_1_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_finger_tip_1_sphere1",
+     "rgba": "0.200000 0.492000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_finger_tip_1_sphere2",
+     "radius": "0.026000",
+     "material": "color_m1n4s200_link_finger_tip_1_sphere2",
+     "rgba": "0.200000 0.492000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_finger_2_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_finger_2_sphere1",
+     "rgba": "0.200000 0.438000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_finger_2_sphere2",
+     "radius": "0.027000",
+     "material": "color_m1n4s200_link_finger_2_sphere2",
+     "rgba": "0.200000 0.438000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_finger_tip_2_sphere1",
+     "radius": "0.010000",
+     "material": "color_m1n4s200_link_finger_tip_2_sphere1",
+     "rgba": "0.200000 0.384000 1.000000 1.000000"
+    },
+    {
+     "name": "m1n4s200_link_finger_tip_2_sphere2",
+     "radius": "0.028000",
+     "material": "color_m1n4s200_link_finger_tip_2_sphere2",
+     "rgba": "0.200000 0.384000 1.000000 1.000000"
+    }
+   ],
+   "joints": [
+    {
+     "name": "m1n4s200_link_base_to_m1n4s200_link_base_sphere1",
+     "parent": "m1n4s200_link_base",
+     "child": "m1n4s200_link_base_sphere1",
+     "xyz": "0.000000 0.020000 0.000000"
+    },
+    {
+     "name": "m1n4s200_link_base_to_m1n4s200_link_base_sphere2",
+     "parent": "m1n4s200_link_base",
+     "child": "m1n4s200_link_base_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "m1n4s200_link_1_to_m1n4s200_link_1_sphere1",
+     "parent": "m1n4s200_link_1",
+     "child": "m1n4s200_link_1_sphere1",
+     "xyz": "0.010000 0.020000 -0.010000"
+    },
+    {
+     "name": "m1n4s200_link_1_to_m1n4s200_link_1_sphere2",
+     "parent": "m1n4s200_link_1",
+     "child": "m1n4s200_link_1_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "m1n4s200_link_2_to_m1n4s200_link_2_sphere1",
+     "parent": "m1n4s200_link_2",
+     "child": "m1n4s200_link_2_sphere1",
+     "xyz": "0.020000 0.020000 -0.020000"
+    },
+    {
+     "name": "m1n4s200_link_2_to_m1n4s200_link_2_sphere2",
+     "parent": "m1n4s200_link_2",
+     "child": "m1n4s200_link_2_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "m1n4s200_link_3_to_m1n4s200_link_3_sphere1",
+     "parent": "m1n4s200_link_3",
+     "child": "m1n4s200_link_3_sphere1",
+     "xyz": "0.030000 0.020000 -0.030000"
+    },
+    {
+     "name": "m1n4s200_link_3_to_m1n4s200_link_3_sphere2",
+     "parent": "m1n4s200_link_3",
+     "child": "m1n4s200_link_3_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "m1n4s200_link_4_to_m1n4s200_link_4_sphere1",
+     "parent": "m1n4s200_link_4",
+     "child": "m1n4s200_link_4_sphere1",
+     "xyz": "0.040000 0.020000 -0.040000"
+    },
+    {
+     "name": "m1n4s200_link_4_to_m1n4s200_link_4_sphere2",
+     "parent": "m1n4s200_link_4",
+     "child": "m1n4s200_link_4_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "m1n4s200_link_finger_1_to_m1n4s200_link_finger_1_sphere1",
+     "parent": "m1n4s200_link_finger_1",
+     "child": "m1n4s200_link_finger_1_sphere1",
+     "xyz": "0.050000 0.020000 -0.050000"
+    },
+    {
+     "name": "m1n4s200_link_finger_1_to_m1n4s200_link_finger_1_sphere2",
+     "parent": "m1n4s200_link_finger_1",
+     "child": "m1n4s200_link_finger_1_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "m1n4s200_link_finger_tip_1_to_m1n4s200_link_finger_tip_1_sphere1",
+     "parent": "m1n4s200_link_finger_tip_1",
+     "child": "m1n4s200_link_finger_tip_1_sphere1",
+     "xyz": "0.060000 0.020000 -0.060000"
+    },
+    {
+     "name": "m1n4s200_link_finger_tip_1_to_m1n4s200_link_finger_tip_1_sphere2",
+     "parent": "m1n4s200_link_finger_tip_1",
+     "child": "m1n4s200_link_finger_tip_1_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "m1n4s200_link_finger_2_to_m1n4s200_link_finger_2_sphere1",
+     "parent": "m1n4s200_link_finger_2",
+     "child": "m1n4s200_link_finger_2_sphere1",
+     "xyz": "0.070000 0.020000 -0.070000"
+    },
+    {
+     "name": "m1n4s200_link_finger_2_to_m1n4s200_link_finger_2_sphere2",
+     "parent": "m1n4s200_link_finger_2",
+     "child": "m1n4s200_link_finger_2_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "m1n4s200_link_finger_tip_2_to_m1n4s200_link_finger_tip_2_sphere1",
+     "parent": "m1n4s200_link_finger_tip_2",
+     "child": "m1n4s200_link_finger_tip_2_sphere1",
+     "xyz": "0.080000 0.020000 -0.080000"
+    },
+    {
+     "name": "m1n4s200_link_finger_tip_2_to_m1n4s200_link_finger_tip_2_sphere2",
+     "parent": "m1n4s200_link_finger_tip_2",
+     "child": "m1n4s200_link_finger_tip_2_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    }
+   ]
+  }
+ },
+ "ur5": {
+  "folder": "ur5",
+  "urdf": "ur5_gripper.urdf",
+  "color": "#ff8800",
+  "variation": 1.0,
+  "summary": {
+   "collisions": {
+    "base_link": 0,
+    "shoulder_link": 0,
+    "upper_arm_link": 0,
+    "forearm_link": 0,
+    "wrist_1_link": 0,
+    "wrist_2_link": 0,
+    "wrist_3_link": 0,
+    "ee_link": 0,
+    "base": 0,
+    "tool0": 0,
+    "world": 0,
+    "base_link_sphere1": 1,
+    "base_link_sphere2": 1,
+    "shoulder_link_sphere1": 1,
+    "shoulder_link_sphere2": 1,
+    "upper_arm_link_sphere1": 1,
+    "upper_arm_link_sphere2": 1,
+    "forearm_link_sphere1": 1,
+    "forearm_link_sphere2": 1,
+    "wrist_1_link_sphere1": 1,
+    "wrist_1_link_sphere2": 1,
+    "wrist_2_link_sphere1": 1,
+    "wrist_2_link_sphere2": 1,
+    "wrist_3_link_sphere1": 1,
+    "wrist_3_link_sphere2": 1
+   },
+   "links": [
+    {
+     "name": "base_link_sphere1",
+     "radius": "0.010000",
+     "material": "color_base_link_sphere1",
+     "rgba": "1.000000 0.000000 0.366667 1.000000"
+    },
+    {
+     "name": "base_link_sphere2",
+     "radius": "0.020000",
+     "material": "color_base_link_sphere2",
+     "rgba": "1.000000 0.000000 0.366667 1.000000"
+    },
+    {
+     "name": "shoulder_link_sphere1",
+     "radius": "0.010000",
+     "material": "color_shoulder_link_sphere1",
+     "rgba": "1.000000 0.000000 0.066667 1.000000"
+    },
+    {
+     "name": "shoulder_link_sphere2",
+     "radius": "0.021000",
+     "material": "color_shoulder_link_sphere2",
+     "rgba": "1.000000 0.000000 0.066667 1.000000"
+    },
+    {
+     "name": "upper_arm_link_sphere1",
+     "radius": "0.010000",
+     "material": "color_upper_arm_link_sphere1",
+     "rgba": "1.000000 0.233333 0.000000 1.000000"
+    },
+    {
+     "name": "upper_arm_link_sphere2",
+     "radius": "0.022000",
+     "material": "color_upper_arm_link_sphere2",
+     "rgba": "1.000000 0.233333 0.000000 1.000000"
+    },
+    {
+     "name": "forearm_link_sphere1",
+     "radius": "0.010000",
+     "material": "color_forearm_link_sphere1",
+     "rgba": "1.000000 0.533333 0.000000 1.000000"
+    },
+    {
+     "name": "forearm_link_sphere2",
+     "radius": "0.023000",
+     "material": "color_forearm_link_sphere2",
+     "rgba": "1.000000 0.533333 0.000000 1.000000"
+    },
+    {
+     "name": "wrist_1_link_sphere1",
+     "radius": "0.010000",
+     "material": "color_wrist_1_link_sphere1",
+     "rgba": "1.000000 0.833333 0.000000 1.000000"
+    },
+    {
+     "name": "wrist_1_link_sphere2",
+     "radius": "0.024000",
+     "material": "color_wrist_1_link_sphere2",
+     "rgba": "1.000000 0.833333 0.000000 1.000000"
+    },
+    {
+     "name": "wrist_2_link_sphere1",
+     "radius": "0.010000",
+     "material": "color_wrist_2_link_sphere1",
+     "rgba": "0.866667 1.000000 0.000000 1.000000"
+    },
+    {
+     "name": "wrist_2_link_sphere2",
+     "radius": "0.025000",
+     "material": "color_wrist_2_link_sphere2",
+     "rgba": "0.866667 1.000000 0.000000 1.000000"
+    },
+    {
+     "name": "wrist_3_link_sphere1",
+     "radius": "0.010000",
+     "material": "color_wrist_3_link_sphere1",
+     "rgba": "0.566667 1.000000 0.000000 1.000000"
+    },
+    {
+     "name": "wrist_3_link_sphere2",
+     "radius": "0.026000",
+     "material": "color_wrist_3_link_sphere2",
+     "rgba": "0.566667 1.000000 0.000000 1.000000"
+    }
+   ],
+   "joints": [
+    {
+     "name": "base_link_to_base_link_sphere1",
+     "parent": "base_link",
+     "child": "base_link_sphere1",
+     "xyz": "0.000000 0.020000 0.000000"
+    },
+    {
+     "name": "base_link_to_base_link_sphere2",
+     "parent": "base_link",
+     "child": "base_link_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "shoulder_link_to_shoulder_link_sphere1",
+     "parent": "shoulder_link",
+     "child": "shoulder_link_sphere1",
+     "xyz": "0.010000 0.020000 -0.010000"
+    },
+    {
+     "name": "shoulder_link_to_shoulder_link_sphere2",
+     "parent": "shoulder_link",
+     "child": "shoulder_link_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "upper_arm_link_to_upper_arm_link_sphere1",
+     "parent": "upper_arm_link",
+     "child": "upper_arm_link_sphere1",
+     "xyz": "0.020000 0.020000 -0.020000"
+    },
+    {
+     "name": "upper_arm_link_to_upper_arm_link_sphere2",
+     "parent": "upper_arm_link",
+     "child": "upper_arm_link_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "forearm_link_to_forearm_link_sphere1",
+     "parent": "forearm_link",
+     "child": "forearm_link_sphere1",
+     "xyz": "0.030000 0.020000 -0.030000"
+    },
+    {
+     "name": "forearm_link_to_forearm_link_sphere2",
+     "parent": "forearm_link",
+     "child": "forearm_link_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "wrist_1_link_to_wrist_1_link_sphere1",
+     "parent": "wrist_1_link",
+     "child": "wrist_1_link_sphere1",
+     "xyz": "0.040000 0.020000 -0.040000"
+    },
+    {
+     "name": "wrist_1_link_to_wrist_1_link_sphere2",
+     "parent": "wrist_1_link",
+     "child": "wrist_1_link_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "wrist_2_link_to_wrist_2_link_sphere1",
+     "parent": "wrist_2_link",
+     "child": "wrist_2_link_sphere1",
+     "xyz": "0.050000 0.020000 -0.050000"
+    },
+    {
+     "name": "wrist_2_link_to_wrist_2_link_sphere2",
+     "parent": "wrist_2_link",
+     "child": "wrist_2_link_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    },
+    {
+     "name": "wrist_3_link_to_wrist_3_link_sphere1",
+     "parent": "wrist_3_link",
+     "child": "wrist_3_link_sphere1",
+     "xyz": "0.060000 0.020000 -0.060000"
+    },
+    {
+     "name": "wrist_3_link_to_wrist_3_link_sphere2",
+     "parent": "wrist_3_link",
+     "child": "wrist_3_link_sphere2",
+     "xyz": "0.000000 0.000000 0.050000"
+    }
+   ]
+  }
+ }
+}

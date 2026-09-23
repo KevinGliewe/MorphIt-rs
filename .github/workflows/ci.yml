@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: fmt
+      - run: cargo fmt --all --check
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          linux-deps: "true"
+          cache-key: clippy
+      - name: Clippy (native, whole workspace)
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - name: Clippy (wasm32)
+        run: cargo clippy -p morphit-wasm -p morphit-studio --target wasm32-unknown-unknown --locked -- -D warnings
+      - name: C header is up to date
+        run: git diff --exit-code crates/morphit-capi/include
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          linux-deps: ${{ matrix.os == 'ubuntu-latest' }}
+          cache-key: test-${{ matrix.os }}
+      - name: Tests (every native crate except the studio)
+        run: cargo t --locked
+      - name: Tests without rayon (sequential loops, same results)
+        if: runner.os == 'Linux'
+        run: |
+          cargo test -p morphit --no-default-features --features gpu,union --locked
+          cargo test -p morphit-robot --no-default-features --features gpu,union,zip --locked
+      - name: MorphIt Studio library tests
+        if: runner.os == 'Linux'
+        run: cargo test -p morphit-studio --lib --locked
+
+  # The GPU backend on lavapipe (Mesa's software Vulkan): the CPU = GPU
+  # bit-identity tests run instead of skipping for want of an adapter.
+  test-gpu:
+    runs-on: ubuntu-latest
+    env:
+      MORPHIT_GPU_ALLOW_SOFTWARE: "1"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: test-gpu
+      - name: Mesa lavapipe
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq --no-install-recommends mesa-vulkan-drivers libvulkan1
+      - name: An adapter is visible
+        run: |
+          cargo run -q -p morphit-cli --locked -- devices | tee devices.txt
+          if grep -q "no GPU adapters" devices.txt; then
+            echo "::error::lavapipe was not found by wgpu"
+            exit 1
+          fi
+      - name: GPU tests
+        run: |
+          cargo test -p morphit --lib --locked search::gpu
+          cargo test -p morphit-capi --test threading --locked
+          cargo test -p morphit-cli --test cli --locked gpu
+
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          wasm-tools: "true"
+          cache-key: wasm
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Library builds for wasm32
+        run: |
+          cargo build -p morphit --target wasm32-unknown-unknown --no-default-features --features union --locked
+          cargo build -p morphit --target wasm32-unknown-unknown --no-default-features --features gpu,union --locked
+          cargo build -p morphit-robot --target wasm32-unknown-unknown --no-default-features --features gpu,union,zip --locked
+      - name: JavaScript API in Node
+        run: cargo test -p morphit-wasm --target wasm32-unknown-unknown --test node --locked
+      - uses: browser-actions/setup-chrome@v2
+        id: chrome
+        with:
+          install-chromedriver: true
+          install-dependencies: true
+      - name: JavaScript API in headless Chrome
+        env:
+          CHROMEDRIVER: ${{ steps.chrome.outputs.chromedriver-path }}
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+        run: |
+          # The runner image has its own Chrome; drive the one matching this
+          # chromedriver (wasm-bindgen-test-runner reads webdriver.json from
+          # the working directory, the crate's folder under cargo test).
+          printf '{ "goog:chromeOptions": { "binary": "%s" } }\n' "$CHROME" \
+            | tee webdriver.json crates/morphit-wasm/webdriver.json
+          cargo test -p morphit-wasm --target wasm32-unknown-unknown --test browser --locked
+
+  # Packages and verifies every publishable crate as crates.io would build it.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: package
+      - run: bash tools/ci/publish_crates.sh --dry-run

@@ -1,0 +1,87 @@
+name: Set up the MorphIt build
+description: Rust toolchain (rust-toolchain.toml), optional targets, Linux packages for Bevy, wasm tools and the cargo cache.
+
+inputs:
+  targets:
+    description: Extra rustup targets, space separated.
+    default: ""
+  linux-deps:
+    description: Install the Linux packages Bevy (MorphIt Studio) builds against.
+    default: "false"
+  wasm-tools:
+    description: Install wasm-bindgen-cli (the version in Cargo.lock) and binaryen's wasm-opt.
+    default: "false"
+  cache-key:
+    description: Shared key of the cargo cache.
+    default: default
+
+runs:
+  using: composite
+  steps:
+    # Local runs with act behind a TLS-intercepting proxy: tools/act.ps1
+    # mounts the proxy's CA at /tmp/extra-ca.crt. Never used on GitHub.
+    - name: Trust the local proxy CA (act only)
+      if: env.ACT && runner.os == 'Linux'
+      shell: bash
+      run: |
+        if [ -s /tmp/extra-ca.crt ]; then
+          sudo cp /tmp/extra-ca.crt /usr/local/share/ca-certificates/extra-ca.crt
+          sudo update-ca-certificates >/dev/null
+          bundle=/etc/ssl/certs/ca-certificates.crt
+          {
+            echo "CARGO_HTTP_CAINFO=$bundle"
+            echo "SSL_CERT_FILE=$bundle"
+            echo "NODE_EXTRA_CA_CERTS=/tmp/extra-ca.crt"
+          } >> "$GITHUB_ENV"
+        fi
+
+    - name: Rust toolchain
+      shell: bash
+      run: |
+        if ! command -v rustup >/dev/null 2>&1; then
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.cargo/bin:$PATH"
+        fi
+        rustup show active-toolchain || rustup toolchain install
+        if [ -n "${{ inputs.targets }}" ]; then
+          # shellcheck disable=SC2086
+          rustup target add ${{ inputs.targets }}
+        fi
+        rustc --version && cargo --version
+
+    - name: Linux packages for Bevy
+      if: inputs.linux-deps == 'true' && runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -yq --no-install-recommends \
+          pkg-config libasound2-dev libudev-dev libxkbcommon-dev libwayland-dev
+
+    - name: wasm-bindgen version
+      if: inputs.wasm-tools == 'true'
+      id: wbg
+      shell: bash
+      run: echo "version=$(sh tools/ci/wasm_bindgen_version.sh)" >> "$GITHUB_OUTPUT"
+
+    - name: wasm-bindgen-cli
+      if: inputs.wasm-tools == 'true'
+      uses: taiki-e/install-action@v2
+      with:
+        tool: wasm-bindgen@${{ steps.wbg.outputs.version }}
+
+    - name: binaryen (wasm-opt)
+      if: inputs.wasm-tools == 'true' && runner.os == 'Linux'
+      shell: bash
+      env:
+        BINARYEN: version_123
+      run: |
+        arch=$(uname -m)
+        curl -sSfL "https://github.com/WebAssembly/binaryen/releases/download/$BINARYEN/binaryen-$BINARYEN-$arch-linux.tar.gz" \
+          | tar -xz -C "$RUNNER_TEMP"
+        echo "$RUNNER_TEMP/binaryen-$BINARYEN/bin" >> "$GITHUB_PATH"
+
+    - name: Cargo cache
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: ${{ inputs.cache-key }}

@@ -1,0 +1,65 @@
+[package]
+name = "morphit-studio"
+description = "MorphIt Studio: interactive sphere packing of meshes and robots (Bevy + egui), native and in the browser"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version = "1.89"
+publish = false
+
+[features]
+default = ["gpu"]
+# MorphIt's GPU searches (wgpu natively, WebGPU in the browser).
+gpu = ["morphit/gpu", "morphit-robot/gpu"]
+# Faster native dev builds (links Bevy dynamically).
+dev = ["bevy/dynamic_linking"]
+# Render with WebGPU in the browser instead of WebGL2.
+webgpu = ["bevy/webgpu"]
+
+[dependencies]
+morphit = { workspace = true, default-features = false, features = ["union"] }
+morphit-robot = { workspace = true, default-features = false, features = ["union", "zip"] }
+bevy = { version = "0.18.1", default-features = false, features = [
+    "default_app",
+    "default_platform",
+    "3d_bevy_render",
+    "picking",
+] }
+bevy_egui = "0.39.1"
+bevy_editor_cam = "0.9.2"
+egui_plot = "0.34.1"
+rfd = "0.17"
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+web-time.workspace = true
+futures-lite = "2"
+pollster.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+morphit = { workspace = true, default-features = false, features = ["parallel"] }
+morphit-robot = { workspace = true, default-features = false, features = ["parallel"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
+js-sys.workspace = true
+web-sys = { workspace = true, features = [
+    "Window",
+    "Location",
+    "Request",
+    "Document",
+    "Element",
+    "HtmlElement",
+    "HtmlInputElement",
+    "HtmlAnchorElement",
+    "Blob",
+    "BlobPropertyBag",
+    "Url",
+    "File",
+    "FileList",
+    "Response",
+    "Event",
+] }
+getrandom = { workspace = true, features = ["wasm_js"] }
+console_error_panic_hook.workspace = true

@@ -1,0 +1,149 @@
+name: Release
+
+# A `v*` tag builds every artifact, creates the GitHub Release and publishes
+# the crates. Started by hand it builds the artifacts (downloadable from the
+# run) and publishes the crates only when asked.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      publish-crates:
+        description: Publish the crates to crates.io
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: version
+      - id: v
+        name: Workspace version (must match the tag)
+        run: |
+          version=$(bash tools/ci/version.sh)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match the workspace version $version"
+            exit 1
+          fi
+
+  native:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-22.04 }
+          - { target: aarch64-unknown-linux-gnu, os: ubuntu-22.04-arm }
+          - { target: aarch64-apple-darwin, os: macos-latest }
+          # Cross-compiled on Apple silicon: built and packaged, not run.
+          - { target: x86_64-apple-darwin, os: macos-latest, cross: true }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          targets: ${{ matrix.target }}
+          linux-deps: "true"
+          cache-key: release-${{ matrix.target }}
+      - name: Build
+        shell: bash
+        run: >
+          cargo build --release --locked --target ${{ matrix.target }}
+          -p morphit-cli -p morphit-studio -p morphit-server -p morphit-capi
+      - name: Package
+        shell: bash
+        run: bash tools/ci/package.sh ${{ matrix.target }} ${{ needs.version.outputs.version }} dist
+      - name: C package works with CMake (shared and static)
+        if: ${{ !matrix.cross }}
+        shell: bash
+        # The archive (.zip or .tar.gz), not its .sha256.
+        run: bash tools/ci/test_capi_package.sh dist/morphit-capi-*-${{ matrix.target }}.*[a-z]
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  web:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          wasm-tools: "true"
+          cache-key: web
+      - name: Build the studio and the wasm package
+        run: bash tools/build_pages.sh
+      - name: Package
+        env:
+          V: ${{ needs.version.outputs.version }}
+        run: |
+          mkdir -p dist
+          (cd target && rm -rf "morphit-studio-web-$V" && cp -r studio-dist "morphit-studio-web-$V" \
+            && zip -qr "../dist/morphit-studio-web-$V.zip" "morphit-studio-web-$V")
+          pkg="target/morphit-wasm-$V"
+          rm -rf "$pkg" && cp -r target/pages/wasm/pkg "$pkg"
+          cp crates/morphit-wasm/www/README.md README.md LICENSE "$pkg/"
+          tar -C target -czf "dist/morphit-wasm-$V.tar.gz" "morphit-wasm-$V"
+          cd dist && for f in *; do sha256sum "$f" > "$f.sha256"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web
+          path: dist/*
+          if-no-files-found: error
+
+  github-release:
+    if: github.ref_type == 'tag' && !github.event.act
+    needs: [ci, native, web]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "$GITHUB_REF_NAME" dist/*
+          --repo "$GITHUB_REPOSITORY" --title "MorphIt $GITHUB_REF_NAME" --generate-notes --verify-tag
+
+  crates:
+    if: github.ref_type == 'tag' || inputs.publish-crates
+    needs: [ci, native]
+    runs-on: ubuntu-latest
+    environment: crates-io
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: package
+      - name: Publish (dry run under act)
+        if: env.ACT
+        run: bash tools/ci/publish_crates.sh --dry-run
+      - name: Publish
+        if: ${{ !env.ACT }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: bash tools/ci/publish_crates.sh

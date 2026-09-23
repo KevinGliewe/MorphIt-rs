@@ -1,0 +1,8 @@
+[build]
+target = "index.html"
+dist = "../../target/studio-dist"
+public_url = "./"
+
+[serve]
+addresses = ["127.0.0.1"]
+port = 8080

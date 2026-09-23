@@ -1,0 +1,117 @@
+{
+ "random": {
+  "centers": [
+   [
+    0.0123456789,
+    -0.2,
+    0.33333333
+   ],
+   [
+    0.1,
+    0.2,
+    0.3
+   ],
+   [
+    -0.05,
+    4e-07,
+    0.07
+   ],
+   [
+    0.001,
+    0.002,
+    -0.003
+   ]
+  ],
+  "radii": [
+   0.01,
+   0.0200000001,
+   0.005,
+   1e-09
+  ],
+  "robot_name": "bunny",
+  "rgba": [
+   0.2,
+   0.6,
+   1.0,
+   1.0
+  ],
+  "centroid": [
+   0.015836419725000002,
+   0.0005001,
+   0.1750833325
+  ],
+  "urdf": "<?xml version=\"1.0\"?>\n<robot name=\"bunny\">\n  <!-- morphit:centroid 0.015836 0.000500 0.175083 -->\n  <material name=\"default_color\">\n    <color rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n  </material>\n  <link name=\"base\">\n    <inertial>\n      <mass value=\"0.001000\"/>\n      <inertia ixx=\"0.000010\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000010\" iyz=\"0.0\" izz=\"0.000010\"/>\n    </inertial>\n  </link>\n  <link name=\"sphere_0\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.010000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.010000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.109589\"/>\n      <inertia ixx=\"0.000004\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000004\" iyz=\"0.0\" izz=\"0.000004\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_0_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_0\"/>\n    <origin xyz=\"-0.003491 -0.200500 0.158250\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_1\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.020000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.020000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.876712\"/>\n      <inertia ixx=\"0.000140\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000140\" iyz=\"0.0\" izz=\"0.000140\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_1_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_1\"/>\n    <origin xyz=\"0.084164 0.199500 0.124917\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_2\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.005000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.005000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.013699\"/>\n      <inertia ixx=\"0.000000\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000000\" iyz=\"0.0\" izz=\"0.000000\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_2_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_2\"/>\n    <origin xyz=\"-0.065836 -0.000500 -0.105083\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_3\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.000001\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.000001\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.000000\"/>\n      <inertia ixx=\"0.000000\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000000\" iyz=\"0.0\" izz=\"0.000000\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_3_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_3\"/>\n    <origin xyz=\"-0.014836 0.001500 -0.178083\" rpy=\"0 0 0\"/>\n  </joint>\n</robot>\n",
+  "mjcf": "<?xml version=\"1.0\"?>\n<mujoco model=\"bunny\">\n  <option gravity=\"0 0 -9.8\"/>\n  <compiler inertiafromgeom=\"true\"/>\n  <worldbody>\n    <body name=\"base\" pos=\"0.015836 0.000500 0.175083\">\n      <freejoint name=\"base_free\"/>\n      <body name=\"sphere_0\" pos=\"-0.003491 -0.200500 0.158250\">\n        <geom name=\"sphere_0_geom\" type=\"sphere\" size=\"0.010000\" density=\"26162.456055\" rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n      </body>\n      <body name=\"sphere_1\" pos=\"0.084164 0.199500 0.124917\">\n        <geom name=\"sphere_1_geom\" type=\"sphere\" size=\"0.020000\" density=\"26162.456055\" rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n      </body>\n      <body name=\"sphere_2\" pos=\"-0.065836 -0.000500 -0.105083\">\n        <geom name=\"sphere_2_geom\" type=\"sphere\" size=\"0.005000\" density=\"26162.456055\" rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n      </body>\n      <body name=\"sphere_3\" pos=\"-0.014836 0.001500 -0.178083\">\n        <geom name=\"sphere_3_geom\" type=\"sphere\" size=\"0.000001\" density=\"26162.456055\" rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n      </body>\n    </body>\n  </worldbody>\n</mujoco>\n",
+  "urdf_anchored": "<?xml version=\"1.0\"?>\n<robot name=\"bunny\">\n  <!-- morphit:centroid 0.015836 0.000500 0.175083 -->\n  <material name=\"default_color\">\n    <color rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n  </material>\n  <link name=\"world\"/>\n  <link name=\"base\">\n    <inertial>\n      <mass value=\"0.001000\"/>\n      <inertia ixx=\"0.000010\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000010\" iyz=\"0.0\" izz=\"0.000010\"/>\n    </inertial>\n  </link>\n  <joint name=\"world_to_base\" type=\"fixed\">\n    <parent link=\"world\"/>\n    <child link=\"base\"/>\n    <origin xyz=\"0.015836 0.000500 0.175083\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_0\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.010000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.010000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.109589\"/>\n      <inertia ixx=\"0.000004\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000004\" iyz=\"0.0\" izz=\"0.000004\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_0_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_0\"/>\n    <origin xyz=\"-0.003491 -0.200500 0.158250\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_1\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.020000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.020000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.876712\"/>\n      <inertia ixx=\"0.000140\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000140\" iyz=\"0.0\" izz=\"0.000140\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_1_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_1\"/>\n    <origin xyz=\"0.084164 0.199500 0.124917\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_2\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.005000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.005000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.013699\"/>\n      <inertia ixx=\"0.000000\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000000\" iyz=\"0.0\" izz=\"0.000000\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_2_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_2\"/>\n    <origin xyz=\"-0.065836 -0.000500 -0.105083\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_3\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.000001\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.000001\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.000000\"/>\n      <inertia ixx=\"0.000000\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000000\" iyz=\"0.0\" izz=\"0.000000\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_3_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_3\"/>\n    <origin xyz=\"-0.014836 0.001500 -0.178083\" rpy=\"0 0 0\"/>\n  </joint>\n</robot>\n",
+  "mjcf_anchored": "<?xml version=\"1.0\"?>\n<mujoco model=\"bunny\">\n  <option gravity=\"0 0 -9.8\"/>\n  <compiler inertiafromgeom=\"true\"/>\n  <worldbody>\n    <body name=\"base\" pos=\"0.015836 0.000500 0.175083\">\n      <body name=\"sphere_0\" pos=\"-0.003491 -0.200500 0.158250\">\n        <geom name=\"sphere_0_geom\" type=\"sphere\" size=\"0.010000\" density=\"26162.456055\" rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n      </body>\n      <body name=\"sphere_1\" pos=\"0.084164 0.199500 0.124917\">\n        <geom name=\"sphere_1_geom\" type=\"sphere\" size=\"0.020000\" density=\"26162.456055\" rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n      </body>\n      <body name=\"sphere_2\" pos=\"-0.065836 -0.000500 -0.105083\">\n        <geom name=\"sphere_2_geom\" type=\"sphere\" size=\"0.005000\" density=\"26162.456055\" rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n      </body>\n      <body name=\"sphere_3\" pos=\"-0.014836 0.001500 -0.178083\">\n        <geom name=\"sphere_3_geom\" type=\"sphere\" size=\"0.000001\" density=\"26162.456055\" rgba=\"0.200000 0.600000 1.000000 1.000000\"/>\n      </body>\n    </body>\n  </worldbody>\n</mujoco>\n"
+ },
+ "short_radii": {
+  "centers": [
+   [
+    1.0,
+    2.0,
+    3.0
+   ],
+   [
+    -1.0,
+    -2.0,
+    -3.5
+   ],
+   [
+    0.5,
+    0.25,
+    0.125
+   ]
+  ],
+  "radii": [
+   0.3,
+   0.1
+  ],
+  "robot_name": "object",
+  "rgba": [
+   1.0,
+   0.0,
+   0.2,
+   1.0
+  ],
+  "centroid": [
+   0.16666666666666666,
+   0.08333333333333333,
+   -0.125
+  ],
+  "urdf": "<?xml version=\"1.0\"?>\n<robot name=\"object\">\n  <!-- morphit:centroid 0.166667 0.083333 -0.125000 -->\n  <material name=\"default_color\">\n    <color rgba=\"1.000000 0.000000 0.200000 1.000000\"/>\n  </material>\n  <link name=\"base\">\n    <inertial>\n      <mass value=\"0.001000\"/>\n      <inertia ixx=\"0.000010\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000010\" iyz=\"0.0\" izz=\"0.000010\"/>\n    </inertial>\n  </link>\n  <link name=\"sphere_0\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.300000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.300000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.931034\"/>\n      <inertia ixx=\"0.033517\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.033517\" iyz=\"0.0\" izz=\"0.033517\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_0_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_0\"/>\n    <origin xyz=\"0.833333 1.916667 3.125000\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_1\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.100000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.100000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.034483\"/>\n      <inertia ixx=\"0.000138\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000138\" iyz=\"0.0\" izz=\"0.000138\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_1_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_1\"/>\n    <origin xyz=\"-1.166667 -2.083333 -3.375000\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_2\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.100000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.100000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.034483\"/>\n      <inertia ixx=\"0.000138\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000138\" iyz=\"0.0\" izz=\"0.000138\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_2_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_2\"/>\n    <origin xyz=\"0.333333 0.166667 0.250000\" rpy=\"0 0 0\"/>\n  </joint>\n</robot>\n",
+  "mjcf": "<?xml version=\"1.0\"?>\n<mujoco model=\"object\">\n  <option gravity=\"0 0 -9.8\"/>\n  <compiler inertiafromgeom=\"true\"/>\n  <worldbody>\n    <body name=\"base\" pos=\"0.166667 0.083333 -0.125000\">\n      <freejoint name=\"base_free\"/>\n      <body name=\"sphere_0\" pos=\"0.833333 1.916667 3.125000\">\n        <geom name=\"sphere_0_geom\" type=\"sphere\" size=\"0.300000\" density=\"8.232152\" rgba=\"1.000000 0.000000 0.200000 1.000000\"/>\n      </body>\n      <body name=\"sphere_1\" pos=\"-1.166667 -2.083333 -3.375000\">\n        <geom name=\"sphere_1_geom\" type=\"sphere\" size=\"0.100000\" density=\"8.232152\" rgba=\"1.000000 0.000000 0.200000 1.000000\"/>\n      </body>\n      <body name=\"sphere_2\" pos=\"0.333333 0.166667 0.250000\">\n        <geom name=\"sphere_2_geom\" type=\"sphere\" size=\"0.100000\" density=\"8.232152\" rgba=\"1.000000 0.000000 0.200000 1.000000\"/>\n      </body>\n    </body>\n  </worldbody>\n</mujoco>\n",
+  "urdf_anchored": "<?xml version=\"1.0\"?>\n<robot name=\"object\">\n  <!-- morphit:centroid 0.166667 0.083333 -0.125000 -->\n  <material name=\"default_color\">\n    <color rgba=\"1.000000 0.000000 0.200000 1.000000\"/>\n  </material>\n  <link name=\"world\"/>\n  <link name=\"base\">\n    <inertial>\n      <mass value=\"0.001000\"/>\n      <inertia ixx=\"0.000010\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000010\" iyz=\"0.0\" izz=\"0.000010\"/>\n    </inertial>\n  </link>\n  <joint name=\"world_to_base\" type=\"fixed\">\n    <parent link=\"world\"/>\n    <child link=\"base\"/>\n    <origin xyz=\"0.166667 0.083333 -0.125000\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_0\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.300000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.300000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.931034\"/>\n      <inertia ixx=\"0.033517\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.033517\" iyz=\"0.0\" izz=\"0.033517\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_0_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_0\"/>\n    <origin xyz=\"0.833333 1.916667 3.125000\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_1\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.100000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.100000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.034483\"/>\n      <inertia ixx=\"0.000138\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000138\" iyz=\"0.0\" izz=\"0.000138\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_1_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_1\"/>\n    <origin xyz=\"-1.166667 -2.083333 -3.375000\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_2\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.100000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.100000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"0.034483\"/>\n      <inertia ixx=\"0.000138\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000138\" iyz=\"0.0\" izz=\"0.000138\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_2_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_2\"/>\n    <origin xyz=\"0.333333 0.166667 0.250000\" rpy=\"0 0 0\"/>\n  </joint>\n</robot>\n",
+  "mjcf_anchored": "<?xml version=\"1.0\"?>\n<mujoco model=\"object\">\n  <option gravity=\"0 0 -9.8\"/>\n  <compiler inertiafromgeom=\"true\"/>\n  <worldbody>\n    <body name=\"base\" pos=\"0.166667 0.083333 -0.125000\">\n      <body name=\"sphere_0\" pos=\"0.833333 1.916667 3.125000\">\n        <geom name=\"sphere_0_geom\" type=\"sphere\" size=\"0.300000\" density=\"8.232152\" rgba=\"1.000000 0.000000 0.200000 1.000000\"/>\n      </body>\n      <body name=\"sphere_1\" pos=\"-1.166667 -2.083333 -3.375000\">\n        <geom name=\"sphere_1_geom\" type=\"sphere\" size=\"0.100000\" density=\"8.232152\" rgba=\"1.000000 0.000000 0.200000 1.000000\"/>\n      </body>\n      <body name=\"sphere_2\" pos=\"0.333333 0.166667 0.250000\">\n        <geom name=\"sphere_2_geom\" type=\"sphere\" size=\"0.100000\" density=\"8.232152\" rgba=\"1.000000 0.000000 0.200000 1.000000\"/>\n      </body>\n    </body>\n  </worldbody>\n</mujoco>\n"
+ },
+ "long_radii": {
+  "centers": [
+   [
+    0.0,
+    0.0,
+    0.0
+   ]
+  ],
+  "radii": [
+   0.25,
+   0.5,
+   0.75
+  ],
+  "robot_name": "single",
+  "rgba": [
+   0.0,
+   0.0,
+   0.0,
+   1.0
+  ],
+  "centroid": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "urdf": "<?xml version=\"1.0\"?>\n<robot name=\"single\">\n  <!-- morphit:centroid 0.000000 0.000000 0.000000 -->\n  <material name=\"default_color\">\n    <color rgba=\"0.000000 0.000000 0.000000 1.000000\"/>\n  </material>\n  <link name=\"base\">\n    <inertial>\n      <mass value=\"0.001000\"/>\n      <inertia ixx=\"0.000010\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000010\" iyz=\"0.0\" izz=\"0.000010\"/>\n    </inertial>\n  </link>\n  <link name=\"sphere_0\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.250000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.250000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"1.000000\"/>\n      <inertia ixx=\"0.025000\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.025000\" iyz=\"0.0\" izz=\"0.025000\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_0_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_0\"/>\n    <origin xyz=\"0.000000 0.000000 0.000000\" rpy=\"0 0 0\"/>\n  </joint>\n</robot>\n",
+  "mjcf": "<?xml version=\"1.0\"?>\n<mujoco model=\"single\">\n  <option gravity=\"0 0 -9.8\"/>\n  <compiler inertiafromgeom=\"true\"/>\n  <worldbody>\n    <body name=\"base\" pos=\"0.000000 0.000000 0.000000\">\n      <freejoint name=\"base_free\"/>\n      <body name=\"sphere_0\" pos=\"0.000000 0.000000 0.000000\">\n        <geom name=\"sphere_0_geom\" type=\"sphere\" size=\"0.250000\" density=\"15.278875\" rgba=\"0.000000 0.000000 0.000000 1.000000\"/>\n      </body>\n    </body>\n  </worldbody>\n</mujoco>\n",
+  "urdf_anchored": "<?xml version=\"1.0\"?>\n<robot name=\"single\">\n  <!-- morphit:centroid 0.000000 0.000000 0.000000 -->\n  <material name=\"default_color\">\n    <color rgba=\"0.000000 0.000000 0.000000 1.000000\"/>\n  </material>\n  <link name=\"world\"/>\n  <link name=\"base\">\n    <inertial>\n      <mass value=\"0.001000\"/>\n      <inertia ixx=\"0.000010\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.000010\" iyz=\"0.0\" izz=\"0.000010\"/>\n    </inertial>\n  </link>\n  <joint name=\"world_to_base\" type=\"fixed\">\n    <parent link=\"world\"/>\n    <child link=\"base\"/>\n    <origin xyz=\"0.000000 0.000000 0.000000\" rpy=\"0 0 0\"/>\n  </joint>\n  <link name=\"sphere_0\">\n    <visual>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.250000\"/></geometry>\n      <material name=\"default_color\"/>\n    </visual>\n    <collision>\n      <origin xyz=\"0 0 0\" rpy=\"0 0 0\"/>\n      <geometry><sphere radius=\"0.250000\"/></geometry>\n    </collision>\n    <inertial>\n      <mass value=\"1.000000\"/>\n      <inertia ixx=\"0.025000\" ixy=\"0.0\" ixz=\"0.0\" iyy=\"0.025000\" iyz=\"0.0\" izz=\"0.025000\"/>\n    </inertial>\n  </link>\n  <joint name=\"sphere_0_fixed\" type=\"fixed\">\n    <parent link=\"base\"/>\n    <child link=\"sphere_0\"/>\n    <origin xyz=\"0.000000 0.000000 0.000000\" rpy=\"0 0 0\"/>\n  </joint>\n</robot>\n",
+  "mjcf_anchored": "<?xml version=\"1.0\"?>\n<mujoco model=\"single\">\n  <option gravity=\"0 0 -9.8\"/>\n  <compiler inertiafromgeom=\"true\"/>\n  <worldbody>\n    <body name=\"base\" pos=\"0.000000 0.000000 0.000000\">\n      <body name=\"sphere_0\" pos=\"0.000000 0.000000 0.000000\">\n        <geom name=\"sphere_0_geom\" type=\"sphere\" size=\"0.250000\" density=\"15.278875\" rgba=\"0.000000 0.000000 0.000000 1.000000\"/>\n      </body>\n    </body>\n  </worldbody>\n</mujoco>\n"
+ }
+}

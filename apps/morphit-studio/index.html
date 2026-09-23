@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MorphIt Studio</title>
+  <link rel="icon" href="data:,">
+  <style>
+    html, body { margin: 0; height: 100%; background: #1f2128; overflow: hidden; }
+    #morphit-canvas { width: 100%; height: 100%; display: block; outline: none; }
+    #loading { position: fixed; inset: 0; display: grid; place-items: center; color: #c8ccd6;
+               font: 15px system-ui, sans-serif; pointer-events: none; }
+  </style>
+  <!-- Trunk: build the app with the wasm-release profile and ship the example library. -->
+  <link data-trunk rel="rust" data-bin="morphit-studio" data-cargo-profile="wasm-release" data-wasm-opt="z" data-wasm-opt-params="--enable-bulk-memory --enable-nontrapping-float-to-int" />
+  <link data-trunk rel="copy-dir" href="../../web/examples" />
+</head>
+<body>
+  <div id="loading">Loading MorphIt Studio…</div>
+  <canvas id="morphit-canvas"></canvas>
+  <script>
+    // Hide the loading note once Bevy has sized the canvas.
+    new ResizeObserver((_, o) => { document.getElementById("loading").remove(); o.disconnect(); })
+      .observe(document.getElementById("morphit-canvas"));
+  </script>
+</body>
+</html>

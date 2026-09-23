@@ -1,0 +1,4026 @@
+{
+ "kinova": {
+  "folder": "kinova_description",
+  "urdf": "m1n4s200_standalone.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "urdf/m1n4s200_standalone.urdf",
+   "urdfs_in_folder": [
+    "urdf/m1n4s200_standalone.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "m1n4s200_link_base",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/base.stl",
+     "mesh_filename": "package://kinova_description/meshes/base.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "m1n4s200_link_1",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/shoulder.stl",
+     "mesh_filename": "package://kinova_description/meshes/shoulder.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "m1n4s200_link_2",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/arm_mico.stl",
+     "mesh_filename": "package://kinova_description/meshes/arm_mico.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "m1n4s200_link_3",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/forearm_mico.stl",
+     "mesh_filename": "package://kinova_description/meshes/forearm_mico.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "m1n4s200_link_4",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/hand_2finger.stl",
+     "mesh_filename": "package://kinova_description/meshes/hand_2finger.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "m1n4s200_link_finger_1",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/finger_proximal.stl",
+     "mesh_filename": "package://kinova_description/meshes/finger_proximal.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "m1n4s200_link_finger_tip_1",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/finger_distal.stl",
+     "mesh_filename": "package://kinova_description/meshes/finger_distal.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "m1n4s200_link_finger_2",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/finger_proximal.stl",
+     "mesh_filename": "package://kinova_description/meshes/finger_proximal.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "m1n4s200_link_finger_tip_2",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/finger_distal.stl",
+     "mesh_filename": "package://kinova_description/meshes/finger_distal.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    }
+   ],
+   "visual_count": 13,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "panda": {
+  "folder": "franka_panda",
+  "urdf": "panda.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "panda.urdf",
+   "urdfs_in_folder": [
+    "panda.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "panda_link0",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/link0.stl",
+     "mesh_filename": "meshes/collision/link0.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_link1",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/link1.stl",
+     "mesh_filename": "meshes/collision/link1.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_link2",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/link2.stl",
+     "mesh_filename": "meshes/collision/link2.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_link3",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/link3.stl",
+     "mesh_filename": "meshes/collision/link3.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_link4",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/link4.stl",
+     "mesh_filename": "meshes/collision/link4.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_link5",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/link5.stl",
+     "mesh_filename": "meshes/collision/link5.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_link6",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/link6.stl",
+     "mesh_filename": "meshes/collision/link6.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_link7",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/link7.stl",
+     "mesh_filename": "meshes/collision/link7.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_hand",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/hand.stl",
+     "mesh_filename": "meshes/collision/hand.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_leftfinger",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/finger.stl",
+     "mesh_filename": "meshes/collision/finger.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "panda_rightfinger",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/collision/finger.stl",
+     "mesh_filename": "meshes/collision/finger.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      3.14159265359
+     ],
+     "warning": null
+    }
+   ],
+   "visual_count": 11,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "ur5": {
+  "folder": "ur5",
+  "urdf": "ur5_gripper.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "ur5_gripper.urdf",
+   "urdfs_in_folder": [
+    "ur5_gripper.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "base_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/ur5/collision/base.stl",
+     "mesh_filename": "meshes/ur5/collision/base.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "shoulder_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/ur5/collision/shoulder.stl",
+     "mesh_filename": "meshes/ur5/collision/shoulder.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "upper_arm_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/ur5/collision/upperarm.stl",
+     "mesh_filename": "meshes/ur5/collision/upperarm.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "forearm_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/ur5/collision/forearm.stl",
+     "mesh_filename": "meshes/ur5/collision/forearm.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "wrist_1_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/ur5/collision/wrist1.stl",
+     "mesh_filename": "meshes/ur5/collision/wrist1.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "wrist_2_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/ur5/collision/wrist2.stl",
+     "mesh_filename": "meshes/ur5/collision/wrist2.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "wrist_3_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/ur5/collision/wrist3.stl",
+     "mesh_filename": "meshes/ur5/collision/wrist3.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "ee_link",
+     "collision_index": 0,
+     "geometry_type": "box",
+     "action": "remove-primitive",
+     "mesh_path": null,
+     "mesh_filename": null,
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      -0.01,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": "<box> collision will be removed. Mesh collisions are the source of truth; redundant primitives are stripped."
+    },
+    {
+     "link_name": "tool0",
+     "collision_index": 0,
+     "geometry_type": "box",
+     "action": "remove-primitive",
+     "mesh_path": null,
+     "mesh_filename": null,
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.03,
+      0.0,
+      0.035
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": "<box> collision will be removed. Mesh collisions are the source of truth; redundant primitives are stripped."
+    },
+    {
+     "link_name": "tool0",
+     "collision_index": 1,
+     "geometry_type": "box",
+     "action": "remove-primitive",
+     "mesh_path": null,
+     "mesh_filename": null,
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      -0.03,
+      0.0,
+      0.035
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": "<box> collision will be removed. Mesh collisions are the source of truth; redundant primitives are stripped."
+    },
+    {
+     "link_name": "tool0",
+     "collision_index": 2,
+     "geometry_type": "box",
+     "action": "remove-primitive",
+     "mesh_path": null,
+     "mesh_filename": null,
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.01
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": "<box> collision will be removed. Mesh collisions are the source of truth; redundant primitives are stripped."
+    }
+   ],
+   "visual_count": 7,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "kuka_iiwa": {
+  "folder": "kuka_iiwa",
+  "urdf": "model.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "model.urdf",
+   "urdfs_in_folder": [
+    "model.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "lbr_iiwa_link_0",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/link_0.stl",
+     "mesh_filename": "meshes/link_0.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "lbr_iiwa_link_1",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/link_1.stl",
+     "mesh_filename": "meshes/link_1.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "lbr_iiwa_link_2",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/link_2.stl",
+     "mesh_filename": "meshes/link_2.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "lbr_iiwa_link_3",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/link_3.stl",
+     "mesh_filename": "meshes/link_3.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "lbr_iiwa_link_4",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/link_4.stl",
+     "mesh_filename": "meshes/link_4.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "lbr_iiwa_link_5",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/link_5.stl",
+     "mesh_filename": "meshes/link_5.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "lbr_iiwa_link_6",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/link_6.stl",
+     "mesh_filename": "meshes/link_6.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "lbr_iiwa_link_7",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/link_7.stl",
+     "mesh_filename": "meshes/link_7.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    }
+   ],
+   "visual_count": 8,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "yumi": {
+  "folder": "yumi",
+  "urdf": "yumi.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "yumi.urdf",
+   "urdfs_in_folder": [
+    "yumi.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "yumi_body",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/body.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/body.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_1_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_1.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_1.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_2_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_2.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_2.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_3_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_3.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_3.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_4_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_4.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_4.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_5_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_5.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_5.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_6_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_6.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_6.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_7_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_7.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_7.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_1_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_1.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_1.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_2_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_2.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_2.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_3_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_3.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_3.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_4_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_4.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_4.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_5_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_5.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_5.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_6_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_6.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_6.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "yumi_link_7_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/coarse/link_7.stl",
+     "mesh_filename": "package://yumi/meshes/coarse/link_7.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "gripper_r_base",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/gripper/coarse/base.stl",
+     "mesh_filename": "package://yumi/meshes/gripper/coarse/base.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "gripper_r_finger_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/gripper/coarse/finger.stl",
+     "mesh_filename": "package://yumi/meshes/gripper/coarse/finger.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "gripper_r_finger_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/gripper/coarse/finger.stl",
+     "mesh_filename": "package://yumi/meshes/gripper/coarse/finger.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "gripper_l_base",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/gripper/coarse/base.stl",
+     "mesh_filename": "package://yumi/meshes/gripper/coarse/base.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "gripper_l_finger_r",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/gripper/coarse/finger.stl",
+     "mesh_filename": "package://yumi/meshes/gripper/coarse/finger.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "gripper_l_finger_l",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/gripper/coarse/finger.stl",
+     "mesh_filename": "package://yumi/meshes/gripper/coarse/finger.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    }
+   ],
+   "visual_count": 21,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "spot": {
+  "folder": "spot",
+  "urdf": "spot.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "urdf/spot.urdf",
+   "urdfs_in_folder": [
+    "urdf/spot.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "body",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/body_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/body_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "front_left_hip",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/front_left_hip_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/front_left_hip_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "front_left_upper_leg",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/front_left_upper_leg_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/front_left_upper_leg_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "front_left_lower_leg",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/front_left_lower_leg_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/front_left_lower_leg_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "front_right_hip",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/front_right_hip_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/front_right_hip_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "front_right_upper_leg",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/front_right_upper_leg_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/front_right_upper_leg_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "front_right_lower_leg",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/front_right_lower_leg_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/front_right_lower_leg_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rear_left_hip",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/rear_left_hip_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/rear_left_hip_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rear_left_upper_leg",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/rear_left_upper_leg_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/rear_left_upper_leg_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rear_left_lower_leg",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/rear_left_lower_leg_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/rear_left_lower_leg_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rear_right_hip",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/rear_right_hip_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/rear_right_hip_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rear_right_upper_leg",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/rear_right_upper_leg_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/rear_right_upper_leg_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rear_right_lower_leg",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/rear_right_lower_leg_collision.stl",
+     "mesh_filename": "package://spot_description/meshes/rear_right_lower_leg_collision.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    }
+   ],
+   "visual_count": 13,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "fetch": {
+  "folder": "fetch",
+  "urdf": "fetch.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "robots/fetch.urdf",
+   "urdfs_in_folder": [
+    "robots/fetch.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "base_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/base_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/base_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "torso_lift_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/torso_lift_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/torso_lift_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "shoulder_pan_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/shoulder_pan_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/shoulder_pan_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "shoulder_lift_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/shoulder_lift_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/shoulder_lift_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "upperarm_roll_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/upperarm_roll_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/upperarm_roll_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "elbow_flex_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/elbow_flex_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/elbow_flex_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "forearm_roll_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/forearm_roll_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/forearm_roll_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "wrist_flex_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/wrist_flex_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/wrist_flex_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "wrist_roll_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/wrist_roll_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/wrist_roll_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "gripper_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/gripper_link.STL",
+     "mesh_filename": "package://fetch_description/meshes/gripper_link.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "r_gripper_finger_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/r_gripper_finger_link.STL",
+     "mesh_filename": "package://fetch_description/meshes/r_gripper_finger_link.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.101425,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "l_gripper_finger_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/l_gripper_finger_link.STL",
+     "mesh_filename": "package://fetch_description/meshes/l_gripper_finger_link.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      -0.101425,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "bellows_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/bellows_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/bellows_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "bellows_link2",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/bellows_link_collision.STL",
+     "mesh_filename": "package://fetch_description/meshes/bellows_link_collision.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "estop_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/estop_link.STL",
+     "mesh_filename": "package://fetch_description/meshes/estop_link.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "laser_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/laser_link.STL",
+     "mesh_filename": "package://fetch_description/meshes/laser_link.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "torso_fixed_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/torso_fixed_link.STL",
+     "mesh_filename": "package://fetch_description/meshes/torso_fixed_link.STL",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    }
+   ],
+   "visual_count": 17,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "valkyrie": {
+  "folder": "valkyrie",
+  "urdf": "valkyrie_A.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "model/robots/valkyrie_A.urdf",
+   "urdfs_in_folder": [
+    "model/robots/valkyrie_A.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "pelvis",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/pelvis/pelvis.dae",
+     "mesh_filename": "package://val_description/model/meshes/pelvis/pelvis.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "torsoYawLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/torso/torsoyaw.dae",
+     "mesh_filename": "package://val_description/model/meshes/torso/torsoyaw.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "torsoPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/torso/torsopitch.dae",
+     "mesh_filename": "package://val_description/model/meshes/torso/torsopitch.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "torso",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/torso/torso.dae",
+     "mesh_filename": "package://val_description/model/meshes/torso/torso.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "lowerNeckPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/head/neckj1.dae",
+     "mesh_filename": "package://val_description/model/meshes/head/neckj1.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "neckYawLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/head/neckj2.dae",
+     "mesh_filename": "package://val_description/model/meshes/head/neckj2.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "upperNeckPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/head/head_multisense_no_visor.dae",
+     "mesh_filename": "package://val_description/model/meshes/head/head_multisense_no_visor.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightShoulderPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj1_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj1_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightShoulderRollLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj2_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj2_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightShoulderYawLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj3_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj3_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightElbowPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj4_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj4_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightForearmLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj5_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj5_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightWristRollLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj6_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj6_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightPalm",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/palm_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/palm_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightThumbRollLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/thumbj1_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/thumbj1_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightThumbPitch1Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/thumbj2_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/thumbj2_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightThumbPitch2Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/thumbj3_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/thumbj3_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightThumbPitch3Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/thumbj4_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/thumbj4_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightIndexFingerPitch1Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/indexj1_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/indexj1_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightIndexFingerPitch2Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/indexj2_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/indexj2_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightIndexFingerPitch3Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/indexj3_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/indexj3_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightMiddleFingerPitch1Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/middlej1_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/middlej1_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightMiddleFingerPitch2Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/middlej2_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/middlej2_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightMiddleFingerPitch3Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/middlej3_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/middlej3_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightPinkyPitch1Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/pinkyj1_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/pinkyj1_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightPinkyPitch2Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/pinkyj2_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/pinkyj2_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightPinkyPitch3Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/pinkyj3_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/pinkyj3_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftShoulderPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj1_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj1_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftShoulderRollLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj2_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj2_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftShoulderYawLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj3_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj3_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftElbowPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj4_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj4_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftForearmLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj5_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj5_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftWristRollLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/aj6_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/aj6_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftPalm",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/arms/palm_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/arms/palm_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftThumbRollLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/thumbj1_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/thumbj1_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftThumbPitch1Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/thumbj2_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/thumbj2_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftThumbPitch2Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/thumbj3_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/thumbj3_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftThumbPitch3Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/thumbj4_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/thumbj4_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftIndexFingerPitch1Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/indexj1_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/indexj1_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftIndexFingerPitch2Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/indexj2_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/indexj2_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftIndexFingerPitch3Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/indexj3_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/indexj3_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftMiddleFingerPitch1Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/middlej1_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/middlej1_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftMiddleFingerPitch2Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/middlej2_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/middlej2_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftMiddleFingerPitch3Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/middlej3_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/middlej3_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftPinkyPitch1Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/pinkyj1_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/pinkyj1_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftPinkyPitch2Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/pinkyj2_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/pinkyj2_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftPinkyPitch3Link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/fingers/pinkyj3_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/fingers/pinkyj3_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightHipYawLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/legs/lj1_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/legs/lj1_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightHipPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/legs/lj3_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/legs/lj3_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightKneePitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/legs/lj4_right.dae",
+     "mesh_filename": "package://val_description/model/meshes/legs/lj4_right.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightAnklePitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/legs/lj5.dae",
+     "mesh_filename": "package://val_description/model/meshes/legs/lj5.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "rightFoot",
+     "collision_index": 0,
+     "geometry_type": "box",
+     "action": "remove-primitive",
+     "mesh_path": null,
+     "mesh_filename": null,
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.045,
+      0.0,
+      -0.056
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": "<box> collision will be removed. Mesh collisions are the source of truth; redundant primitives are stripped."
+    },
+    {
+     "link_name": "leftHipYawLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/legs/lj1_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/legs/lj1_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftHipPitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/legs/lj3_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/legs/lj3_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftKneePitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/legs/lj4_left.dae",
+     "mesh_filename": "package://val_description/model/meshes/legs/lj4_left.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftAnklePitchLink",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "model/meshes/legs/lj5.dae",
+     "mesh_filename": "package://val_description/model/meshes/legs/lj5.dae",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "leftFoot",
+     "collision_index": 0,
+     "geometry_type": "box",
+     "action": "remove-primitive",
+     "mesh_path": null,
+     "mesh_filename": null,
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.045,
+      0.0,
+      -0.056
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": "<box> collision will be removed. Mesh collisions are the source of truth; redundant primitives are stripped."
+    }
+   ],
+   "visual_count": 57,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "fanuc_m20ia": {
+  "folder": "fanuc_m20ia",
+  "urdf": "m20ia10l.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "urdf/m20ia10l.urdf",
+   "urdfs_in_folder": [
+    "urdf/m20ia10l.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "base_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/m20ia10l/collision/base_link.stl",
+     "mesh_filename": "package://fanuc_m20ia_support/meshes/m20ia10l/collision/base_link.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_1",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/m20ia10l/collision/link_1.stl",
+     "mesh_filename": "package://fanuc_m20ia_support/meshes/m20ia10l/collision/link_1.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_2",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/m20ia10l/collision/link_2.stl",
+     "mesh_filename": "package://fanuc_m20ia_support/meshes/m20ia10l/collision/link_2.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_3",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/m20ia10l/collision/link_3.stl",
+     "mesh_filename": "package://fanuc_m20ia_support/meshes/m20ia10l/collision/link_3.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_4",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/m20ia10l/collision/link_4.stl",
+     "mesh_filename": "package://fanuc_m20ia_support/meshes/m20ia10l/collision/link_4.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_5",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/m20ia10l/collision/link_5.stl",
+     "mesh_filename": "package://fanuc_m20ia_support/meshes/m20ia10l/collision/link_5.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_6",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/m20ia10l/collision/link_6.stl",
+     "mesh_filename": "package://fanuc_m20ia_support/meshes/m20ia10l/collision/link_6.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    }
+   ],
+   "visual_count": 7,
+   "warnings": [],
+   "errors": []
+  }
+ },
+ "abb_irb2400": {
+  "folder": "abb_irb2400",
+  "urdf": "irb2400.urdf",
+  "report": {
+   "robot_dir": ".",
+   "urdf_path": "urdf/irb2400.urdf",
+   "urdfs_in_folder": [
+    "urdf/irb2400.urdf"
+   ],
+   "collisions": [
+    {
+     "link_name": "base_link",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/irb2400/collision/base_link.stl",
+     "mesh_filename": "package://collision/base_link.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_1",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/irb2400/collision/link_1.stl",
+     "mesh_filename": "package://collision/link_1.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_2",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/irb2400/collision/link_2_whole.stl",
+     "mesh_filename": "package://collision/link_2_whole.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_3",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/irb2400/collision/link_3.stl",
+     "mesh_filename": "package://collision/link_3.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_4",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/irb2400/collision/link_4.stl",
+     "mesh_filename": "package://collision/link_4.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_5",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/irb2400/collision/link_5.stl",
+     "mesh_filename": "package://collision/link_5.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    },
+    {
+     "link_name": "link_6",
+     "collision_index": 0,
+     "geometry_type": "mesh",
+     "action": "pack",
+     "mesh_path": "meshes/irb2400/collision/link_6.stl",
+     "mesh_filename": "package://collision/link_6.stl",
+     "mesh_scale": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "origin_xyz": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "origin_rpy": [
+      0.0,
+      0.0,
+      0.0
+     ],
+     "warning": null
+    }
+   ],
+   "visual_count": 7,
+   "warnings": [],
+   "errors": []
+  }
+ }
+}

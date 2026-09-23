@@ -1,0 +1,4 @@
+{
+  "act": true,
+  "pull_request": { "head": { "ref": "feature" }, "base": { "ref": "master" } }
+}

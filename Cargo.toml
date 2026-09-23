@@ -1,0 +1,96 @@
+[workspace]
+members = [
+    "crates/morphit",
+    "crates/morphit-capi",
+    "crates/morphit-cli",
+    "crates/morphit-robot",
+    "crates/morphit-server",
+    "crates/morphit-wasm",
+    "apps/morphit-studio",
+]
+# `cargo build`/`cargo test` without `-p` skip the (heavy) Bevy app.
+default-members = [
+    "crates/morphit",
+    "crates/morphit-capi",
+    "crates/morphit-cli",
+    "crates/morphit-robot",
+    "crates/morphit-server",
+    "crates/morphit-wasm",
+]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+rust-version = "1.85"
+repository = "https://github.com/KevinGliewe/MorphIt-rs"
+homepage = "https://kevingliewe.github.io/MorphIt-rs/"
+readme = "README.md"
+keywords = ["sphere-packing", "collision", "robotics", "urdf", "mesh"]
+categories = ["science::robotics", "graphics", "simulation"]
+
+[workspace.dependencies]
+morphit = { path = "crates/morphit", version = "0.1.0", default-features = false }
+morphit-robot = { path = "crates/morphit-robot", version = "0.1.0", default-features = false }
+glam = "0.33"
+rand = "0.9"
+rand_chacha = "0.9"
+rand_distr = "0.5"
+rayon = "1.12"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+thiserror = "2"
+tobj = { version = "4", features = ["use_f64"] }
+stl_io = "0.11"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "env-filter"] }
+clap = { version = "4.6", features = ["derive", "env"] }
+cbindgen = "0.29"
+assert_cmd = "2"
+tempfile = "3"
+wgpu = { version = "30", default-features = false, features = ["std", "wgsl", "vulkan", "dx12", "metal", "webgpu", "fragile-send-sync-non-atomic-wasm"] }
+pollster = "1"
+bytemuck = { version = "1", features = ["derive"] }
+manifold-rust = { version = "0.13", default-features = false }
+roxmltree = "0.21"
+axum = { version = "0.8", features = ["multipart", "ws"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "signal", "sync", "time", "fs"] }
+uuid = { version = "1", features = ["v4"] }
+mime_guess = "2"
+reqwest = { version = "0.13", default-features = false, features = ["multipart", "json"] }
+tokio-tungstenite = "0.30"
+futures-util = "0.3"
+web-time = "1.1"
+getrandom = "0.3"
+futures-channel = "0.3"
+wasm-bindgen = "0.2.128"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = "0.3"
+serde-wasm-bindgen = "0.6"
+wasm-bindgen-test = "0.3"
+console_error_panic_hook = "0.1"
+tracing-wasm = "0.2"
+zip = { version = "8", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+
+[profile.test]
+opt-level = 2
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+
+# Browser builds: small code, but the optimizer itself at full speed.
+[profile.wasm-release]
+inherits = "release"
+opt-level = "s"
+lto = "fat"
+panic = "abort"
+strip = true
+
+[profile.wasm-release.package.morphit]
+opt-level = 3

@@ -1,0 +1,49 @@
+[package]
+name = "morphit"
+description = "MorphIt: approximate a triangle mesh with spheres via gradient-based optimization"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "../../README.md"
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = ["gpu", "union", "parallel"]
+# Multi-threaded loops (rayon). Without it every loop runs in order on the
+# calling thread, with identical results; the wasm build leaves it off.
+parallel = ["dep:rayon"]
+# wgpu compute backend for the distance searches (results stay bit-identical to the CPU).
+gpu = ["dep:wgpu", "dep:pollster", "dep:bytemuck", "dep:futures-channel"]
+# Boolean union of overlapping closed bodies during mesh preparation (manifold-rust).
+union = ["dep:manifold-rust"]
+
+[dependencies]
+glam.workspace = true
+rand.workspace = true
+rand_chacha.workspace = true
+rand_distr.workspace = true
+rayon = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tobj.workspace = true
+stl_io.workspace = true
+tracing.workspace = true
+wgpu = { workspace = true, optional = true }
+pollster = { workspace = true, optional = true }
+bytemuck = { workspace = true, optional = true }
+manifold-rust = { workspace = true, optional = true }
+roxmltree.workspace = true
+web-time.workspace = true
+futures-channel = { workspace = true, optional = true }
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+getrandom = { workspace = true, features = ["wasm_js"] }
+
+[dev-dependencies]
+pollster.workspace = true
+tempfile.workspace = true

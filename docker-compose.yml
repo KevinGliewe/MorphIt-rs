@@ -1,0 +1,36 @@
+# docker compose up                     -> CPU server on http://localhost:8000
+# docker compose --profile gpu up morphit-gpu
+#                                       -> NVIDIA GPU server on http://localhost:8001
+# Robot sessions live in the server's memory: run one replica per service.
+services:
+  morphit:
+    build:
+      context: .
+      target: runtime-cpu
+    image: morphit-server:cpu
+    ports:
+      - "8000:8000"
+    environment:
+      MORPHIT_DEVICE: auto
+      # MORPHIT_THREADS: "4"
+      # MORPHIT_SESSION_TTL: "3600"
+    restart: unless-stopped
+
+  morphit-gpu:
+    profiles: ["gpu"]
+    build:
+      context: .
+      target: runtime-gpu
+    image: morphit-server:gpu
+    ports:
+      - "8001:8000"
+    environment:
+      MORPHIT_DEVICE: auto
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, compute, graphics, utility]
+    restart: unless-stopped
