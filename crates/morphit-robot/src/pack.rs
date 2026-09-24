@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use web_time::Instant;
 
-use morphit::{Mesh, PackResult, Session, StepInfo};
+use morphit::{Mesh, MeshPrepOptions, PackResult, Session, StepInfo};
 use serde::{Deserialize, Serialize};
 
 use crate::config::PackParams;
@@ -19,14 +19,19 @@ pub fn spheres_dir(output_dir: &Path) -> PathBuf {
     output_dir.join("spheres")
 }
 
-/// Whether the result JSON `text` (a saved `PackResult`) was packed on the
-/// prepared mesh (`config.model.union_overlapping_bodies`; true when absent,
-/// the default). Quality metrics must use the same mesh.
-pub fn result_uses_mesh_prep(text: &str) -> bool {
-    serde_json::from_str::<serde_json::Value>(text)
-        .ok()
-        .and_then(|v| v.pointer("/config/model/union_overlapping_bodies").and_then(|b| b.as_bool()))
-        .unwrap_or(true)
+/// The mesh preparation the result JSON `text` (a saved `PackResult`) was
+/// packed with: `config.model.union_overlapping_bodies` (true when absent)
+/// and `config.model.convex_hull` (false when absent). Quality metrics must
+/// use the same mesh ([`morphit::Mesh::prepared_with`]).
+pub fn result_mesh_prep(text: &str) -> MeshPrepOptions {
+    let v = serde_json::from_str::<serde_json::Value>(text).unwrap_or_default();
+    let flag = |key: &str, default: bool| {
+        v.pointer(&format!("/config/model/{key}")).and_then(|b| b.as_bool()).unwrap_or(default)
+    };
+    MeshPrepOptions {
+        union_overlapping_bodies: flag("union_overlapping_bodies", true),
+        convex_hull: flag("convex_hull", false),
+    }
 }
 
 /// `<link>_<index>.json`.
@@ -181,6 +186,7 @@ mod tests {
             seed: Some(3),
             advanced: vec![],
             union_overlapping_bodies: true,
+            convex_hull: false,
         };
         let mut steps = 0;
         let (out, result, history) = pack_one_link(&item, &params, "cpu", t.path(), |s, info| {
@@ -198,11 +204,13 @@ mod tests {
         assert_eq!(saved.config.random_seed, Some(3));
         assert_eq!(saved.config.output_filename, "l1_2.json");
         let text = std::fs::read_to_string(&out.json_path).unwrap();
-        assert!(result_uses_mesh_prep(&text));
+        assert_eq!(result_mesh_prep(&text), MeshPrepOptions::DEFAULT);
         let mut off = saved.clone();
         off.config.model.union_overlapping_bodies = false;
-        assert!(!result_uses_mesh_prep(&off.to_json_string()));
-        assert!(result_uses_mesh_prep(r#"{"centers": [], "radii": []}"#));
+        off.config.model.convex_hull = true;
+        let want = MeshPrepOptions { union_overlapping_bodies: false, convex_hull: true };
+        assert_eq!(result_mesh_prep(&off.to_json_string()), want);
+        assert_eq!(result_mesh_prep(r#"{"centers": [], "radii": []}"#), MeshPrepOptions::DEFAULT);
 
         let mut bad = item.clone();
         bad.action = Action::Error;

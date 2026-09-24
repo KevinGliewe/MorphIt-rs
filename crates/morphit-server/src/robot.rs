@@ -19,9 +19,7 @@ use morphit_robot::history::{MAX_POINTS, subsample_history};
 use morphit_robot::inspect::{
     Action, InspectionReport, find_urdfs, inspect_urdf, resolve_mesh_path, select_urdf,
 };
-use morphit_robot::pack::{
-    PackLinkOutcome, json_filename, pack_one_link, result_uses_mesh_prep, spheres_dir,
-};
+use morphit_robot::pack::{PackLinkOutcome, json_filename, pack_one_link, result_mesh_prep, spheres_dir};
 use morphit_robot::paths::{copy_tree, is_within, safe_join};
 use morphit_robot::py_repr;
 use morphit_robot::quality::{mc_interior_samples, quality_metrics};
@@ -211,6 +209,7 @@ pub async fn pack_link(
         seed: None,
         advanced: Vec::new(),
         union_overlapping_bodies: form.bool_or("union_overlapping_bodies", true)?,
+        convex_hull: form.bool_or("convex_hull", false)?,
     };
     params.validate()?;
     let item = report
@@ -435,7 +434,7 @@ pub async fn analyze(
                 let path = item.mesh_path.as_deref().unwrap_or_default();
                 // Score against the mesh the link was packed on.
                 let mesh = Arc::new(Mesh::load(path)?);
-                let mesh = if result_uses_mesh_prep(&text) { mesh.prepared().0 } else { mesh };
+                let (mesh, _) = mesh.prepared_with(result_mesh_prep(&text));
                 Ok(quality_metrics(&mesh, &item.link_name, item.collision_index, &centers, &radii))
             })
             .collect::<ApiResult<Vec<_>>>()

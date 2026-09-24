@@ -8,7 +8,9 @@ use std::time::Instant;
 
 use clap::{Parser, Subcommand};
 use morphit::glam::DVec3;
-use morphit::{Config, LossId, Mesh, PackResult, Preset, QualityOptions, RunOutcome, Session};
+use morphit::{
+    Config, LossId, Mesh, MeshPrepOptions, PackResult, Preset, QualityOptions, RunOutcome, Session,
+};
 use serde_json::Value;
 
 #[derive(Parser)]
@@ -33,7 +35,12 @@ enum Command {
     /// Score a result JSON against its mesh (debug_quick_eval metrics).
     Metrics(MetricsArgs),
     /// Print mesh properties.
-    Info { mesh: PathBuf },
+    Info {
+        mesh: PathBuf,
+        /// Also report the mesh preparation with convex hulls (`model.convex_hull`).
+        #[arg(long)]
+        convex_hull: bool,
+    },
     /// List the loss-weight presets.
     Presets,
     /// List the GPU adapters usable with `--device gpu:N`.
@@ -96,8 +103,9 @@ struct MetricsArgs {
     /// Print JSON instead of a table row.
     #[arg(long)]
     json: bool,
-    /// Score the mesh as loaded. By default overlapping closed bodies are
-    /// unioned first, as for packing, so metrics compare like with like.
+    /// Score the mesh as loaded. By default the mesh is prepared as the result
+    /// was packed (union of overlapping bodies, convex hulls), so metrics
+    /// compare like with like.
     #[arg(long)]
     raw_mesh: bool,
 }
@@ -152,7 +160,7 @@ fn main() -> ExitCode {
         Command::Pack(a) => pack(a),
         Command::Export(a) => export(a),
         Command::Metrics(a) => metrics(a),
-        Command::Info { mesh } => info(mesh),
+        Command::Info { mesh, convex_hull } => info(mesh, convex_hull),
         Command::Presets => {
             presets();
             Ok(())
@@ -291,10 +299,10 @@ fn pack(a: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
             session.device()
         );
         let prep = session.mesh_prep();
-        if prep.is_unioned() {
+        if prep.changed() {
             eprintln!(
-                "mesh prep: unioned {} overlapping bodies: faces {} -> {}, volume {:.6e} -> {:.6e}",
-                prep.n_bodies, prep.faces_before, prep.faces_after, prep.volume_before, prep.volume_after
+                "mesh prep: {}: faces {} -> {}, volume {:.6e} -> {:.6e}",
+                prep.reason, prep.faces_before, prep.faces_after, prep.volume_before, prep.volume_after
             );
         }
     }
@@ -338,19 +346,17 @@ fn pack(a: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
 
 fn metrics(a: MetricsArgs) -> Result<(), Box<dyn std::error::Error>> {
     let mesh = Arc::new(Mesh::load(&a.mesh)?);
+    let r = PackResult::load(&a.result)?;
     let mesh = if a.raw_mesh {
         mesh
     } else {
-        let (prepared, prep) = mesh.prepared();
-        if prep.is_unioned() {
-            eprintln!(
-                "scoring the union of {} overlapping bodies (--raw-mesh scores the mesh as loaded)",
-                prep.n_bodies
-            );
+        // The mesh as this result was packed.
+        let (prepared, prep) = mesh.for_model(&r.config.model);
+        if prep.changed() {
+            eprintln!("scoring the prepared mesh: {} (--raw-mesh scores the mesh as loaded)", prep.reason);
         }
         prepared
     };
-    let r = PackResult::load(&a.result)?;
     let centers: Vec<DVec3> = r.centers.iter().map(|c| DVec3::from_array(*c)).collect();
     let opts = QualityOptions {
         seed: a.seed,
@@ -396,7 +402,7 @@ fn metrics(a: MetricsArgs) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn info(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+fn info(path: PathBuf, convex_hull: bool) -> Result<(), Box<dyn std::error::Error>> {
     let m = Mesh::load(&path)?;
     let (lo, hi) = m.bounds();
     let i = m.moment_inertia();
@@ -416,14 +422,15 @@ fn info(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     if m.winding_flipped() {
         println!("note          faces were wound inward and have been flipped");
     }
-    let (union, prep) = Arc::new(m).prepared();
+    let options = MeshPrepOptions { convex_hull, ..MeshPrepOptions::DEFAULT };
+    let (prepared, prep) = Arc::new(m).prepared_with(options);
     println!("mesh prep     {} ({})", prep.action, prep.reason);
     println!(
         "bodies        {} ({} closed, {} open, {} degenerate dropped), overlapping: {}",
         prep.n_bodies, prep.n_closed, prep.n_open, prep.n_degenerate_dropped, prep.overlapping
     );
-    if prep.is_unioned() {
-        println!("union         {} faces, volume {:.9e}", union.faces().len(), union.volume());
+    if prep.changed() {
+        println!("prepared      {} faces, volume {:.9e}", prepared.faces().len(), prepared.volume());
     }
     Ok(())
 }

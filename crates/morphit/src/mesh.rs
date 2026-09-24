@@ -11,7 +11,7 @@ use glam::{DMat3, DVec3};
 use crate::contains::{HASH_RESOLUTION, Parity, RobustIntersector, ZRayIntersector};
 use crate::error::{Error, Result};
 use crate::mesh_io;
-use crate::mesh_prep::{MeshPrepReport, prepare_mesh};
+use crate::mesh_prep::{MeshPrepOptions, MeshPrepReport, prepare_mesh};
 
 /// A closed triangle mesh. Immutable after construction and safe to share
 /// between threads (`Send + Sync`); wrap it in an `Arc` to share it between
@@ -30,9 +30,15 @@ pub struct Mesh {
     winding_flipped: bool,
     exact: OnceLock<ZRayIntersector>,
     robust: OnceLock<RobustIntersector>,
-    /// Cached [`Mesh::prepared`]; `None` means the mesh itself (storing an
-    /// `Arc` to `self` here would be a reference cycle).
-    prepared: OnceLock<(Option<Arc<Mesh>>, MeshPrepReport)>,
+    /// Cached [`Mesh::prepared_with`], one slot per combination of options
+    /// ([`prep_slot`]); `None` means the mesh itself (storing an `Arc` to
+    /// `self` here would be a reference cycle).
+    prepared: [OnceLock<(Option<Arc<Mesh>>, MeshPrepReport)>; 4],
+}
+
+/// Index of `options` in [`Mesh`]'s preparation cache.
+fn prep_slot(options: MeshPrepOptions) -> usize {
+    usize::from(options.union_overlapping_bodies) | usize::from(options.convex_hull) << 1
 }
 
 impl fmt::Debug for Mesh {
@@ -174,7 +180,7 @@ impl Mesh {
             winding_flipped,
             exact: OnceLock::new(),
             robust: OnceLock::new(),
-            prepared: OnceLock::new(),
+            prepared: Default::default(),
         })
     }
 
@@ -258,15 +264,25 @@ impl Mesh {
         })
     }
 
-    /// The mesh to pack: overlapping closed bodies unioned (see
-    /// [`crate::mesh_prep`]), or this mesh itself. Computed once and shared by
-    /// every session on this mesh.
+    /// The mesh to pack with the default preparation: overlapping closed
+    /// bodies unioned (see [`crate::mesh_prep`]), or this mesh itself.
     pub fn prepared(self: &Arc<Self>) -> (Arc<Mesh>, MeshPrepReport) {
-        let (mesh, report) = self.prepared.get_or_init(|| {
-            let (mesh, report) = prepare_mesh(self, true);
+        self.prepared_with(MeshPrepOptions::DEFAULT)
+    }
+
+    /// The mesh to pack with `options` (see [`prepare_mesh`]). Computed once
+    /// per combination of options and shared by every session on this mesh.
+    pub fn prepared_with(self: &Arc<Self>, options: MeshPrepOptions) -> (Arc<Mesh>, MeshPrepReport) {
+        let (mesh, report) = self.prepared[prep_slot(options)].get_or_init(|| {
+            let (mesh, report) = prepare_mesh(self, options);
             ((!Arc::ptr_eq(&mesh, self)).then_some(mesh), report)
         });
         (mesh.clone().unwrap_or_else(|| Arc::clone(self)), report.clone())
+    }
+
+    /// The mesh a session with this model config packs (see [`Mesh::prepared_with`]).
+    pub fn for_model(self: &Arc<Self>, model: &crate::config::ModelConfig) -> (Arc<Mesh>, MeshPrepReport) {
+        self.prepared_with(model.into())
     }
 
     /// Python's `check_mesh_contains` for one point (axis-aligned ray parity).

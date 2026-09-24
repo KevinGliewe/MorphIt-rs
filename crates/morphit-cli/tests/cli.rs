@@ -217,7 +217,7 @@ fn overlapping_bodies_are_unioned_unless_disabled() {
         .assert()
         .success();
     let stderr = String::from_utf8_lossy(&a.get_output().stderr).into_owned();
-    assert_eq!(stderr.contains("mesh prep: unioned 2 overlapping bodies"), union, "{stderr}");
+    assert_eq!(stderr.contains("mesh prep: 2 overlapping closed bodies unioned"), union, "{stderr}");
     let r = PackResult::load(&out).unwrap();
     assert_eq!(r.mesh_prep.as_ref().unwrap().action, if union { "unioned" } else { "skipped" });
     assert!(r.config.model.union_overlapping_bodies);
@@ -239,9 +239,41 @@ fn overlapping_bodies_are_unioned_unless_disabled() {
     assert!(text.contains("mesh prep     unioned") && text.contains("overlapping: true"), "{text}");
 
     let m = morphit().args(["metrics", boxes.to_str().unwrap(), out.to_str().unwrap()]).assert().success();
-    assert!(String::from_utf8_lossy(&m.get_output().stderr).contains("scoring the union"));
+    let stderr = String::from_utf8_lossy(&m.get_output().stderr).to_string();
+    assert!(stderr.contains("scoring the prepared mesh: 2 overlapping closed bodies unioned"), "{stderr}");
     morphit()
         .args(["metrics", boxes.to_str().unwrap(), out.to_str().unwrap(), "--raw-mesh"])
         .assert()
         .success();
+}
+
+#[test]
+fn convex_hulls_on_request() {
+    if !cfg!(feature = "union") {
+        return;
+    }
+    let dir = tempfile::tempdir().unwrap();
+    let boxes = write_overlapping_boxes(dir.path());
+    let out = dir.path().join("h.json");
+    let a = morphit()
+        .args(["pack", boxes.to_str().unwrap(), "-n", "8", "-i", "5", "-s", "3"])
+        .args(["--set", "model.convex_hull=true", "--set", "model.union_overlapping_bodies=false", "-o"])
+        .arg(&out)
+        .assert()
+        .success();
+    let stderr = String::from_utf8_lossy(&a.get_output().stderr).into_owned();
+    assert!(stderr.contains("mesh prep: 2 bodies replaced by convex hulls"), "{stderr}");
+    let r = PackResult::load(&out).unwrap();
+    let prep = r.mesh_prep.as_ref().unwrap();
+    assert_eq!((prep.action.as_str(), prep.n_hulled, prep.convex_hull), ("hulled", 2, true));
+    assert!(r.config.model.convex_hull);
+
+    let info = morphit().args(["info", boxes.to_str().unwrap(), "--convex-hull"]).assert().success();
+    let text = String::from_utf8(info.get_output().stdout.clone()).unwrap();
+    assert!(text.contains("mesh prep     unioned (2 overlapping convex hulls unioned)"), "{text}");
+
+    // Metrics score the mesh prepared as the result was packed.
+    let m = morphit().args(["metrics", boxes.to_str().unwrap(), out.to_str().unwrap()]).assert().success();
+    let stderr = String::from_utf8_lossy(&m.get_output().stderr).to_string();
+    assert!(stderr.contains("scoring the prepared mesh: 2 bodies replaced by convex hulls"), "{stderr}");
 }

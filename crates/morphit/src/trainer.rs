@@ -100,15 +100,10 @@ pub struct Session {
     mesh_prep: MeshPrepReport,
 }
 
-/// The mesh a session packs: the prepared mesh when
-/// `model.union_overlapping_bodies` is set, else the mesh as given.
+/// The mesh a session packs: prepared as `model.union_overlapping_bodies`
+/// and `model.convex_hull` ask, the mesh as given when both are off.
 fn prepare(config: &Config, mesh: Arc<Mesh>) -> (Arc<Mesh>, MeshPrepReport) {
-    if config.model.union_overlapping_bodies {
-        mesh.prepared()
-    } else {
-        let report = MeshPrepReport::disabled(&mesh);
-        (mesh, report)
-    }
+    mesh.for_model(&config.model)
 }
 
 impl Session {
@@ -538,6 +533,16 @@ mod tests {
         let s3 = Session::new(off, raw.clone()).unwrap();
         assert_eq!(s3.mesh_prep().action, "disabled");
         assert!(Arc::ptr_eq(s3.mesh(), &raw));
+        assert_eq!(v["config"]["model"]["convex_hull"], false);
+
+        // Convex hulls without the union: the two boxes side by side.
+        let mut hull = small_config(Preset::B, 1, 4);
+        hull.model.union_overlapping_bodies = false;
+        hull.model.convex_hull = true;
+        let s4 = Session::new(hull, raw.clone()).unwrap();
+        assert_eq!((s4.mesh_prep().action.as_str(), s4.mesh_prep().n_hulled), ("hulled", 2));
+        assert_eq!(s4.mesh().faces().len(), raw.faces().len());
+        assert!(s4.result().config.model.convex_hull);
     }
 
     #[test]

@@ -215,6 +215,7 @@ mod tests {
             seed: Some(3),
             advanced: vec![],
             union_overlapping_bodies: true,
+            convex_hull: false,
         }
     }
 

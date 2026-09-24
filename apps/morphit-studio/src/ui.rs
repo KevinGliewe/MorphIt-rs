@@ -168,6 +168,11 @@ fn params(ui: &mut egui::Ui, p: &mut Params, devices: &[morphit::GpuInfo]) {
             .on_hover_text("Merge overlapping closed bodies into their union before packing (default on)");
         ui.checkbox(&mut p.union_overlapping_bodies, "merge overlapping bodies");
         ui.end_row();
+        ui.label("");
+        ui.checkbox(&mut p.convex_hull, "convex hull of each body").on_hover_text(
+            "Replace every body with its convex hull before merging: a simpler, closed shape;              concavities and holes are filled (default off)",
+        );
+        ui.end_row();
         ui.label("Device");
         egui::ComboBox::from_id_salt("device").selected_text(&p.device).show_ui(ui, |ui| {
             ui.selectable_value(&mut p.device, "auto".to_string(), "auto");

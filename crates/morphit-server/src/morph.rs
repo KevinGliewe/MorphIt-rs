@@ -7,7 +7,7 @@ use axum::extract::multipart::MultipartRejection;
 use axum::extract::{Multipart, State};
 use axum::http::HeaderName;
 use axum::response::Response;
-use morphit::Mesh;
+use morphit::{Mesh, MeshPrepOptions};
 use morphit_robot::config::{PackParams, parse_advanced};
 use morphit_robot::history::{MAX_POINTS, history_json, subsample_history};
 use morphit_robot::object_model::{ObjectModelOptions, spheres_from_object_urdf, write_object_urdf};
@@ -36,8 +36,9 @@ fn attr_escape(s: &str) -> String {
 }
 
 /// `POST /api/morph`: form fields `mesh` (file), `variant`, `num_spheres`,
-/// `iterations`, `seed`, `advanced`, `base_color`, `union_overlapping_bodies`
-/// (mesh preparation, default true). Returns the URDF with the
+/// `iterations`, `seed`, `advanced`, `base_color`, and the mesh preparation
+/// switches `union_overlapping_bodies` (default true) and `convex_hull`
+/// (default false). Returns the URDF with the
 /// `X-Morphit-Centroid`, `X-Morphit-Loss` and `X-Morphit-Mesh-Prep` headers.
 pub async fn morph(
     State(state): State<SharedState>,
@@ -53,6 +54,7 @@ pub async fn morph(
         seed: None,
         advanced: Vec::new(),
         union_overlapping_bodies: form.bool_or("union_overlapping_bodies", true)?,
+        convex_hull: form.bool_or("convex_hull", false)?,
     };
     params.validate()?;
     let suffix = file_suffix(mesh.filename.as_deref());
@@ -118,8 +120,9 @@ pub fn analyze_response(links: Vec<LinkQuality>) -> ApiResult<Response> {
 }
 
 /// `POST /api/morph/analyze`: form fields `mesh` (file), `urdf` (the
-/// object URDF text) and `union_overlapping_bodies` (score against the
-/// prepared mesh, default true, as packed). Returns `{links: [row], overall}`.
+/// object URDF text), `union_overlapping_bodies` (default true) and
+/// `convex_hull` (default false), which score against the mesh prepared as it
+/// was packed. Returns `{links: [row], overall}`.
 pub async fn analyze(
     State(_state): State<SharedState>,
     multipart: Result<Multipart, MultipartRejection>,
@@ -127,7 +130,10 @@ pub async fn analyze(
     let form = Form::read(multipart).await?;
     let mesh = form.file("mesh")?.clone();
     let urdf = form.required_text("urdf")?.to_string();
-    let union = form.bool_or("union_overlapping_bodies", true)?;
+    let prep = MeshPrepOptions {
+        union_overlapping_bodies: form.bool_or("union_overlapping_bodies", true)?,
+        convex_hull: form.bool_or("convex_hull", false)?,
+    };
     let suffix = file_suffix(mesh.filename.as_deref());
     if !ALLOWED_EXTENSIONS.contains(&suffix.as_str()) {
         return Err(extension_error());
@@ -139,7 +145,7 @@ pub async fn analyze(
     let name = file_stem(Some(mesh.filename.as_deref().unwrap_or("object")), "object");
     let row = blocking(move || {
         let m = Arc::new(Mesh::load_from_bytes(&mesh.data, &suffix, None)?);
-        let mesh = if union { m.prepared().0 } else { m };
+        let (mesh, _) = m.prepared_with(prep);
         Ok(quality_metrics(&mesh, &name, 0, &centers, &radii))
     })
     .await?;

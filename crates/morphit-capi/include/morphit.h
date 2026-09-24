@@ -559,8 +559,9 @@ enum morphit_status morphit_session_device(const struct morphit_session *session
 
 /**
  * What mesh preparation did when the session was created, as JSON with the
- * keys of Python's `MeshPrepReport` (`action` is `unchanged`, `unioned`,
- * `skipped` or `disabled`; see `model.union_overlapping_bodies`). Never blocks.
+ * keys of Python's `MeshPrepReport` plus `convex_hull` and `n_hulled`
+ * (`action` is `unchanged`, `unioned`, `hulled`, `skipped` or `disabled`; see
+ * `model.union_overlapping_bodies` and `model.convex_hull`). Never blocks.
  */
 enum morphit_status morphit_session_mesh_prep_json(const struct morphit_session *session,
                                                    char *buf,

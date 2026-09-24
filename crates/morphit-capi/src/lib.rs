@@ -839,8 +839,9 @@ pub unsafe extern "C" fn morphit_session_device(
 }
 
 /// What mesh preparation did when the session was created, as JSON with the
-/// keys of Python's `MeshPrepReport` (`action` is `unchanged`, `unioned`,
-/// `skipped` or `disabled`; see `model.union_overlapping_bodies`). Never blocks.
+/// keys of Python's `MeshPrepReport` plus `convex_hull` and `n_hulled`
+/// (`action` is `unchanged`, `unioned`, `hulled`, `skipped` or `disabled`; see
+/// `model.union_overlapping_bodies` and `model.convex_hull`). Never blocks.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn morphit_session_mesh_prep_json(
     session: *const morphit_session,

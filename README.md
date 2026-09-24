@@ -94,6 +94,15 @@ solid. What was done is recorded under `mesh_prep` in the result JSON. Set
 `model.union_overlapping_bodies = false` to disable the step. Note that an inner
 shell wound inward (a cavity) counts as a body too and gets filled, as in Python.
 
+`model.convex_hull = true` (off by default, not in Python) replaces every body
+with its convex hull before that step, for collision models where
+concavities, holes and thin gaps do not matter: the spheres then approximate a
+simpler, closed shape. Open bodies become closed hulls, and hulls that overlap
+are merged when `union_overlapping_bodies` is on; with it off the hulls are
+packed side by side. The report then says `hulled` (or `unioned` with
+`convex_hull: true`) and counts the hulls in `n_hulled`;
+`morphit info mesh.obj --convex-hull` shows what it would do.
+
 The union uses [manifold-rust](https://crates.io/crates/manifold-rust), a
 pure-Rust port of the Manifold library that Python calls through manifold3d.
 On the parity cases in `tests/fixtures/mesh_prep/` both produce the same
@@ -291,8 +300,8 @@ exits 0 when it answers, which is what the Docker health check runs.
 |---|---|
 | `GET /`, `GET /healthz` | web UI, `{"ok":true}` |
 | `GET /api/examples`, `GET /api/example/{name}[/packed\|/thumbnail]` | example objects, mesh, pre-baked URDF (`X-Morphit-Centroid`), PNG |
-| `POST /api/morph` | form: `mesh` (.obj/.stl/.ply), `variant`, `num_spheres` (1–200), `iterations` (1–1000), `seed`, `advanced` (JSON), `base_color`, `union_overlapping_bodies` (mesh preparation, default `true`). Returns the object URDF with `X-Morphit-Centroid`, `X-Morphit-Loss` and `X-Morphit-Mesh-Prep` |
-| `POST /api/morph/analyze` | form: `mesh`, `urdf`, `union_overlapping_bodies` (default `true`; score against the mesh the packing used). Surface distances and coverage |
+| `POST /api/morph` | form: `mesh` (.obj/.stl/.ply), `variant`, `num_spheres` (1–200), `iterations` (1–1000), `seed`, `advanced` (JSON), `base_color`, `union_overlapping_bodies` and `convex_hull` (mesh preparation, defaults `true` and `false`). Returns the object URDF with `X-Morphit-Centroid`, `X-Morphit-Loss` and `X-Morphit-Mesh-Prep` |
+| `POST /api/morph/analyze` | form: `mesh`, `urdf`, `union_overlapping_bodies` (default `true`), `convex_hull` (default `false`); score against the mesh the packing used. Surface distances and coverage |
 | `GET /api/robot/examples`, `POST /api/robot/example/{name}`, `GET /api/robot/example/{name}/spherical` | example robots; loading one opens a session |
 | `POST /api/robot/inspect` | form: repeated `files` (names are package paths), optional `urdf`. Opens a session and classifies the collisions |
 | `GET /api/robot/file?session_id=&path=` | files of the session (`package://`, relative) |
@@ -302,10 +311,11 @@ exits 0 when it answers, which is what the Docker health check runs.
 | `POST /api/robot/assemble` | form: `session_id`, `base_color`, `color_variation`. The spherical URDF |
 | `POST /api/robot/analyze` | form: `session_id`. Metrics per packed link, each against the mesh it was packed on |
 
-`union_overlapping_bodies` is an addition to the Python API (which always
-prepares the mesh): `false` packs the mesh exactly as loaded, and the
-`X-Morphit-Mesh-Prep` report then says `disabled`. The web UI has it under
-Advanced settings, Mesh preparation.
+`union_overlapping_bodies` and `convex_hull` are additions to the Python API
+(which always merges and never builds hulls): `union_overlapping_bodies=false`
+packs the mesh exactly as loaded (the `X-Morphit-Mesh-Prep` report then says
+`disabled`), and `convex_hull=true` packs the convex hull of each body. The
+web UI has both under Advanced settings, Mesh preparation.
 
 Robot sessions live in the server's memory and in the session directory, and
 expire after the TTL. Run a single instance. Uploads are capped at 100 MB per
@@ -387,8 +397,9 @@ const urdf = objectUrdf(session.centers(), session.radii(), { name: "bunny" }).t
 ```
 
 - **Objects:** `Mesh` (`fromBytes` for OBJ/STL/PLY/DAE, `fromArrays`, `info`,
-  `prepared`), `Config` (presets, dotted keys), `Session` (`step`, `stepMany`,
-  `stepSync` on the CPU, `centers`/`radii`/`masses`, `finalize`, `resultJson`,
+  `prepared`/`prepReport` with `{ unionOverlappingBodies, convexHull }`),
+  `Config` (presets, dotted keys), `Session` (`step`, `stepMany`, `stepSync` on
+  the CPU, `centers`/`radii`/`masses`, `finalize`, `resultJson`,
   `historyJson`), `objectUrdf`/`objectMjcf`, `evaluatePacking`.
 - **Robots:** `RobotPackage` (`fromFiles`, `fromZip`, `addFile`, `inspect`,
   `linkPoses`, `packLink` returns a `Session`, `setLinkResult`, `assemble`),
@@ -417,7 +428,8 @@ and in the browser from the same code:
 
 - **Object mode:** open a mesh (dialog, drag and drop, or one of the 20
   bundled examples), choose preset, sphere count, iterations, seed, device,
-  mesh preparation (merge overlapping bodies, on by default) and the advanced
+  mesh preparation (merge overlapping bodies, on by default; convex hull of
+  each body, off by default) and the advanced
   loss weights, and watch the spheres and the loss curve while it
   packs (pause, finish early, cancel). Save the result JSON, a URDF or MJCF
   (free or anchored, with a total mass), and analyze coverage, surface
@@ -526,6 +538,9 @@ of the Python repository and are not part of this repository.
 
 ## Differences from the Python code
 
+- Mesh preparation can be switched off (`model.union_overlapping_bodies`) and
+  extended with convex hulls (`model.convex_hull`); Python always merges and
+  never builds hulls. Both keys are stored in the result's config.
 - Float64 throughout. GPU support is a search accelerator with CPU-identical
   results rather than a float32 port; `model.device` therefore never changes
   the output.

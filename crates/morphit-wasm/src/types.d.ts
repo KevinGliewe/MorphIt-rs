@@ -51,7 +51,15 @@ export interface MeshInfo {
   sourcePath: string | null;
 }
 
-/** Python `MeshPrepReport` keys. */
+/** Mesh preparation steps (`Mesh.prepared`, `Mesh.prepReport`). */
+export interface MeshPrepOptions {
+  /** Merge overlapping closed bodies (default true). */
+  unionOverlappingBodies?: boolean;
+  /** Replace each body with its convex hull before merging (default false). */
+  convexHull?: boolean;
+}
+
+/** Python `MeshPrepReport` keys, plus `convex_hull` and `n_hulled`. */
 export interface MeshPrepReport {
   action: string;
   reason: string;
@@ -65,6 +73,8 @@ export interface MeshPrepReport {
   volume_before: number;
   volume_after: number;
   warnings: string[];
+  convex_hull: boolean;
+  n_hulled: number;
 }
 
 export interface ObjectModelOptions {
@@ -169,6 +179,8 @@ export interface PackParams {
   advanced?: Record<string, number | boolean>;
   /** Merge overlapping closed bodies before packing (default true). */
   unionOverlappingBodies?: boolean;
+  /** Replace each body with its convex hull before merging (default false). */
+  convexHull?: boolean;
 }
 
 /** A rigid transform: column-major 3x3 rotation, then translation. */

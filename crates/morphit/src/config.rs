@@ -196,6 +196,11 @@ pub struct ModelConfig {
     /// CAD exports with several overlapping solids otherwise read as hollow in
     /// the overlap and lose spheres there. `false` packs the mesh exactly as loaded.
     pub union_overlapping_bodies: bool,
+    /// Replace every body with its convex hull before the union (see
+    /// [`crate::mesh_prep`]): a simpler, closed shape to approximate, for
+    /// collision models where concavities do not matter. Not in Python; off
+    /// by default.
+    pub convex_hull: bool,
 }
 
 impl Default for ModelConfig {
@@ -211,6 +216,7 @@ impl Default for ModelConfig {
             density: 1000.0,
             per_sphere_mass: false,
             union_overlapping_bodies: true,
+            convex_hull: false,
         }
     }
 }

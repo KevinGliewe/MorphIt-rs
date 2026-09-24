@@ -8,7 +8,9 @@ use std::sync::atomic::Ordering;
 
 use bevy::prelude::*;
 use morphit::glam::DVec3;
-use morphit::{Config, GpuInfo, Mesh, PackResult, QualityMetrics, QualityOptions, evaluate_packing};
+use morphit::{
+    Config, GpuInfo, Mesh, MeshPrepOptions, PackResult, QualityMetrics, QualityOptions, evaluate_packing,
+};
 use morphit_robot::assemble::{MemSpheres, rewrite_urdf_text};
 use morphit_robot::color::vary_color;
 use morphit_robot::config::{ADVANCED_OVERRIDE_MAP, ALLOWED_VARIANTS, PackParams};
@@ -41,6 +43,8 @@ pub struct Params {
     pub device: String,
     /// Mesh preparation: merge overlapping closed bodies before packing.
     pub union_overlapping_bodies: bool,
+    /// Mesh preparation: replace each body with its convex hull before merging.
+    pub convex_hull: bool,
     /// `(flat key, dotted key, value)` of the advanced overrides, starting
     /// at the preset's values.
     pub advanced: Vec<(&'static str, &'static str, Value)>,
@@ -63,6 +67,7 @@ impl Params {
             seed: (!self.random_seed).then_some(self.seed),
             advanced: self.advanced.iter().map(|(_, d, v)| (d.to_string(), v.clone())).collect(),
             union_overlapping_bodies: self.union_overlapping_bodies,
+            convex_hull: self.convex_hull,
         }
     }
 }
@@ -77,6 +82,7 @@ impl Default for Params {
             seed: 42,
             device: "auto".into(),
             union_overlapping_bodies: true,
+            convex_hull: false,
             advanced: Params::advanced_for(ALLOWED_VARIANTS[2]),
         }
     }
@@ -459,8 +465,7 @@ impl Studio {
                 self.quality_task = Some(spawn(async move {
                     Yielder::default().yield_now().await;
                     // Score against the mesh the packing used.
-                    let prepared =
-                        if r.config.model.union_overlapping_bodies { mesh.prepared().0 } else { mesh };
+                    let (prepared, _) = mesh.for_model(&r.config.model);
                     let centers: Vec<DVec3> = r.centers.iter().map(|c| DVec3::from_array(*c)).collect();
                     let masses = r.per_sphere_mass.then_some(r.masses.as_slice());
                     QualityOut::Object(evaluate_packing(
@@ -485,7 +490,7 @@ impl Studio {
                             m.clone(),
                             res.centers.clone(),
                             res.radii.clone(),
-                            res.config.model.union_overlapping_bodies,
+                            MeshPrepOptions::from(&res.config.model),
                         ));
                     }
                 }
@@ -495,10 +500,10 @@ impl Studio {
                 self.quality_task = Some(spawn(async move {
                     let mut y = Yielder::default();
                     let mut links = Vec::new();
-                    for (link, idx, mesh, centers, radii, union) in work {
+                    for (link, idx, mesh, centers, radii, prep) in work {
                         y.yield_now().await;
                         // Score against the mesh the packing used.
-                        let mesh = if union { mesh.prepared().0 } else { mesh };
+                        let (mesh, _) = mesh.prepared_with(prep);
                         let q = quality_metrics(&mesh, &link, idx, &centers, &radii);
                         links.push(q);
                     }

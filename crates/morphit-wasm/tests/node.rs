@@ -44,6 +44,17 @@ fn mesh_and_config() {
     assert!(JsMesh::supported_extensions().contains(&"stl".to_string()));
     assert!(JsMesh::from_bytes(b"nonsense", "xyz", None).is_err());
 
+    // Mesh preparation options: link0 is one body; its hull is larger.
+    let report = m.prep_report(JsValue::UNDEFINED).unwrap();
+    assert_eq!(get(&report, "action").as_string().as_deref(), Some("unchanged"));
+    let hull_opts = || js(serde_json::json!({ "convexHull": true })).unwrap();
+    let report = m.prep_report(hull_opts()).unwrap();
+    assert_eq!(get(&report, "action").as_string().as_deref(), Some("hulled"));
+    assert_eq!(get(&report, "n_hulled").as_f64(), Some(1.0));
+    let hull = m.prepared(hull_opts()).unwrap();
+    let volume = |m: &JsMesh| get(&m.info().unwrap(), "volume").as_f64().unwrap();
+    assert!(volume(&hull) > volume(&m));
+
     let mut c = config(7, 3);
     assert_eq!(c.get("model.num_spheres").unwrap().as_f64(), Some(7.0));
     assert!(JsConfig::presets().contains(&"MorphIt-V".to_string()));
@@ -162,6 +173,11 @@ async fn robot_package_pipeline() {
     let s = pkg.pack_link(collisions.get(0), raw, Some("cpu".into())).unwrap();
     assert!(s.config_json().unwrap().contains("\"union_overlapping_bodies\":false"));
     assert!(s.mesh_prep_json().unwrap().contains("\"action\":\"disabled\""));
+
+    let hull = js(serde_json::json!({ "numSpheres": 3, "iterations": 1, "convexHull": true })).unwrap();
+    let s = pkg.pack_link(collisions.get(0), hull, Some("cpu".into())).unwrap();
+    assert!(s.config_json().unwrap().contains("\"convex_hull\":true"));
+    assert!(s.mesh_prep_json().unwrap().contains("\"convex_hull\":true"));
 
     let bad = js(serde_json::json!({ "numSpheres": 0 })).unwrap();
     let e = pkg.pack_link(collisions.get(0), bad, None).map_err(JsValue::from).err().unwrap();

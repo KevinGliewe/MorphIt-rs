@@ -68,6 +68,9 @@ pub struct PackParams {
     /// Mesh preparation: merge overlapping closed bodies into their union
     /// before packing (`model.union_overlapping_bodies`, default true).
     pub union_overlapping_bodies: bool,
+    /// Mesh preparation: replace every body with its convex hull before the
+    /// merge (`model.convex_hull`, default false).
+    pub convex_hull: bool,
 }
 
 impl PackParams {
@@ -95,6 +98,7 @@ impl PackParams {
         c.model.device = device.to_string();
         c.training.iterations = self.iterations;
         c.model.union_overlapping_bodies = self.union_overlapping_bodies;
+        c.model.convex_hull = self.convex_hull;
         c.training.logging_enabled = false;
         c.visualization.enabled = false;
         c.visualization.off_screen = true;
@@ -124,6 +128,7 @@ mod tests {
             seed: None,
             advanced: vec![],
             union_overlapping_bodies: true,
+            convex_hull: false,
         }
     }
 
@@ -152,6 +157,9 @@ mod tests {
         assert!(p.config("cpu", "", "x.json").unwrap().model.union_overlapping_bodies);
         p.union_overlapping_bodies = false;
         assert!(!p.config("cpu", "", "x.json").unwrap().model.union_overlapping_bodies);
+        assert!(!p.config("cpu", "", "x.json").unwrap().model.convex_hull);
+        p.convex_hull = true;
+        assert!(p.config("cpu", "", "x.json").unwrap().model.convex_hull);
     }
 
     #[test]

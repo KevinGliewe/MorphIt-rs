@@ -1,4 +1,5 @@
-//! Mesh preparation: union overlapping closed bodies (`mesh_prep.py`).
+//! Mesh preparation: union overlapping closed bodies (`mesh_prep.py`), and
+//! optionally replace every body with its convex hull first.
 //!
 //! CAD exports often contain several closed solids that overlap, for example
 //! a body and a fitting exported as separate parts into one file. The inside
@@ -20,6 +21,11 @@
 //! (< 4 faces or zero volume) dropped, winding made consistent and outward,
 //! closed = watertight with consistent winding, overlap = any vertex of one
 //! body inside the other by the exact ray-parity test.
+//!
+//! With [`MeshPrepOptions::convex_hull`] (not in Python, off by default) each
+//! body is replaced by its convex hull before the overlap test, so hulls that
+//! overlap are unioned and open bodies become closed ones. Without the union
+//! the hulls are packed side by side.
 
 use std::collections::{HashMap, VecDeque};
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -38,11 +44,46 @@ const VOLUME_TOL: f64 = 0.01;
 /// trimesh merges vertex positions equal after rounding to this many decimals.
 const MERGE_DIGITS: i32 = 8;
 
+/// Which preparation steps run; see [`prepare_mesh`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct MeshPrepOptions {
+    /// Union overlapping closed bodies (`model.union_overlapping_bodies`).
+    pub union_overlapping_bodies: bool,
+    /// Replace each body with its convex hull before the union (`model.convex_hull`).
+    pub convex_hull: bool,
+}
+
+impl MeshPrepOptions {
+    /// The defaults: union on, convex hull off.
+    pub const DEFAULT: MeshPrepOptions =
+        MeshPrepOptions { union_overlapping_bodies: true, convex_hull: false };
+    /// No preparation: the mesh as loaded.
+    pub const NONE: MeshPrepOptions = MeshPrepOptions { union_overlapping_bodies: false, convex_hull: false };
+
+    /// True when neither step runs.
+    pub fn is_disabled(&self) -> bool {
+        !self.union_overlapping_bodies && !self.convex_hull
+    }
+}
+
+impl Default for MeshPrepOptions {
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
+
+impl From<&crate::config::ModelConfig> for MeshPrepOptions {
+    fn from(m: &crate::config::ModelConfig) -> Self {
+        MeshPrepOptions { union_overlapping_bodies: m.union_overlapping_bodies, convex_hull: m.convex_hull }
+    }
+}
+
 /// What [`prepare_mesh`] found and did; serialized as `mesh_prep` in the
-/// result JSON with the keys of Python's `MeshPrepReport.to_dict()`.
+/// result JSON with the keys of Python's `MeshPrepReport.to_dict()`, plus
+/// `convex_hull` and `n_hulled`.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct MeshPrepReport {
-    /// `unchanged`, `unioned`, `skipped` or `disabled`.
+    /// `unchanged`, `unioned`, `hulled`, `skipped` or `disabled`.
     pub action: String,
     pub reason: String,
     /// Non-degenerate connected bodies.
@@ -57,6 +98,12 @@ pub struct MeshPrepReport {
     pub volume_before: f64,
     pub volume_after: f64,
     pub warnings: Vec<String>,
+    /// Whether bodies were replaced by their convex hulls (`model.convex_hull`).
+    #[serde(default)]
+    pub convex_hull: bool,
+    /// Number of convex hulls in the prepared mesh (before any union).
+    #[serde(default)]
+    pub n_hulled: usize,
 }
 
 impl MeshPrepReport {
@@ -74,10 +121,13 @@ impl MeshPrepReport {
             volume_before: mesh.volume(),
             volume_after: mesh.volume(),
             warnings: Vec::new(),
+            convex_hull: false,
+            n_hulled: 0,
         }
     }
 
-    /// The report for `model.union_overlapping_bodies = false`.
+    /// The report when both steps are off (`model.union_overlapping_bodies =
+    /// false`, `model.convex_hull = false`).
     pub fn disabled(mesh: &Mesh) -> Self {
         MeshPrepReport {
             action: "disabled".into(),
@@ -89,6 +139,11 @@ impl MeshPrepReport {
     /// True when the returned mesh is a union rather than the input.
     pub fn is_unioned(&self) -> bool {
         self.action == "unioned"
+    }
+
+    /// True when the returned mesh differs from the input (a union or convex hulls).
+    pub fn changed(&self) -> bool {
+        self.action == "unioned" || self.action == "hulled"
     }
 
     fn warn(&mut self, message: String) {
@@ -106,15 +161,15 @@ impl MeshPrepReport {
 /// Return the mesh MorphIt should pack, plus a report of what was done.
 ///
 /// The returned `Arc` is `mesh` itself unless overlapping closed bodies were
-/// unioned. `enabled = false` returns `mesh` with action `disabled`.
-/// Preparation never fails: any unexpected problem falls back to `mesh`
-/// with action `skipped` and a warning.
-pub fn prepare_mesh(mesh: &Arc<Mesh>, enabled: bool) -> (Arc<Mesh>, MeshPrepReport) {
-    if !enabled {
+/// unioned or bodies were replaced by their convex hulls. With both steps off
+/// it returns `mesh` with action `disabled`. Preparation never fails: any
+/// unexpected problem falls back to `mesh` with action `skipped` and a warning.
+pub fn prepare_mesh(mesh: &Arc<Mesh>, options: MeshPrepOptions) -> (Arc<Mesh>, MeshPrepReport) {
+    if options.is_disabled() {
         return (Arc::clone(mesh), MeshPrepReport::disabled(mesh));
     }
     let mut report = MeshPrepReport::new(mesh);
-    let outcome = catch_unwind(AssertUnwindSafe(|| prepare(mesh, &mut report)));
+    let outcome = catch_unwind(AssertUnwindSafe(|| prepare(mesh, options, &mut report)));
     let failure = match outcome {
         Ok(Ok(Some(union))) => return (Arc::new(union), report),
         Ok(Ok(None)) => return (Arc::clone(mesh), report),
@@ -133,9 +188,14 @@ pub fn prepare_mesh(mesh: &Arc<Mesh>, enabled: bool) -> (Arc<Mesh>, MeshPrepRepo
     (Arc::clone(mesh), report)
 }
 
-/// Body of [`prepare_mesh`] once enabled: `Ok(Some(union))` when unioned,
-/// `Ok(None)` to keep the input (the report says why), `Err` on failure.
-fn prepare(mesh: &Mesh, report: &mut MeshPrepReport) -> Result<Option<Mesh>, String> {
+/// Body of [`prepare_mesh`] once enabled: `Ok(Some(mesh))` for a union or
+/// convex hulls, `Ok(None)` to keep the input (the report says why), `Err`
+/// on failure.
+fn prepare(
+    mesh: &Mesh,
+    options: MeshPrepOptions,
+    report: &mut MeshPrepReport,
+) -> Result<Option<Mesh>, String> {
     #[cfg(test)]
     if tests::FAIL_SPLIT.with(|f| f.get()) {
         return Err("simulated failure".into());
@@ -146,9 +206,37 @@ fn prepare(mesh: &Mesh, report: &mut MeshPrepReport) -> Result<Option<Mesh>, Str
     let mut kept: Vec<Body> = bodies.into_iter().filter(|b| !b.is_degenerate()).collect();
     report.n_degenerate_dropped = n_all - kept.len();
     report.n_bodies = kept.len();
+
+    let mut hulled = false;
+    if options.convex_hull && !kept.is_empty() {
+        match kept.iter().map(hull).collect::<Result<Vec<Body>, UnionError>>() {
+            Ok(hulls) => {
+                let n = hulls.len();
+                // A flat body has a flat hull, which encloses nothing.
+                kept = hulls.into_iter().filter(|b| !b.is_degenerate()).collect();
+                report.n_degenerate_dropped += n - kept.len();
+                report.n_bodies = kept.len();
+                report.convex_hull = true;
+                report.n_hulled = kept.len();
+                hulled = !kept.is_empty();
+            }
+            Err(UnionError::Unavailable(why) | UnionError::Failed(why)) => {
+                report.warn(format!("convex hulls not built ({why}); preparing the mesh without them."));
+            }
+        }
+    }
+    // The hulls side by side, when no union follows.
+    let hulls_only = |report: &mut MeshPrepReport, kept: &[Body], reason: String| {
+        if hulled { hulled_mesh(mesh, kept, report, reason).map(Some) } else { Ok(None) }
+    };
+
+    if !options.union_overlapping_bodies {
+        let reason = format!("{} replaced by convex hulls", plural(kept.len(), "body", "bodies"));
+        return hulls_only(report, &kept, reason);
+    }
     if kept.len() <= 1 {
         report.reason = "single body".into();
-        return Ok(None);
+        return hulls_only(report, &kept, "single body replaced by its convex hull".into());
     }
 
     for body in &mut kept {
@@ -161,7 +249,8 @@ fn prepare(mesh: &Mesh, report: &mut MeshPrepReport) -> Result<Option<Mesh>, Str
     report.overlapping = any_overlap(&kept);
     if !report.overlapping {
         report.reason = format!("{} disjoint bodies", kept.len());
-        return Ok(None);
+        let reason = format!("{} disjoint bodies replaced by convex hulls", kept.len());
+        return hulls_only(report, &kept, reason);
     }
 
     if report.n_open > 0 {
@@ -227,7 +316,11 @@ fn prepare(mesh: &Mesh, report: &mut MeshPrepReport) -> Result<Option<Mesh>, Str
     };
 
     report.action = "unioned".into();
-    report.reason = format!("{n} overlapping closed bodies unioned");
+    report.reason = if hulled {
+        format!("{n} overlapping convex hulls unioned")
+    } else {
+        format!("{n} overlapping closed bodies unioned")
+    };
     report.faces_after = union_mesh.faces().len();
     report.volume_after = union_mesh.volume();
     tracing::info!(
@@ -240,6 +333,42 @@ fn prepare(mesh: &Mesh, report: &mut MeshPrepReport) -> Result<Option<Mesh>, Str
         py_e3(report.volume_after)
     );
     Ok(Some(union_mesh))
+}
+
+/// The convex hulls in `bodies` as one mesh, with the report filled in.
+fn hulled_mesh(
+    mesh: &Mesh,
+    bodies: &[Body],
+    report: &mut MeshPrepReport,
+    reason: String,
+) -> Result<Mesh, String> {
+    let mut vertices = Vec::new();
+    let mut faces = Vec::new();
+    for body in bodies {
+        let base = vertices.len() as u32;
+        vertices.extend_from_slice(&body.vertices);
+        faces.extend(body.faces.iter().map(|f| f.map(|i| i + base)));
+    }
+    let hulls = Mesh::from_vertices(vertices, faces, mesh.source_path().map(str::to_string))
+        .map_err(|e| format!("convex hull mesh: {e}"))?;
+    report.action = "hulled".into();
+    report.reason = reason;
+    report.faces_after = hulls.faces().len();
+    report.volume_after = hulls.volume();
+    tracing::info!(
+        "mesh prep: {}: faces {} -> {}, volume {} -> {}",
+        report.reason,
+        report.faces_before,
+        report.faces_after,
+        py_e3(report.volume_before),
+        py_e3(report.volume_after)
+    );
+    Ok(hulls)
+}
+
+/// `1 body`, `3 bodies`.
+fn plural(n: usize, one: &str, many: &str) -> String {
+    format!("{n} {}", if n == 1 { one } else { many })
 }
 
 /// Python's `f"{x:.3e}"` (`1.568e+00`).
@@ -554,6 +683,40 @@ fn union(_bodies: &[Body]) -> Result<(Vec<DVec3>, Vec<[u32; 3]>), UnionError> {
     Err(UnionError::Unavailable("mesh union support is not built in (feature `union`)".into()))
 }
 
+/// Convex hull of a body's vertices (Manifold's quickhull in f64), wound
+/// outward, with duplicate positions merged.
+#[cfg(feature = "union")]
+fn hull(body: &Body) -> Result<Body, UnionError> {
+    use manifold_rust::linalg::Vec3;
+    use manifold_rust::manifold::Manifold;
+    use manifold_rust::types::Error as MfError;
+
+    let points: Vec<Vec3> = body.vertices.iter().map(|v| Vec3::new(v.x, v.y, v.z)).collect();
+    let hull = Manifold::hull(&points);
+    let status = hull.status();
+    if status != MfError::NoError {
+        return Err(UnionError::Failed(format!("convex hull status Error.{status:?}")));
+    }
+    let out = hull.get_mesh_gl64(-1);
+    let np = out.num_prop as usize;
+    if np < 3 {
+        return Err(UnionError::Failed(format!("hull mesh has {np} properties per vertex")));
+    }
+    let vertices: Vec<DVec3> =
+        out.vert_properties.chunks_exact(np).map(|p| DVec3::new(p[0], p[1], p[2])).collect();
+    let faces: Vec<[u32; 3]> =
+        out.tri_verts.chunks_exact(3).map(|t| [t[0] as u32, t[1] as u32, t[2] as u32]).collect();
+    let (vertices, faces) = merge_positions(&vertices, &faces);
+    let mut body = Body { vertices, faces };
+    body.fix_normals();
+    Ok(body)
+}
+
+#[cfg(not(feature = "union"))]
+fn hull(_body: &Body) -> Result<Body, UnionError> {
+    Err(UnionError::Unavailable("convex hull support is not built in (feature `union`)".into()))
+}
+
 #[cfg(test)]
 pub(crate) mod tests {
     use std::cell::Cell;
@@ -599,7 +762,7 @@ pub(crate) mod tests {
     #[test]
     fn single_body_is_returned_unchanged() {
         let m = Arc::new(box_mesh(DVec3::ZERO, DVec3::ONE));
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         assert!(Arc::ptr_eq(&out, &m));
         assert_eq!((r.action.as_str(), r.reason.as_str(), r.n_bodies), ("unchanged", "single body", 1));
         assert_eq!((r.faces_before, r.faces_after), (12, 12));
@@ -609,7 +772,7 @@ pub(crate) mod tests {
     #[test]
     fn disabled_returns_the_input() {
         let m = concat(&[unit_box(DVec3::ZERO), unit_box(SHIFT)]);
-        let (out, r) = prepare_mesh(&m, false);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::NONE);
         assert!(Arc::ptr_eq(&out, &m));
         assert_eq!(r.action, "disabled");
         assert_eq!(r.reason, "model.union_overlapping_bodies is False");
@@ -622,7 +785,7 @@ pub(crate) mod tests {
             vec![[0, 1, 2], [0, 2, 1]],
         );
         let m = concat(&[unit_box(DVec3::ZERO), sliver]);
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         assert!(Arc::ptr_eq(&out, &m));
         assert_eq!((r.action.as_str(), r.n_degenerate_dropped, r.n_bodies), ("unchanged", 1, 1));
     }
@@ -630,7 +793,7 @@ pub(crate) mod tests {
     #[test]
     fn disjoint_bodies_are_left_alone() {
         let m = concat(&[unit_box(DVec3::ZERO), unit_box(DVec3::new(3.0, 0.0, 0.0))]);
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         assert!(Arc::ptr_eq(&out, &m));
         assert_eq!((r.action.as_str(), r.reason.as_str()), ("unchanged", "2 disjoint bodies"));
         assert_eq!((r.n_bodies, r.n_closed, r.n_open, r.overlapping), (2, 2, 0, false));
@@ -641,7 +804,7 @@ pub(crate) mod tests {
         let (v, mut f) = unit_box(SHIFT);
         f.remove(0);
         let m = concat(&[unit_box(DVec3::ZERO), (v, f)]);
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         assert!(Arc::ptr_eq(&out, &m));
         assert_eq!((r.action.as_str(), r.n_open, r.n_closed), ("skipped", 1, 1));
         assert!(r.overlapping);
@@ -653,7 +816,7 @@ pub(crate) mod tests {
     fn internal_failure_falls_back_to_the_raw_mesh() {
         let m = concat(&[unit_box(DVec3::ZERO), unit_box(SHIFT)]);
         FAIL_SPLIT.with(|f| f.set(true));
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         FAIL_SPLIT.with(|f| f.set(false));
         assert!(Arc::ptr_eq(&out, &m));
         assert_eq!(r.action, "skipped");
@@ -673,7 +836,7 @@ pub(crate) mod tests {
             df.push([base, base + 1, base + 2]);
         }
         let m = concat(&[(dv, df)]);
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         assert!(Arc::ptr_eq(&out, &m));
         assert_eq!((r.action.as_str(), r.n_bodies), ("unchanged", 1));
     }
@@ -712,7 +875,7 @@ pub(crate) mod tests {
     #[test]
     fn overlapping_closed_bodies_are_unioned() {
         let m = concat(&[unit_box(DVec3::ZERO), unit_box(SHIFT)]);
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         assert!(!Arc::ptr_eq(&out, &m));
         let expected = 2.0 - 0.6 * 0.8 * 0.9;
         assert_eq!(r.action, "unioned", "{r:?}");
@@ -737,7 +900,7 @@ pub(crate) mod tests {
         f.iter_mut().for_each(|t| t.reverse());
         let m = concat(&[unit_box(DVec3::ZERO), (v, f)]);
         assert!((m.volume() - 0.875).abs() < 1e-12);
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         assert_eq!(r.action, "unioned", "{r:?}");
         assert!((out.volume() - 1.0).abs() < 1e-6, "volume {}", out.volume());
     }
@@ -746,9 +909,140 @@ pub(crate) mod tests {
     #[test]
     fn without_the_union_feature_overlaps_are_skipped() {
         let m = concat(&[unit_box(DVec3::ZERO), unit_box(SHIFT)]);
-        let (out, r) = prepare_mesh(&m, true);
+        let (out, r) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
         assert!(Arc::ptr_eq(&out, &m));
         assert_eq!(r.action, "skipped");
         assert_eq!(r.warnings.len(), 1);
+    }
+
+    const HULL: MeshPrepOptions = MeshPrepOptions { union_overlapping_bodies: true, convex_hull: true };
+    const HULL_ONLY: MeshPrepOptions = MeshPrepOptions { union_overlapping_bodies: false, convex_hull: true };
+
+    /// A concave body: the union of two overlapping unit boxes (volume 1.568).
+    #[cfg(feature = "union")]
+    fn concave_body() -> Parts {
+        parts(&two_overlapping_boxes().prepared().0)
+    }
+
+    /// True when every point lies on the inner side of every face plane of `m`.
+    fn inside_all_planes(m: &Mesh, points: &[DVec3]) -> bool {
+        m.triangles().all(|[a, b, c]| {
+            let n = (b - a).cross(c - a).normalize();
+            points.iter().all(|&p| n.dot(p - a) <= 1e-9)
+        })
+    }
+
+    #[cfg(feature = "union")]
+    #[test]
+    fn a_concave_body_becomes_its_convex_hull() {
+        let body = concave_body();
+        let m = concat(std::slice::from_ref(&body));
+        let (out, r) = prepare_mesh(&m, HULL);
+        assert!(!Arc::ptr_eq(&out, &m));
+        assert_eq!(
+            (r.action.as_str(), r.reason.as_str()),
+            ("hulled", "single body replaced by its convex hull")
+        );
+        assert!(r.convex_hull && r.n_hulled == 1, "{r:?}");
+        // Convex, holds every input vertex, larger than the body, within its box.
+        assert!(inside_all_planes(&out, out.vertices()));
+        assert!(inside_all_planes(&out, &body.0));
+        assert!(out.volume() > 1.568 + 0.05 && out.volume() < 1.4 * 1.2 * 1.1, "volume {}", out.volume());
+        assert!(Body { vertices: out.vertices().to_vec(), faces: out.faces().to_vec() }.is_closed());
+        assert_eq!((r.faces_after, r.volume_after), (out.faces().len(), out.volume()));
+        // A notch of the concave body is solid in the hull.
+        let notch = DVec3::new(1.05, 0.12, 0.5);
+        assert!(out.contains(notch) && !m.contains(notch));
+    }
+
+    #[cfg(feature = "union")]
+    #[test]
+    fn disjoint_bodies_get_one_hull_each() {
+        let (a, (bv, bf)) = (concave_body(), concave_body());
+        let far = (bv.iter().map(|&v| v + DVec3::splat(5.0)).collect(), bf);
+        let m = concat(&[a, far]);
+        let (out, r) = prepare_mesh(&m, HULL);
+        assert_eq!((r.action.as_str(), r.n_hulled, r.n_bodies), ("hulled", 2, 2), "{r:?}");
+        assert_eq!(r.reason, "2 disjoint bodies replaced by convex hulls");
+        let single = prepare_mesh(&concat(&[concave_body()]), HULL).0;
+        assert_eq!(out.faces().len(), 2 * single.faces().len());
+        assert!((out.volume() - 2.0 * single.volume()).abs() < 1e-9);
+    }
+
+    /// The concave body and a small box in its notch: apart as loaded, but
+    /// the box lies inside the body's hull.
+    #[cfg(feature = "union")]
+    fn body_and_box_in_its_notch() -> Arc<Mesh> {
+        let notch_box = parts(&box_mesh(DVec3::new(1.02, 0.1, 0.4), DVec3::new(1.08, 0.18, 0.6)));
+        concat(&[concave_body(), notch_box])
+    }
+
+    #[cfg(feature = "union")]
+    #[test]
+    fn overlapping_hulls_are_unioned() {
+        let m = body_and_box_in_its_notch();
+        let (_, raw) = prepare_mesh(&m, MeshPrepOptions::DEFAULT);
+        assert_eq!((raw.action.as_str(), raw.overlapping), ("unchanged", false));
+
+        let (out, r) = prepare_mesh(&m, HULL);
+        assert_eq!(r.action, "unioned", "{r:?}");
+        assert_eq!(r.reason, "2 overlapping convex hulls unioned");
+        assert!(r.convex_hull && r.n_hulled == 2 && r.overlapping);
+        // The box is swallowed: the union is the body's hull.
+        let hull = prepare_mesh(&concat(&[concave_body()]), HULL).0;
+        assert!(
+            (out.volume() - hull.volume()).abs() < 1e-5 * hull.volume(),
+            "{} vs {}",
+            out.volume(),
+            hull.volume()
+        );
+    }
+
+    #[cfg(feature = "union")]
+    #[test]
+    fn without_the_union_hulls_are_packed_side_by_side() {
+        let m = body_and_box_in_its_notch();
+        let (out, r) = prepare_mesh(&m, HULL_ONLY);
+        assert_eq!((r.action.as_str(), r.n_hulled), ("hulled", 2), "{r:?}");
+        assert_eq!(r.reason, "2 bodies replaced by convex hulls");
+        let hull = prepare_mesh(&concat(&[concave_body()]), HULL).0;
+        assert_eq!(out.faces().len(), hull.faces().len() + 12);
+    }
+
+    #[cfg(feature = "union")]
+    #[test]
+    fn an_open_body_is_closed_by_its_hull_and_unioned() {
+        let (v, mut f) = unit_box(SHIFT);
+        f.remove(0);
+        let m = concat(&[unit_box(DVec3::ZERO), (v, f)]);
+        let (out, r) = prepare_mesh(&m, HULL);
+        assert_eq!((r.action.as_str(), r.n_open, r.n_closed), ("unioned", 0, 2), "{r:?}");
+        assert!((out.volume() - (2.0 - 0.6 * 0.8 * 0.9)).abs() < 0.01);
+        assert!(r.warnings.is_empty());
+    }
+
+    #[cfg(feature = "union")]
+    #[test]
+    fn preparations_are_cached_per_option() {
+        let m = two_overlapping_boxes();
+        let (union, _) = m.prepared();
+        let (hulled, r) = m.prepared_with(HULL);
+        assert_eq!(r.action, "unioned");
+        assert!(!Arc::ptr_eq(&union, &hulled));
+        assert!(Arc::ptr_eq(&hulled, &m.prepared_with(HULL).0));
+        assert!(Arc::ptr_eq(&union, &m.prepared_with(MeshPrepOptions::DEFAULT).0));
+        assert!(Arc::ptr_eq(&m, &m.prepared_with(MeshPrepOptions::NONE).0));
+        // Boxes are their own hulls: the same solid, computed separately.
+        assert!((hulled.volume() - union.volume()).abs() < 1e-6);
+    }
+
+    #[cfg(not(feature = "union"))]
+    #[test]
+    fn without_the_union_feature_hulls_are_skipped_with_a_warning() {
+        let m = concat(&[unit_box(DVec3::ZERO)]);
+        let (out, r) = prepare_mesh(&m, HULL_ONLY);
+        assert!(Arc::ptr_eq(&out, &m));
+        assert!(!r.convex_hull);
+        assert_eq!(r.warnings.len(), 1, "{r:?}");
     }
 }

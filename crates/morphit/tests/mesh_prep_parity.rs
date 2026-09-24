@@ -12,7 +12,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use morphit::{Mesh, prepare_mesh};
+use morphit::{Mesh, MeshPrepOptions, prepare_mesh};
 use serde_json::Value;
 
 fn fixture_dir() -> PathBuf {
@@ -35,7 +35,7 @@ fn reports_match_python() {
     assert!(cases.len() >= 8);
     for (name, case) in cases {
         let mesh = Arc::new(Mesh::load(fixture_dir().join(case["file"].as_str().unwrap())).unwrap());
-        let (out, got) = prepare_mesh(&mesh, true);
+        let (out, got) = prepare_mesh(&mesh, MeshPrepOptions::DEFAULT);
         let want = &case["report"];
         let ctx = format!("{name}: rust {got:?}\npython {want}");
         for key in ["action", "reason"] {

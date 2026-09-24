@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use morphit::Mesh;
 use morphit::glam::DVec3;
+use morphit::{Mesh, MeshPrepOptions};
 use wasm_bindgen::prelude::*;
 
 use crate::dto::{MeshInfoDto, to_js};
@@ -12,6 +12,26 @@ use crate::err;
 #[derive(Clone)]
 pub struct JsMesh {
     pub(crate) inner: Arc<Mesh>,
+}
+
+#[derive(serde::Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+struct MeshPrepOptionsDto {
+    union_overlapping_bodies: Option<bool>,
+    convex_hull: Option<bool>,
+}
+
+/// `{ unionOverlappingBodies, convexHull }` (either may be missing) as options.
+fn prep_options(options: JsValue) -> Result<MeshPrepOptions, JsError> {
+    let o: MeshPrepOptionsDto = if options.is_undefined() || options.is_null() {
+        Default::default()
+    } else {
+        serde_wasm_bindgen::from_value(options).map_err(err)?
+    };
+    Ok(MeshPrepOptions {
+        union_overlapping_bodies: o.union_overlapping_bodies.unwrap_or(true),
+        convex_hull: o.convex_hull.unwrap_or(false),
+    })
 }
 
 impl JsMesh {
@@ -62,15 +82,23 @@ impl JsMesh {
         self.inner.contains_many(&pts).into_iter().map(u8::from).collect()
     }
 
-    /// The mesh a session packs with `model.union_overlapping_bodies`:
-    /// overlapping closed bodies merged into one.
-    pub fn prepared(&self) -> JsMesh {
-        JsMesh { inner: self.inner.prepared().0 }
+    /// The mesh a session packs with these mesh preparation options
+    /// (`{ unionOverlappingBodies, convexHull }`, default merge on, hull off):
+    /// overlapping closed bodies merged, bodies replaced by convex hulls.
+    pub fn prepared(
+        &self,
+        #[wasm_bindgen(unchecked_param_type = "MeshPrepOptions | undefined")] options: JsValue,
+    ) -> Result<JsMesh, JsError> {
+        Ok(JsMesh { inner: self.inner.prepared_with(prep_options(options)?).0 })
     }
 
-    /// What [`JsMesh::prepared`] did (Python `MeshPrepReport` keys).
+    /// What [`JsMesh::prepared`] does with the same options (Python
+    /// `MeshPrepReport` keys, plus `convex_hull` and `n_hulled`).
     #[wasm_bindgen(js_name = prepReport, unchecked_return_type = "MeshPrepReport")]
-    pub fn prep_report(&self) -> Result<JsValue, JsError> {
-        to_js(&self.inner.prepared().1)
+    pub fn prep_report(
+        &self,
+        #[wasm_bindgen(unchecked_param_type = "MeshPrepOptions | undefined")] options: JsValue,
+    ) -> Result<JsValue, JsError> {
+        to_js(&self.inner.prepared_with(prep_options(options)?).1)
     }
 }

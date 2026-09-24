@@ -246,6 +246,58 @@ async fn mesh_prep_can_be_disabled() {
     assert_eq!(r.status(), StatusCode::OK);
 }
 
+/// `convex_hull` replaces each body with its convex hull (default off).
+#[tokio::test(flavor = "multi_thread")]
+async fn convex_hull_can_be_enabled() {
+    let s = start(Duration::from_secs(3600)).await;
+    let form = |hull: &'static str| {
+        Form::new()
+            .part("mesh", mesh_part(link0(), "link0.obj"))
+            .text("num_spheres", "6")
+            .text("iterations", "3")
+            .text("seed", "1")
+            .text("convex_hull", hull)
+    };
+    let prep =
+        |r: &reqwest::Response| -> Value { serde_json::from_str(&header(r, "x-morphit-mesh-prep")).unwrap() };
+    let r = s.post("/api/morph", form("false")).await;
+    assert_eq!(prep(&r)["action"], "unchanged");
+    assert_eq!(prep(&r)["convex_hull"], false);
+    let r = s.post("/api/morph", form("true")).await;
+    assert_eq!(r.status(), StatusCode::OK);
+    let p = prep(&r);
+    assert_eq!((p["action"].as_str(), p["convex_hull"].as_bool()), (Some("hulled"), Some(true)), "{p}");
+    assert!(p["volume_after"].as_f64().unwrap() > p["volume_before"].as_f64().unwrap());
+    let urdf = r.text().await.unwrap();
+
+    let r = s.post("/api/morph", form("sometimes")).await;
+    assert_eq!(r.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(detail(r).await[0]["loc"], serde_json::json!(["body", "convex_hull"]));
+
+    let analyze = Form::new()
+        .part("mesh", mesh_part(link0(), "link0.obj"))
+        .text("urdf", urdf)
+        .text("convex_hull", "true");
+    assert_eq!(s.post("/api/morph/analyze", analyze).await.status(), StatusCode::OK);
+
+    // Robot links remember the choice.
+    let report = load_example(&s, "kinova").await;
+    let sid = report["session_id"].as_str().unwrap().to_string();
+    let r = s
+        .post(
+            "/api/robot/pack-link",
+            pack_form(&sid, "m1n4s200_link_base", 0, 4, 2).text("convex_hull", "on"),
+        )
+        .await;
+    assert_eq!(r.status(), StatusCode::OK);
+    let out: Value = r.json().await.unwrap();
+    let saved = morphit::PackResult::load(out["json_path"].as_str().unwrap()).unwrap();
+    assert!(saved.config.model.convex_hull);
+    assert!(saved.mesh_prep.unwrap().convex_hull);
+    let r = s.post("/api/robot/analyze", Form::new().text("session_id", sid)).await;
+    assert_eq!(r.status(), StatusCode::OK);
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn object_mode_rejects_bad_input() {
     let s = start(Duration::from_secs(3600)).await;

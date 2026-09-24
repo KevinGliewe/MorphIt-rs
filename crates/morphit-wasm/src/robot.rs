@@ -38,8 +38,10 @@ struct PackParamsDto {
     seed: Option<u64>,
     /// The web UI's flat `advanced` overrides (`coverage_weight`, ...).
     advanced: Option<serde_json::Value>,
-    /// Mesh preparation (default true).
+    /// Mesh preparation: merge overlapping bodies (default true).
     union_overlapping_bodies: Option<bool>,
+    /// Mesh preparation: convex hull of each body first (default false).
+    convex_hull: Option<bool>,
 }
 
 #[derive(Serialize)]
@@ -147,7 +149,7 @@ impl JsRobotPackage {
 
     /// A session packing one `pack` item of `inspect()`. `params`:
     /// `{ variant, numSpheres, iterations, seed, advanced,
-    /// unionOverlappingBodies }` with the web
+    /// unionOverlappingBodies, convexHull }` with the web
     /// API's defaults and limits. Store the finished session's `resultJson()`
     /// with `setLinkResult`.
     #[wasm_bindgen(js_name = packLink)]
@@ -170,6 +172,7 @@ impl JsRobotPackage {
             seed: p.seed,
             advanced,
             union_overlapping_bodies: p.union_overlapping_bodies.unwrap_or(true),
+            convex_hull: p.convex_hull.unwrap_or(false),
         };
         params.validate().map_err(err)?;
         let mesh_path = pack_mesh_path(&item).map_err(err)?;

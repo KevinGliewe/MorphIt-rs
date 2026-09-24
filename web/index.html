@@ -1285,6 +1285,10 @@
             <input type="checkbox" name="union_overlapping_bodies" checked>
             <span>Merge overlapping bodies <span class="info" data-tip="On by default. Analysis scores against the same mesh the packing used. The API reports what was done in the X-Morphit-Mesh-Prep header."></span></span>
           </label>
+          <label class="field check">
+            <input type="checkbox" name="convex_hull">
+            <span>Convex hull of each body <span class="info" data-tip="Off by default. Replaces every body with its convex hull before merging, so the spheres approximate a simpler, closed shape; concavities and holes are filled. Overlapping hulls are merged when merging is on."></span></span>
+          </label>
         </fieldset>
 
         <fieldset>
@@ -2778,7 +2782,7 @@ async function runAnalysis() {
       const fd = new FormData();
       fd.append('mesh', meshFile);
       fd.append('urdf', urdfText);
-      fd.append('union_overlapping_bodies', meshPrepField());
+      appendMeshPrep(fd);
       r = await fetchWithTimeout(
         '/api/morph/analyze', { method: 'POST', body: fd }, 120_000);
     }
@@ -3051,10 +3055,13 @@ const ADVANCED_KEYS = [
   'hausdorff_weight', 'mesh_containment_weight',
 ];
 
-// Mesh preparation switch (its own form field; default on).
-function meshPrepField() {
-  const el = f.querySelector('[name="union_overlapping_bodies"]');
-  return el && !el.checked ? 'false' : 'true';
+// Mesh preparation switches (their own form fields): merge overlapping
+// bodies (default on) and convex hull of each body (default off).
+function appendMeshPrep(fd) {
+  const union = f.querySelector('[name="union_overlapping_bodies"]');
+  const hull = f.querySelector('[name="convex_hull"]');
+  fd.append('union_overlapping_bodies', union && !union.checked ? 'false' : 'true');
+  fd.append('convex_hull', hull && hull.checked ? 'true' : 'false');
 }
 
 function gatherAdvanced() {
@@ -3565,7 +3572,7 @@ async function runObject() {
   fd.append('iterations',  String(numIters));
   fd.append('advanced',    JSON.stringify(gatherAdvanced()));
   fd.append('base_color',  visuals.base_color);
-  fd.append('union_overlapping_bodies', meshPrepField());
+  appendMeshPrep(fd);
   if (seed !== null) fd.append('seed', String(seed));
 
   status.textContent = '';
@@ -3698,7 +3705,7 @@ async function runRobot() {
       fdPack.append('num_spheres',     String(sphereCounts[i]));
       fdPack.append('iterations',      String(iterations));
       fdPack.append('advanced',        advancedJson);
-      fdPack.append('union_overlapping_bodies', meshPrepField());
+      appendMeshPrep(fdPack);
       if (seed !== null) fdPack.append('seed', String(seed));
 
       console.log(`[robot] pack ${i + 1}/${items.length}: ${item.link_name}`);
