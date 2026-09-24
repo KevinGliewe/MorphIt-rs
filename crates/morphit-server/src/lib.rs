@@ -14,6 +14,7 @@
 pub mod error;
 pub mod examples;
 pub mod forms;
+pub mod mesh;
 pub mod morph;
 pub mod robot;
 pub mod sessions;
@@ -94,6 +95,7 @@ pub fn router(state: SharedState) -> Router {
         .route("/api/example/{name}/thumbnail", get(examples::get_thumbnail))
         .route("/api/morph", post(morph::morph))
         .route("/api/morph/analyze", post(morph::analyze))
+        .route("/api/mesh/prepare", post(mesh::prepare))
         .route("/api/robot/examples", get(examples::list_robots))
         .route("/api/robot/example/{name}", post(robot::example_load))
         .route("/api/robot/example/{name}/spherical", get(examples::robot_spherical))
@@ -104,6 +106,7 @@ pub fn router(state: SharedState) -> Router {
         .route("/api/robot/pack-live", get(robot::pack_live))
         .route("/api/robot/mesh-stats", get(robot::mesh_stats))
         .route("/api/robot/analyze", post(robot::analyze))
+        .route("/api/robot/prepared-mesh", get(mesh::robot_prepared_mesh))
         // Uploads are read into memory like the Python service does; the
         // per-route caps (413 with advice) sit below this hard limit.
         .layer(DefaultBodyLimit::max(MAX_ROBOT_FOLDER_BYTES + 16 * MB))

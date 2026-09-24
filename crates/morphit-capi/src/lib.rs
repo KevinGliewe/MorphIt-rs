@@ -271,6 +271,66 @@ pub unsafe extern "C" fn morphit_mesh_contains(
     })
 }
 
+/// The mesh as packing prepares it: overlapping closed bodies unioned when
+/// `union_overlapping_bodies` is nonzero, each body replaced by its convex hull
+/// first when `convex_hull` is nonzero (the `model.*` keys of the same names).
+/// `*out` receives a new mesh (release it with `morphit_mesh_free`); it may
+/// share data with `mesh`. The result is computed once per mesh and options.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn morphit_mesh_prepare(
+    mesh: *const morphit_mesh,
+    union_overlapping_bodies: c_int,
+    convex_hull: c_int,
+    out_mesh: *mut *mut morphit_mesh,
+) -> morphit_status {
+    guard(|| {
+        let m = &unsafe { mesh_ref(mesh) }?.mesh;
+        let o = unsafe { out(out_mesh, "out") }?;
+        *o = null_mut();
+        let (prepared, _) = m.prepared_with(prep_options(union_overlapping_bodies, convex_hull));
+        *o = Box::into_raw(Box::new(morphit_mesh { mesh: prepared }));
+        Ok(MORPHIT_OK)
+    })
+}
+
+/// What `morphit_mesh_prepare` does with the same options, as JSON (the keys
+/// of `morphit_session_mesh_prep_json`). Buffer rules as for every string output.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn morphit_mesh_prep_report_json(
+    mesh: *const morphit_mesh,
+    union_overlapping_bodies: c_int,
+    convex_hull: c_int,
+    buf: *mut c_char,
+    capacity: usize,
+    needed: *mut usize,
+) -> morphit_status {
+    guard(|| {
+        let m = &unsafe { mesh_ref(mesh) }?.mesh;
+        let (_, report) = m.prepared_with(prep_options(union_overlapping_bodies, convex_hull));
+        let json = serde_json::to_string_pretty(&report).expect("report serializes");
+        unsafe { write_string(&json, buf, capacity, needed) }
+    })
+}
+
+/// Write a mesh to `path` (UTF-8), as .obj (exact coordinates) or binary .stl
+/// (single precision), chosen by the extension.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn morphit_mesh_save(mesh: *const morphit_mesh, path: *const c_char) -> morphit_status {
+    guard(|| {
+        let m = &unsafe { mesh_ref(mesh) }?.mesh;
+        let path = unsafe { cstr(path, "path") }?;
+        m.save(path)?;
+        Ok(MORPHIT_OK)
+    })
+}
+
+fn prep_options(union_overlapping_bodies: c_int, convex_hull: c_int) -> morphit::MeshPrepOptions {
+    morphit::MeshPrepOptions {
+        union_overlapping_bodies: union_overlapping_bodies != 0,
+        convex_hull: convex_hull != 0,
+    }
+}
+
 /// Release a mesh. NULL is ignored. Sessions created from it stay valid.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn morphit_mesh_free(mesh: *mut morphit_mesh) {

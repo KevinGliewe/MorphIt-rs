@@ -25,7 +25,7 @@ use crate::{
 /// Mesh formats object mode accepts (as the Python API: trimesh-native ones).
 pub const ALLOWED_EXTENSIONS: [&str; 3] = [".obj", ".stl", ".ply"];
 
-fn extension_error() -> ApiError {
+pub(crate) fn extension_error() -> ApiError {
     let exts: Vec<String> = ALLOWED_EXTENSIONS.iter().map(|e| morphit_robot::py_repr(e)).collect();
     ApiError::bad_request(format!("mesh extension must be one of ({})", exts.join(", ")))
 }

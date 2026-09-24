@@ -60,6 +60,7 @@ morphit pack link0.obj --preset MorphIt-B --spheres 20 --iterations 300 --seed 4
 morphit pack bunny.stl -p MorphIt-V -n 64 --set training.center_lr=0.001 --history log.json
 morphit metrics link0.obj spheres.json          # debug_quick_eval-style quality metrics
 morphit info link0.obj                          # volume, bounds, inertia, bodies, ...
+morphit prepare parts.obj -o parts_prepared.stl   # the mesh as packing prepares it (--convex-hull, --no-union)
 morphit export spheres.json -o link0.urdf         # URDF (ROS, PyBullet, Genesis, ...)
 morphit export spheres.json -o link0.xml --anchored   # MJCF for MuJoCo, welded to the world
 morphit presets
@@ -101,7 +102,10 @@ simpler, closed shape. Open bodies become closed hulls, and hulls that overlap
 are merged when `union_overlapping_bodies` is on; with it off the hulls are
 packed side by side. The report then says `hulled` (or `unioned` with
 `convex_hull: true`) and counts the hulls in `n_hulled`;
-`morphit info mesh.obj --convex-hull` shows what it would do.
+`morphit info mesh.obj --convex-hull` shows what it would do, and
+`morphit prepare mesh.obj --convex-hull -o hull.obj` writes the prepared mesh
+(OBJ with exact coordinates, or binary STL); the HTTP API, the C API, the
+wasm build and the studio export it too.
 
 The union uses [manifold-rust](https://crates.io/crates/manifold-rust), a
 pure-Rust port of the Manifold library that Python calls through manifold3d.
@@ -165,6 +169,9 @@ its capacity; `NULL` with capacity 0 asks for the size.
 `morphit_session_device` reports what a session runs on.
 `morphit_session_mesh_prep_json` returns the mesh preparation report; the
 union is computed once per mesh handle and shared by its sessions.
+`morphit_mesh_prepare(mesh, union, hull, &prepared)` returns the prepared mesh
+as a new handle, `morphit_mesh_prep_report_json` what was done, and
+`morphit_mesh_save(mesh, "out.obj")` writes any mesh as .obj or .stl.
 
 **Threading.** Every function may be called from any thread.
 
@@ -310,6 +317,8 @@ exits 0 when it answers, which is what the Docker health check runs.
 | `GET /api/robot/pack-live?session_id=` | websocket with the live spheres of the running pack |
 | `POST /api/robot/assemble` | form: `session_id`, `base_color`, `color_variation`. The spherical URDF |
 | `POST /api/robot/analyze` | form: `session_id`. Metrics per packed link, each against the mesh it was packed on |
+| `POST /api/mesh/prepare` | form: `mesh`, `union_overlapping_bodies` (default `true`), `convex_hull` (default `false`), `format` (`obj` default, or `stl`). The prepared mesh as a download, with the report in `X-Morphit-Mesh-Prep` |
+| `GET /api/robot/prepared-mesh?session_id=&link_name=&collision_index=` | the prepared mesh of one collision of a robot session; same `union_overlapping_bodies`, `convex_hull` and `format` options as query parameters |
 
 `union_overlapping_bodies` and `convex_hull` are additions to the Python API
 (which always merges and never builds hulls): `union_overlapping_bodies=false`
@@ -397,7 +406,8 @@ const urdf = objectUrdf(session.centers(), session.radii(), { name: "bunny" }).t
 ```
 
 - **Objects:** `Mesh` (`fromBytes` for OBJ/STL/PLY/DAE, `fromArrays`, `info`,
-  `prepared`/`prepReport` with `{ unionOverlappingBodies, convexHull }`),
+  `prepared`/`prepReport` with `{ unionOverlappingBodies, convexHull }`,
+  `toObj`/`toStl`),
   `Config` (presets, dotted keys), `Session` (`step`, `stepMany`, `stepSync` on
   the CPU, `centers`/`radii`/`masses`, `finalize`, `resultJson`,
   `historyJson`), `objectUrdf`/`objectMjcf`, `evaluatePacking`.
@@ -433,7 +443,9 @@ and in the browser from the same code:
   loss weights, and watch the spheres and the loss curve while it
   packs (pause, finish early, cancel). Save the result JSON, a URDF or MJCF
   (free or anchored, with a total mass), and analyze coverage, surface
-  distance and mass properties.
+  distance and mass properties. "prepared mesh" draws the mesh as packing
+  prepares it with the current settings, and "Save prepared mesh" exports
+  it as OBJ or STL (in robot mode, the selected collision).
 - **Robot mode:** open a robot package (a folder, a `.zip` or one of the 10
   bundled robots). The collision meshes appear at their zero-configuration
   poses; pack all of them or a selected one, assemble the spherical URDF

@@ -132,22 +132,24 @@ pub fn rebuild(
     match studio.mode {
         Mode::Object => {
             if let Some(doc) = &studio.object {
+                let shown = studio.shown_mesh(0, &doc.mesh);
                 commands.spawn((
                     PackedMesh,
-                    Mesh3d(meshes.add(to_bevy_mesh(&doc.mesh))),
+                    Mesh3d(meshes.add(to_bevy_mesh(&shown))),
                     MeshMaterial3d(mesh_material.clone()),
                     Transform::default(),
                     ChildOf(root),
                 ));
-                let (lo, hi) = doc.mesh.bounds();
+                let (lo, hi) = shown.bounds();
                 grow(lo, hi);
                 group(&mut commands, &mut materials, None, colors[0].1, root);
             }
         }
         Mode::Robot => {
             if let Some(doc) = studio.robot.as_ref().map(|r| &r.doc) {
-                for (item, mesh) in doc.report.collisions.iter().zip(&doc.meshes) {
+                for (i, (item, mesh)) in doc.report.collisions.iter().zip(&doc.meshes).enumerate() {
                     let Some(mesh) = mesh else { continue };
+                    let mesh = &studio.shown_mesh(i, mesh);
                     let link = doc.poses.get(&item.link_name).copied().unwrap_or(Pose::IDENTITY);
                     let pose = collision_pose(&link, item);
                     let at = commands.spawn((to_transform(&pose), Visibility::default(), ChildOf(root))).id();

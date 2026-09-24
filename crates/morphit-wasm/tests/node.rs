@@ -55,6 +55,12 @@ fn mesh_and_config() {
     let volume = |m: &JsMesh| get(&m.info().unwrap(), "volume").as_f64().unwrap();
     assert!(volume(&hull) > volume(&m));
 
+    // The prepared mesh exports and loads back.
+    let obj = JsMesh::from_bytes(hull.to_obj().as_bytes(), "obj", None).unwrap();
+    assert_eq!(volume(&obj), volume(&hull));
+    let stl = JsMesh::from_bytes(&hull.to_stl(), "stl", None).unwrap();
+    assert!((volume(&stl) - volume(&hull)).abs() < 1e-6 * volume(&hull));
+
     let mut c = config(7, 3);
     assert_eq!(c.get("model.num_spheres").unwrap().as_f64(), Some(7.0));
     assert!(JsConfig::presets().contains(&"MorphIt-V".to_string()));

@@ -36,7 +36,7 @@ use crate::{
 };
 
 const NO_REPORT: &str = "session has no inspection report";
-const NO_REPORT_INSPECT: &str = "session has no inspection report; call /inspect first";
+pub(crate) const NO_REPORT_INSPECT: &str = "session has no inspection report; call /inspect first";
 /// Minimum time between two live frames of one pack.
 const LIVE_INTERVAL: Duration = Duration::from_millis(80);
 

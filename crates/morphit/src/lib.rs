@@ -45,6 +45,7 @@ pub use config::{Config, LossId, LossWeights, Preset};
 pub use device::{Device, GpuInfo, ResolvedDevice};
 pub use error::{Error, Result};
 pub use mesh::Mesh;
+pub use mesh_io::MeshFormat;
 pub use mesh_prep::{MeshPrepOptions, MeshPrepReport, prepare_mesh};
 pub use quality::{QualityMetrics, QualityOptions, evaluate_packing};
 pub use result::PackResult;

@@ -560,3 +560,66 @@ async fn idle_sessions_expire() {
     assert_eq!(r.status(), StatusCode::NOT_FOUND);
     assert_eq!(detail(r).await, format!("session '{sid}' not found or expired"));
 }
+
+/// `POST /api/mesh/prepare` and `GET /api/robot/prepared-mesh` return the
+/// prepared mesh as OBJ or STL, with the report in `X-Morphit-Mesh-Prep`.
+#[tokio::test(flavor = "multi_thread")]
+async fn prepared_mesh_downloads() {
+    let s = start(Duration::from_secs(3600)).await;
+    let raw = morphit::Mesh::load_from_bytes(&link0(), "obj", None).unwrap();
+    let form = |fields: &[(&'static str, &'static str)]| {
+        fields
+            .iter()
+            .fold(Form::new().part("mesh", mesh_part(link0(), "link0.obj")), |f, (k, v)| f.text(*k, *v))
+    };
+
+    let r = s.post("/api/mesh/prepare", form(&[("convex_hull", "true")])).await;
+    assert_eq!(r.status(), StatusCode::OK);
+    assert_eq!(header(&r, "content-type"), "model/obj");
+    assert!(header(&r, "content-disposition").contains("filename=\"link0_prepared.obj\""));
+    let prep: Value = serde_json::from_str(&header(&r, "x-morphit-mesh-prep")).unwrap();
+    assert_eq!(prep["action"], "hulled");
+    let hull = morphit::Mesh::load_from_bytes(&r.bytes().await.unwrap(), "obj", None).unwrap();
+    assert!(hull.volume() > raw.volume());
+    assert_eq!(hull.volume(), prep["volume_after"].as_f64().unwrap());
+
+    let r = s.post("/api/mesh/prepare", form(&[("format", "STL")])).await;
+    assert_eq!(r.status(), StatusCode::OK);
+    assert_eq!(header(&r, "content-type"), "model/stl");
+    let bytes = r.bytes().await.unwrap();
+    assert_eq!(bytes.len(), 84 + 50 * raw.faces().len());
+
+    let r = s.post("/api/mesh/prepare", form(&[("format", "ply")])).await;
+    assert_eq!(r.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(detail(r).await[0]["loc"], serde_json::json!(["body", "format"]));
+    let r = s.post("/api/mesh/prepare", Form::new().text("format", "obj")).await;
+    assert_eq!(r.status(), StatusCode::UNPROCESSABLE_ENTITY);
+
+    // A collision mesh of a robot session.
+    let report = load_example(&s, "kinova").await;
+    let sid = report["session_id"].as_str().unwrap().to_string();
+    let url = |extra: &str| {
+        format!(
+            "/api/robot/prepared-mesh?session_id={sid}&link_name=m1n4s200_link_base&collision_index=0{extra}"
+        )
+    };
+    let r = s.get(&url("")).await;
+    assert_eq!(r.status(), StatusCode::OK);
+    assert!(header(&r, "content-disposition").contains("m1n4s200_link_base_0_prepared.obj"));
+    let base = morphit::Mesh::load_from_bytes(&r.bytes().await.unwrap(), "obj", None).unwrap();
+    let r = s.get(&url("&convex_hull=1&format=stl")).await;
+    assert_eq!(r.status(), StatusCode::OK);
+    let prep: Value = serde_json::from_str(&header(&r, "x-morphit-mesh-prep")).unwrap();
+    assert!(prep["convex_hull"].as_bool().unwrap());
+    let hull = morphit::Mesh::load_from_bytes(&r.bytes().await.unwrap(), "stl", None).unwrap();
+    assert!(hull.volume() >= base.volume() * (1.0 - 1e-6));
+
+    let r = s.get(&url("&convex_hull=maybe")).await;
+    assert_eq!(r.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(detail(r).await[0]["loc"], serde_json::json!(["query", "convex_hull"]));
+    let r =
+        s.get(&format!("/api/robot/prepared-mesh?session_id={sid}&link_name=nope&collision_index=0")).await;
+    assert_eq!(r.status(), StatusCode::NOT_FOUND);
+    let r = s.get(&format!("/api/robot/prepared-mesh?session_id={sid}&link_name=x&collision_index=a")).await;
+    assert_eq!(r.status(), StatusCode::UNPROCESSABLE_ENTITY);
+}

@@ -277,3 +277,39 @@ fn convex_hulls_on_request() {
     let stderr = String::from_utf8_lossy(&m.get_output().stderr).to_string();
     assert!(stderr.contains("scoring the prepared mesh: 2 bodies replaced by convex hulls"), "{stderr}");
 }
+
+#[test]
+fn prepare_writes_the_prepared_mesh() {
+    let dir = tempfile::tempdir().unwrap();
+    let boxes = write_overlapping_boxes(dir.path());
+    let union = cfg!(feature = "union");
+    let out = dir.path().join("prepared.obj");
+    let a = morphit().args(["prepare", boxes.to_str().unwrap(), "-o"]).arg(&out).assert().success();
+    let stderr = String::from_utf8_lossy(&a.get_output().stderr).into_owned();
+    let raw = morphit::Mesh::load(&boxes).unwrap();
+    let got = morphit::Mesh::load(&out).unwrap();
+    if union {
+        assert!(stderr.contains("mesh prep: unioned"), "{stderr}");
+        assert!((got.volume() - (2.0 - 0.6 * 0.8 * 0.9)).abs() < 0.01, "{}", got.volume());
+    } else {
+        assert!((got.volume() - raw.volume()).abs() < 1e-9);
+    }
+
+    // Raw, as STL; and OBJ on stdout.
+    let stl = dir.path().join("raw.stl");
+    morphit().args(["prepare", boxes.to_str().unwrap(), "--no-union", "-o"]).arg(&stl).assert().success();
+    assert!((morphit::Mesh::load(&stl).unwrap().volume() - raw.volume()).abs() < 1e-6);
+    let a = morphit().args(["prepare", boxes.to_str().unwrap(), "--no-union"]).assert().success();
+    assert!(String::from_utf8_lossy(&a.get_output().stdout).starts_with("# MorphIt mesh"));
+    morphit().args(["prepare", boxes.to_str().unwrap(), "--format", "stl"]).assert().failure();
+
+    if union {
+        let hull = dir.path().join("hull.obj");
+        morphit()
+            .args(["prepare", boxes.to_str().unwrap(), "--convex-hull", "--no-union", "-o"])
+            .arg(&hull)
+            .assert()
+            .success();
+        assert_eq!(morphit::Mesh::load(&hull).unwrap().faces().len(), raw.faces().len());
+    }
+}

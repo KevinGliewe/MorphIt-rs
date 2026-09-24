@@ -339,6 +339,35 @@ enum morphit_status morphit_mesh_contains(const struct morphit_mesh *mesh,
                                           uint8_t *out_inside);
 
 /**
+ * The mesh as packing prepares it: overlapping closed bodies unioned when
+ * `union_overlapping_bodies` is nonzero, each body replaced by its convex hull
+ * first when `convex_hull` is nonzero (the `model.*` keys of the same names).
+ * `*out` receives a new mesh (release it with `morphit_mesh_free`); it may
+ * share data with `mesh`. The result is computed once per mesh and options.
+ */
+enum morphit_status morphit_mesh_prepare(const struct morphit_mesh *mesh,
+                                         int union_overlapping_bodies,
+                                         int convex_hull,
+                                         struct morphit_mesh **out_mesh);
+
+/**
+ * What `morphit_mesh_prepare` does with the same options, as JSON (the keys
+ * of `morphit_session_mesh_prep_json`). Buffer rules as for every string output.
+ */
+enum morphit_status morphit_mesh_prep_report_json(const struct morphit_mesh *mesh,
+                                                  int union_overlapping_bodies,
+                                                  int convex_hull,
+                                                  char *buf,
+                                                  size_t capacity,
+                                                  size_t *needed);
+
+/**
+ * Write a mesh to `path` (UTF-8), as .obj (exact coordinates) or binary .stl
+ * (single precision), chosen by the extension.
+ */
+enum morphit_status morphit_mesh_save(const struct morphit_mesh *mesh, const char *path);
+
+/**
  * Release a mesh. NULL is ignored. Sessions created from it stay valid.
  */
 void morphit_mesh_free(struct morphit_mesh *mesh);

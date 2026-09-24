@@ -92,6 +92,19 @@ impl JsMesh {
         Ok(JsMesh { inner: self.inner.prepared_with(prep_options(options)?).0 })
     }
 
+    /// The mesh as Wavefront OBJ text (exact coordinates), e.g. of
+    /// `mesh.prepared({ convexHull: true })` for download.
+    #[wasm_bindgen(js_name = toObj)]
+    pub fn to_obj(&self) -> String {
+        self.inner.to_obj()
+    }
+
+    /// The mesh as binary STL (single precision).
+    #[wasm_bindgen(js_name = toStl)]
+    pub fn to_stl(&self) -> Vec<u8> {
+        self.inner.to_stl()
+    }
+
     /// What [`JsMesh::prepared`] does with the same options (Python
     /// `MeshPrepReport` keys, plus `convex_hull` and `n_hulled`).
     #[wasm_bindgen(js_name = prepReport, unchecked_return_type = "MeshPrepReport")]

@@ -7,7 +7,7 @@ use bevy::window::PrimaryWindow;
 use bevy_editor_cam::prelude::EditorCam;
 use bevy_egui::{EguiContexts, egui};
 use egui_plot::{Legend, Line, Plot, PlotPoints};
-use morphit::LossId;
+use morphit::{LossId, MeshFormat};
 use morphit_robot::config::ALLOWED_VARIANTS;
 use morphit_robot::inspect::Action;
 use serde_json::Value;
@@ -270,11 +270,22 @@ fn run_controls(ui: &mut egui::Ui, s: &mut Studio) {
 }
 
 fn view_controls(ui: &mut egui::Ui, s: &mut Studio) {
+    let preparing = s.preparing();
     let v = &mut s.view;
-    let before = (v.color, v.color_variation);
+    let before = (v.color, v.color_variation, v.show_prepared);
     ui.horizontal(|ui| {
         ui.checkbox(&mut v.show_mesh, "Mesh");
         ui.add(egui::Slider::new(&mut v.mesh_alpha, 0.05..=1.0).text("opacity"));
+    });
+    ui.horizontal(|ui| {
+        ui.checkbox(&mut v.show_prepared, "prepared mesh").on_hover_text(
+            "Show the mesh as packing prepares it with the current mesh preparation \
+             (merged bodies, convex hulls)",
+        );
+        if preparing {
+            ui.spinner();
+            ui.small("preparing…");
+        }
     });
     ui.horizontal(|ui| {
         ui.color_edit_button_rgb(&mut v.color);
@@ -283,12 +294,43 @@ fn view_controls(ui: &mut egui::Ui, s: &mut Studio) {
             ui.add(egui::Slider::new(&mut v.color_variation, 0.0..=1.0).text("hue spread"));
         }
     });
-    if (v.color, v.color_variation) != before {
+    if (v.color, v.color_variation, v.show_prepared) != before {
         s.scene_dirty = true;
     }
 }
 
+/// "Save prepared mesh" with its format: the object, or the selected robot collision.
+fn save_prepared_row(ui: &mut egui::Ui, s: &mut Studio, enabled: bool) {
+    ui.horizontal(|ui| {
+        let button = egui::Button::new("Save prepared mesh");
+        if ui
+            .add_enabled(enabled && !s.preparing(), button)
+            .on_hover_text("The mesh as packing prepares it with the current mesh preparation")
+            .clicked()
+        {
+            s.save_prepared();
+        }
+        let format = &mut s.view.mesh_format;
+        egui::ComboBox::from_id_salt("mesh_format").width(56.0).selected_text(format.extension()).show_ui(
+            ui,
+            |ui| {
+                for f in MeshFormat::ALL {
+                    ui.selectable_value(format, f, f.extension());
+                }
+            },
+        );
+    });
+}
+
 fn exports(ui: &mut egui::Ui, s: &mut Studio) {
+    let can_save_prepared = match s.mode {
+        Mode::Object => s.object.is_some(),
+        Mode::Robot => s
+            .robot
+            .as_ref()
+            .is_some_and(|r| r.selected.and_then(|i| r.doc.meshes.get(i)).is_some_and(|m| m.is_some())),
+    };
+    save_prepared_row(ui, s, can_save_prepared);
     match s.mode {
         Mode::Object => {
             let packed = s.object.as_ref().is_some_and(|o| o.result.is_some());

@@ -8,6 +8,9 @@
 
 mod dae;
 mod ply;
+mod write;
+
+pub use write::MeshFormat;
 
 use std::io::Cursor;
 

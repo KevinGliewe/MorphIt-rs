@@ -9,7 +9,8 @@ use std::sync::atomic::Ordering;
 use bevy::prelude::*;
 use morphit::glam::DVec3;
 use morphit::{
-    Config, GpuInfo, Mesh, MeshPrepOptions, PackResult, QualityMetrics, QualityOptions, evaluate_packing,
+    Config, GpuInfo, Mesh, MeshFormat, MeshPrepOptions, PackResult, QualityMetrics, QualityOptions,
+    evaluate_packing,
 };
 use morphit_robot::assemble::{MemSpheres, rewrite_urdf_text};
 use morphit_robot::color::vary_color;
@@ -59,6 +60,14 @@ impl Params {
             .collect()
     }
 
+    /// The mesh preparation these parameters ask for.
+    pub fn prep_options(&self) -> MeshPrepOptions {
+        MeshPrepOptions {
+            union_overlapping_bodies: self.union_overlapping_bodies,
+            convex_hull: self.convex_hull,
+        }
+    }
+
     fn pack_params(&self) -> PackParams {
         PackParams {
             variant: self.variant.clone(),
@@ -90,6 +99,10 @@ impl Default for Params {
 
 pub struct View {
     pub show_mesh: bool,
+    /// Draw the meshes as packing prepares them (merged, convex hulls).
+    pub show_prepared: bool,
+    /// Format of "Save prepared mesh".
+    pub mesh_format: MeshFormat,
     pub mesh_alpha: f32,
     /// Sphere color.
     pub color: [f32; 3],
@@ -102,6 +115,8 @@ impl Default for View {
     fn default() -> Self {
         View {
             show_mesh: true,
+            show_prepared: false,
+            mesh_format: MeshFormat::Obj,
             mesh_alpha: 0.35,
             color: [0.2, 0.6, 1.0],
             color_variation: 0.6,
@@ -161,7 +176,16 @@ pub struct Studio {
     results_version: u64,
     /// Start packing once the pending load has finished.
     pub pack_after_load: bool,
+    /// Prepared meshes of the document (the object, or every robot
+    /// collision) for [`View::show_prepared`], with the options used.
+    prepared: Option<(MeshPrepOptions, PreparedMeshes)>,
+    prepared_task: Option<(MeshPrepOptions, Slot<PreparedMeshes>)>,
+    /// A "Save prepared mesh" waiting for its mesh: file name, format, mesh.
+    prepared_save: Option<(String, MeshFormat, Slot<Arc<Mesh>>)>,
 }
+
+/// One entry per mesh of the document; `None` where there is no mesh.
+type PreparedMeshes = Vec<Option<Arc<Mesh>>>;
 
 impl Default for Studio {
     fn default() -> Self {
@@ -187,6 +211,9 @@ impl Default for Studio {
             spheres_dirty: false,
             results_version: 1,
             pack_after_load: false,
+            prepared: None,
+            prepared_task: None,
+            prepared_save: None,
         }
     }
 }
@@ -220,6 +247,105 @@ impl Studio {
 
     pub fn quality_running(&self) -> bool {
         self.quality_task.is_some()
+    }
+
+    /// The meshes of the current document: the object, or every robot collision.
+    fn doc_meshes(&self) -> PreparedMeshes {
+        match self.mode {
+            Mode::Object => self.object.iter().map(|o| Some(o.mesh.clone())).collect(),
+            Mode::Robot => self.robot.as_ref().map(|r| r.doc.meshes.clone()).unwrap_or_default(),
+        }
+    }
+
+    /// The mesh to draw at `index` of [`Studio::doc_meshes`]: the prepared one
+    /// when [`View::show_prepared`] is on and it is ready.
+    pub fn shown_mesh(&self, index: usize, loaded: &Arc<Mesh>) -> Arc<Mesh> {
+        self.prepared
+            .as_ref()
+            .filter(|_| self.view.show_prepared)
+            .and_then(|(_, meshes)| meshes.get(index).cloned().flatten())
+            .unwrap_or_else(|| loaded.clone())
+    }
+
+    /// True while prepared meshes are being computed for display or saving.
+    pub fn preparing(&self) -> bool {
+        self.prepared_task.is_some() || self.prepared_save.is_some()
+    }
+
+    /// Forget prepared meshes (a new document or mode).
+    fn clear_prepared(&mut self) {
+        self.prepared = None;
+        self.prepared_task = None;
+    }
+
+    /// Start preparing the document's meshes when they are shown and the
+    /// preparation options changed; pick up finished work.
+    fn poll_prepared(&mut self) {
+        if let Some(meshes) = self.prepared_task.as_ref().and_then(|(_, s)| s.take()) {
+            let (options, _) = self.prepared_task.take().expect("task present");
+            self.prepared = Some((options, meshes));
+            self.scene_dirty |= self.view.show_prepared;
+        }
+        if self.view.show_prepared {
+            let want = self.params.prep_options();
+            let current = self.prepared.as_ref().map(|p| p.0);
+            let running = self.prepared_task.as_ref().map(|t| t.0);
+            if current != Some(want) && running != Some(want) {
+                let meshes = self.doc_meshes();
+                if !meshes.is_empty() {
+                    self.prepared_task = Some((
+                        want,
+                        spawn(async move {
+                            let mut y = Yielder::default();
+                            let mut out = Vec::with_capacity(meshes.len());
+                            for m in meshes {
+                                y.yield_now().await;
+                                out.push(m.map(|m| m.prepared_with(want).0));
+                            }
+                            out
+                        }),
+                    ));
+                }
+            }
+        }
+        if let Some(mesh) = self.prepared_save.as_ref().and_then(|(_, _, s)| s.take()) {
+            let (name, format, _) = self.prepared_save.take().expect("save present");
+            self.saving.push(io::save(name, mesh.to_bytes(format)));
+        }
+    }
+
+    /// Save the mesh as packing prepares it with the current options: the
+    /// object, or the selected robot collision.
+    pub fn save_prepared(&mut self) {
+        let format = self.view.mesh_format;
+        let (stem, mesh) = match self.mode {
+            Mode::Object => match &self.object {
+                Some(o) => (o.name.clone(), o.mesh.clone()),
+                None => return self.error("Open a mesh first."),
+            },
+            Mode::Robot => {
+                let picked = self.robot.as_ref().and_then(|r| {
+                    let i = r.selected?;
+                    let c = r.doc.report.collisions.get(i)?;
+                    Some((format!("{}_{}", c.link_name, c.collision_index), r.doc.meshes.get(i)?.clone()?))
+                });
+                match picked {
+                    Some(p) => p,
+                    None => return self.error("Select a mesh collision in the table first."),
+                }
+            }
+        };
+        let options = self.params.prep_options();
+        let name = format!("{stem}_prepared.{}", format.extension());
+        self.info(format!("Preparing {name}…"));
+        self.prepared_save = Some((
+            name,
+            format,
+            spawn(async move {
+                Yielder::default().yield_now().await;
+                mesh.prepared_with(options).0
+            }),
+        ));
     }
 
     /// Start loading something; `what` is shown meanwhile.
@@ -269,12 +395,14 @@ impl Studio {
             Loaded::Nothing => self.message = None,
         }
         self.live = None;
+        self.clear_prepared();
         self.scene_dirty = true;
     }
 
     pub fn set_mode(&mut self, mode: Mode) {
         if self.mode != mode {
             self.mode = mode;
+            self.clear_prepared();
             self.scene_dirty = true;
         }
     }
@@ -574,6 +702,7 @@ impl Studio {
 
     /// Pick up finished background work; called every frame.
     pub fn poll(&mut self) {
+        self.poll_prepared();
         if let Some(d) = self.devices_task.as_ref().and_then(Slot::take) {
             self.devices = d;
             self.devices_task = None;
@@ -676,4 +805,62 @@ pub enum Export {
     Mjcf,
     SphericalUrdf,
     LinkJson(usize),
+}
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod tests {
+    use super::*;
+    use morphit::glam::DVec3;
+
+    /// Poll until `done` holds (the preparation runs on a thread).
+    fn poll_until(s: &mut Studio, done: impl Fn(&Studio) -> bool) {
+        let t0 = std::time::Instant::now();
+        while !done(s) {
+            assert!(t0.elapsed().as_secs() < 60, "preparation did not finish");
+            std::thread::sleep(std::time::Duration::from_millis(10));
+            s.poll();
+        }
+    }
+
+    #[test]
+    fn prepared_meshes_are_shown_on_request() {
+        // A concave body: the union of two overlapping boxes, whose hull is larger.
+        let a = morphit::shapes::box_mesh(DVec3::ZERO, DVec3::ONE);
+        let b = morphit::shapes::box_mesh(DVec3::new(0.4, 0.2, 0.1), DVec3::new(1.4, 1.2, 1.1));
+        let mut v = a.vertices().to_vec();
+        let mut f = a.faces().to_vec();
+        let base = v.len() as u32;
+        v.extend_from_slice(b.vertices());
+        f.extend(b.faces().iter().map(|t| t.map(|i| i + base)));
+        let (union, _) = Arc::new(Mesh::from_vertices(v, f, None).unwrap()).prepared();
+        let body = Mesh::from_vertices(union.vertices().to_vec(), union.faces().to_vec(), None).unwrap();
+
+        let mut s = Studio::default();
+        s.opened(Loaded::Object { name: "l-shape".into(), mesh: Box::new(body) });
+        let loaded = s.object.as_ref().unwrap().mesh.clone();
+        s.scene_dirty = false;
+        s.poll();
+        assert!(!s.preparing(), "nothing is prepared while the toggle is off");
+        assert!(Arc::ptr_eq(&s.shown_mesh(0, &loaded), &loaded));
+
+        // Default preparation: a single body stays as it is.
+        s.view.show_prepared = true;
+        poll_until(&mut s, |s| s.prepared.is_some() && !s.preparing());
+        assert!(s.scene_dirty);
+        assert!(Arc::ptr_eq(&s.shown_mesh(0, &loaded), &loaded));
+
+        // Convex hull: prepared again and drawn instead.
+        s.scene_dirty = false;
+        s.params.convex_hull = true;
+        s.poll();
+        assert!(s.preparing());
+        poll_until(&mut s, |s| !s.preparing());
+        assert!(s.scene_dirty);
+        let hull = s.shown_mesh(0, &loaded);
+        assert!(hull.volume() > loaded.volume() + 0.05, "{} vs {}", hull.volume(), loaded.volume());
+
+        // Off again: the loaded mesh.
+        s.view.show_prepared = false;
+        assert!(Arc::ptr_eq(&s.shown_mesh(0, &loaded), &loaded));
+    }
 }

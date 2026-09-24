@@ -9,7 +9,8 @@ use std::time::Instant;
 use clap::{Parser, Subcommand};
 use morphit::glam::DVec3;
 use morphit::{
-    Config, LossId, Mesh, MeshPrepOptions, PackResult, Preset, QualityOptions, RunOutcome, Session,
+    Config, LossId, Mesh, MeshFormat, MeshPrepOptions, PackResult, Preset, QualityOptions, RunOutcome,
+    Session,
 };
 use serde_json::Value;
 
@@ -34,6 +35,9 @@ enum Command {
     Export(ExportArgs),
     /// Score a result JSON against its mesh (debug_quick_eval metrics).
     Metrics(MetricsArgs),
+    /// Write the mesh as packing prepares it (union of overlapping bodies,
+    /// optionally convex hulls) to an .obj or .stl file.
+    Prepare(PrepareArgs),
     /// Print mesh properties.
     Info {
         mesh: PathBuf,
@@ -45,6 +49,24 @@ enum Command {
     Presets,
     /// List the GPU adapters usable with `--device gpu:N`.
     Devices,
+}
+
+#[derive(clap::Args)]
+struct PrepareArgs {
+    /// Mesh file (.obj, .stl, .ply or .dae).
+    mesh: PathBuf,
+    /// Output file (default: OBJ on stdout).
+    #[arg(short, long)]
+    output: Option<PathBuf>,
+    /// Output format [default: the output extension, else obj].
+    #[arg(short, long, value_parser = ["obj", "stl"])]
+    format: Option<String>,
+    /// Keep overlapping bodies apart (`model.union_overlapping_bodies = false`).
+    #[arg(long)]
+    no_union: bool,
+    /// Replace each body with its convex hull before merging (`model.convex_hull`).
+    #[arg(long)]
+    convex_hull: bool,
 }
 
 #[derive(clap::Args)]
@@ -160,6 +182,7 @@ fn main() -> ExitCode {
         Command::Pack(a) => pack(a),
         Command::Export(a) => export(a),
         Command::Metrics(a) => metrics(a),
+        Command::Prepare(a) => prepare(a),
         Command::Info { mesh, convex_hull } => info(mesh, convex_hull),
         Command::Presets => {
             presets();
@@ -398,6 +421,43 @@ fn metrics(a: MetricsArgs) -> Result<(), Box<dyn std::error::Error>> {
             q.com_rel,
             q.i_rel
         );
+    }
+    Ok(())
+}
+
+fn prepare(a: PrepareArgs) -> Result<(), Box<dyn std::error::Error>> {
+    let format = match (&a.format, &a.output) {
+        (Some(f), _) => f.parse::<MeshFormat>()?,
+        (None, Some(out)) => out
+            .extension()
+            .and_then(|e| e.to_str())
+            .and_then(|e| e.parse::<MeshFormat>().ok())
+            .unwrap_or_default(),
+        (None, None) => MeshFormat::Obj,
+    };
+    if a.output.is_none() && format == MeshFormat::Stl {
+        return Err("binary STL needs an output file (-o)".into());
+    }
+    let mesh = Arc::new(Mesh::load(&a.mesh)?);
+    let options = MeshPrepOptions { union_overlapping_bodies: !a.no_union, convex_hull: a.convex_hull };
+    let (prepared, prep) = mesh.prepared_with(options);
+    eprintln!("mesh prep: {} ({})", prep.action, prep.reason);
+    eprintln!(
+        "faces {} -> {}, volume {:.6e} -> {:.6e}",
+        prep.faces_before,
+        prepared.faces().len(),
+        prep.volume_before,
+        prepared.volume()
+    );
+    for w in &prep.warnings {
+        eprintln!("warning: {w}");
+    }
+    let bytes = prepared.to_bytes(format);
+    match &a.output {
+        Some(path) => {
+            std::fs::write(path, bytes).map_err(|e| format!("cannot write {}: {e}", path.display()))?
+        }
+        None => std::io::Write::write_all(&mut std::io::stdout(), &bytes)?,
     }
     Ok(())
 }

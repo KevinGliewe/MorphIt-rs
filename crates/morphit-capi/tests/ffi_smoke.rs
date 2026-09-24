@@ -82,6 +82,39 @@ fn mesh_from_file_info_and_contains() {
 }
 
 #[test]
+fn prepared_mesh_report_and_save() {
+    let b = box_mesh(2.0, 1.0, 1.0);
+    let mut prepared = null_mut();
+    ok(unsafe { morphit_mesh_prepare(b, 1, 0, &mut prepared) });
+    let mut info = morphit_mesh_info::default();
+    ok(unsafe { morphit_mesh_get_info(prepared, &mut info) });
+    assert!((info.volume - 2.0).abs() < 1e-12, "a single box is unchanged");
+
+    let mut needed = 0;
+    ok(unsafe { morphit_mesh_prep_report_json(b, 0, 0, null_mut(), 0, &mut needed) });
+    let mut buf = vec![0 as std::ffi::c_char; needed];
+    ok(unsafe { morphit_mesh_prep_report_json(b, 0, 0, buf.as_mut_ptr(), needed, &mut needed) });
+    let json = unsafe { CStr::from_ptr(buf.as_ptr()) }.to_str().unwrap().to_string();
+    assert!(json.contains("\"action\": \"disabled\""), "{json}");
+
+    let dir = tempfile::tempdir().unwrap();
+    for name in ["box.obj", "box.stl"] {
+        let path = c(dir.path().join(name).to_str().unwrap());
+        ok(unsafe { morphit_mesh_save(prepared, path.as_ptr()) });
+        let mut back = null_mut();
+        ok(unsafe { morphit_mesh_load(path.as_ptr(), &mut back) });
+        ok(unsafe { morphit_mesh_get_info(back, &mut info) });
+        assert!((info.volume - 2.0).abs() < 1e-6, "{name}");
+        unsafe { morphit_mesh_free(back) };
+    }
+    let bad = c(dir.path().join("box.ply").to_str().unwrap());
+    assert_eq!(unsafe { morphit_mesh_save(prepared, bad.as_ptr()) }, MORPHIT_ERR_MESH);
+    assert_eq!(unsafe { morphit_mesh_prepare(null(), 1, 0, &mut prepared) }, MORPHIT_ERR_NULL_ARG);
+    unsafe { morphit_mesh_free(prepared) };
+    unsafe { morphit_mesh_free(b) };
+}
+
+#[test]
 fn config_accessors() {
     let mut cfg = null_mut();
     let bad = c("MorphIt-Q");

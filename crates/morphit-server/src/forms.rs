@@ -103,18 +103,7 @@ impl Form {
     /// Optional boolean field, parsed as FastAPI does (`true/false`, `1/0`,
     /// `yes/no`, `on/off`, ...; 422 otherwise).
     pub fn bool_or(&self, name: &str, default: bool) -> ApiResult<bool> {
-        let Some(v) = self.text(name) else { return Ok(default) };
-        match v.trim().to_ascii_lowercase().as_str() {
-            "1" | "true" | "t" | "yes" | "y" | "on" => Ok(true),
-            "0" | "false" | "f" | "no" | "n" | "off" => Ok(false),
-            _ => Err(ApiError::validation(
-                "body",
-                name,
-                "bool_parsing",
-                "Input should be a valid boolean, unable to interpret input",
-                Value::String(v.into()),
-            )),
-        }
+        self.text(name).map_or(Ok(default), |v| parse_bool("body", name, v))
     }
 
     /// The first file part named `name` (422 when absent).
@@ -145,5 +134,21 @@ pub fn seed(v: Option<i64>) -> ApiResult<Option<u64>> {
         Some(s) => u64::try_from(s).map(Some).map_err(|_| {
             ApiError::new(StatusCode::BAD_REQUEST, format!("seed must be a non-negative integer, got {s}"))
         }),
+    }
+}
+
+/// A boolean as FastAPI parses it (`true/false`, `1/0`, `yes/no`, `on/off`,
+/// ...); anything else is a 422 at `loc` (`body` or `query`).
+pub fn parse_bool(loc: &str, name: &str, v: &str) -> ApiResult<bool> {
+    match v.trim().to_ascii_lowercase().as_str() {
+        "1" | "true" | "t" | "yes" | "y" | "on" => Ok(true),
+        "0" | "false" | "f" | "no" | "n" | "off" => Ok(false),
+        _ => Err(ApiError::validation(
+            loc,
+            name,
+            "bool_parsing",
+            "Input should be a valid boolean, unable to interpret input",
+            Value::String(v.into()),
+        )),
     }
 }
