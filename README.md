@@ -521,8 +521,7 @@ rebuilds.
     identical, so this comes from the optimization path (float32 vs float64,
     random streams). It deserves a larger study if small-object physics
     fidelity matters.
-  - On this machine a 64-sphere run takes 0.5 to 1.5 s in Rust versus
-    6 to 30 s for Python on CPU.
+  - For timings see [Performance](#performance).
 - **Mesh preparation parity** (`crates/morphit/tests/mesh_prep_parity.rs`)
   compares Python's `prepare_mesh` and the Rust port on the same OBJ files:
   link0, OBJ groups with duplicated vertices,
@@ -547,6 +546,54 @@ The `py_*.json` fixtures under `crates/*/tests/fixtures` were generated from
 the Python reference implementation and are checked in, so the parity tests
 run without Python; the scripts that produced them work against a local clone
 of the Python repository and are not part of this repository.
+
+## Performance
+
+Wall time of one pack against the Python reference (PyTorch 2.7.1 on the CPU
+with 8 threads, and on CUDA 12.6), with the same settings on both sides:
+preset MorphIt-B, 300 iterations, 5000 inside and 5000 surface samples,
+density control on, fixed learning rates, seed 0. Measured on one laptop
+(Intel i7-11850H, 8 cores; NVIDIA RTX A2000 Laptop GPU, 4 GB). Python ran
+once per case after an untimed warm-up; Rust is the median of three runs.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/benchmark/scaling-dark.svg">
+  <img alt="Seconds per pack on the bunny mesh from 16 to 2048 spheres: Python CPU grows from 3.3 s to 162 s, Python CUDA from 3.7 s to 21 s, Rust CPU from 0.22 s to 11 s, and the Rust GPU optimizer loop from 0.36 s to 6.3 s" src="assets/benchmark/scaling-light.svg">
+</picture>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/benchmark/meshes-dark.svg">
+  <img alt="Seconds per pack at 256 spheres on five meshes from 200 to 38,052 faces, split into setup and optimization, for Python CPU, Python CUDA, Rust with 8 threads, Rust with 1 thread and Rust GPU" src="assets/benchmark/meshes-light.svg">
+</picture>
+
+| Mesh (faces) | Spheres | Python CPU | Python CUDA | Rust, 8 threads | Rust, 1 thread | Rust, GPU | Speed-up |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| link0 (200) | 16 | 3.24 | 3.57 | 0.21 | 0.48 | 0.98 | 15× |
+| | 64 | 5.70 | 3.68 | 0.37 | 1.31 | 1.05 | 16× |
+| | 256 | 15.88 | 3.96 | 1.03 | 4.30 | 1.21 | 15× |
+| bunny (292) | 256 | 15.52 | 4.09 | 1.00 | 4.30 | 1.23 | 16× |
+| | 1024 | 71.82 | 10.43 | 4.43 | | 2.22 ¹ | 16× |
+| | 2048 | 162.10 | 21.37 | 10.98 | | 6.28 ¹ | 15× |
+| teapot (8,324) | 256 | 16.93 | 4.57 | 1.07 | 4.35 | 1.19 | 16× |
+| mug (11,224) | 256 | 30.29 | 17.87 | 1.06 | 4.35 | 1.17 | 29× |
+| | 1024 | 122.02 | 58.88 | 4.19 | | 2.05 ¹ | 29× |
+| school_bus (38,052) | 16 | 4.32 | 4.54 | 0.28 | 0.53 | 1.07 | 16× |
+| | 256 | 34.94 | 21.63 | 1.15 | 4.29 | 1.24 | 30× |
+
+Seconds per pack including mesh load and setup; the speed-up compares Python
+on the CPU with Rust on 8 threads. Rust GPU times include about 0.65 s of
+one-time device setup per process; ¹ optimizer loop only.
+
+- The Rust CPU build is 15–30× faster than Python on the CPU, and still
+  3.5–8× faster on a single thread. The optimizer loop costs about 1.3 ms per
+  iteration at 64 spheres against about 20 ms in Python.
+- Python's setup (sampling and initial spheres) runs on the CPU for both of
+  its devices and grows with mesh size and sphere count, to 14–19 s for the
+  large meshes at 256 spheres; Rust's stays under 0.1 s.
+- CUDA speeds up Python's optimizer loop from about 64 spheres on, but its
+  per-iteration overhead keeps a pack above 3.5 s. Rust's GPU loop is 7–9×
+  faster than Python's CUDA loop at 256 spheres and overtakes the Rust CPU
+  build from about 256 spheres; CPU and GPU give identical results.
 
 ## Differences from the Python code
 
