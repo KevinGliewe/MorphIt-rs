@@ -48,6 +48,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Linux builds on the oldest supported runner: binaries need at least the
+        # glibc they were linked against (2.35 on 22.04, 2.39 on 24.04), so
+        # 22.04 builds also run on Ubuntu 22.04 and Debian 12 (glibc 2.36).
         include:
           - { target: x86_64-pc-windows-msvc, os: windows-latest }
           - { target: x86_64-unknown-linux-gnu, os: ubuntu-22.04 }
@@ -102,7 +105,7 @@ jobs:
             && zip -qr "../dist/morphit-studio-web-$V.zip" "morphit-studio-web-$V")
           pkg="target/morphit-wasm-$V"
           rm -rf "$pkg" && cp -r target/pages/wasm/pkg "$pkg"
-          cp crates/morphit-wasm/www/README.md README.md LICENSE "$pkg/"
+          cp README.md LICENSE "$pkg/"
           tar -C target -czf "dist/morphit-wasm-$V.tar.gz" "morphit-wasm-$V"
           cd dist && for f in *; do sha256sum "$f" > "$f.sha256"; done
       - uses: actions/upload-artifact@v4

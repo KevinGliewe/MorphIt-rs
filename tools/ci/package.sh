@@ -76,11 +76,12 @@ cp "$BIN/$STATIC" "$dir/lib/"
 [ -z "$EXTRA" ] || cp "$BIN/$EXTRA" "$dir/lib/"
 cp crates/morphit-capi/cmake/morphit-config.cmake "$dir/lib/cmake/morphit/"
 sed "s/@VERSION@/$VERSION/" crates/morphit-capi/cmake/morphit-config-version.cmake.in   > "$dir/lib/cmake/morphit/morphit-config-version.cmake"
-# The system libraries the static library needs, as rustc reports them.
+# The system libraries the static library needs, as rustc reports them (without
+# color: CI sets CARGO_TERM_COLOR=always, which would end the list in an escape code).
 target_arg=
 [ "$BIN" = target/release ] || target_arg="--target $TARGET"
 # shellcheck disable=SC2086
-libs=$(cargo rustc --release --locked -q $target_arg -p morphit-capi --crate-type staticlib   -- --print native-static-libs 2>&1 | sed -n 's/.*native-static-libs: //p' | tail -n 1)
+libs=$(cargo rustc --release --locked -q --color never $target_arg -p morphit-capi --crate-type staticlib   -- --print native-static-libs 2>&1 | sed -n 's/.*native-static-libs: //p' | tail -n 1)
 [ -n "$libs" ] || { echo "rustc did not report native-static-libs" >&2; exit 1; }
 {
   echo "# System libraries of the static MorphIt library ($TARGET), from rustc --print native-static-libs."
