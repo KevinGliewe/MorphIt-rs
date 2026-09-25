@@ -1,0 +1,43 @@
+cff-version: 1.2.0
+message: >-
+  If you use MorphIt in your research, please cite the MorphIt paper
+  (preferred citation below). To refer to this Rust implementation, cite the
+  software itself.
+title: "MorphIt-rs: a Rust port of MorphIt"
+abstract: >-
+  Rust port of MorphIt: approximate a triangle mesh with a fixed budget of
+  spheres by gradient-based optimization, with a thread-safe C API, a
+  wgpu GPU backend, an HTTP server, WebAssembly bindings and an interactive
+  studio.
+type: software
+authors:
+  - given-names: Kevin
+    family-names: Gliewe
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/KevinGliewe/MorphIt-rs"
+url: "https://kevingliewe.github.io/MorphIt-rs/"
+keywords:
+  - sphere packing
+  - collision geometry
+  - robotics
+  - mesh approximation
+preferred-citation:
+  type: article
+  title: "MorphIt: Flexible Spherical Approximation of Robot Morphology for Representation-driven Adaptation"
+  authors:
+    - given-names: Nataliya
+      family-names: Nechyporenko
+    - given-names: Yutong
+      family-names: Zhang
+    - given-names: Sean
+      family-names: Campbell
+    - given-names: Alessandro
+      family-names: Roncone
+  year: 2025
+  journal: arXiv preprint
+  identifiers:
+    - type: other
+      value: "arXiv:2507.14061"
+      description: arXiv identifier
+  url: "https://arxiv.org/abs/2507.14061"

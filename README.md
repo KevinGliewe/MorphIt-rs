@@ -1,35 +1,233 @@
-# MorphIt-rs
+<div align="center" id="readme-top">
 
-Rust port of [MorphIt](https://github.com/HIRO-group/MorphIt-1)
-([paper](https://arxiv.org/abs/2507.14061)): approximate a triangle mesh with a
-fixed budget of spheres by gradient-based optimization. The port ships as
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+  <img alt="MorphIt-rs: a bunny drawn as the spheres MorphIt packed into it" src="assets/logo-light.svg" width="520">
+</picture>
 
-- **`morphit`**: a Rust library crate with the complete optimizer,
-- **`morphit-capi`**: a thread-safe C library (`morphit_capi.dll` / `.so` /
-  `.dylib` plus a static library) with a generated header, `include/morphit.h`,
-- **`morphit-cli`**: a `morphit` command-line tool,
-- **`morphit-server`**: an HTTP server compatible with the Python web service,
-  with its web UI, and a Docker image ([HTTP API](#http-api), [Docker](#docker)),
-- **`morphit-robot`**: object URDF generation and the robot pipeline (URDF
-  inspection, per-link packing, spherical URDF assembly) behind the server,
-- **`morphit-wasm`**: the library compiled to WebAssembly with a
-  JavaScript/TypeScript API, WebGPU included ([WebAssembly](#webassembly)),
-- **`morphit-studio`**: an interactive app (Bevy, egui) for meshes and robots
-  that runs on the desktop and in the browser ([MorphIt Studio](#morphit-studio)).
+**Approximate any triangle mesh (or a whole robot) with a fixed budget of spheres, fast, on any CPU or GPU.**
+
+[![CI](https://img.shields.io/github/actions/workflow/status/KevinGliewe/MorphIt-rs/ci.yml?branch=master&label=CI&logo=github)](https://github.com/KevinGliewe/MorphIt-rs/actions/workflows/ci.yml)
+[![Pages](https://img.shields.io/github/actions/workflow/status/KevinGliewe/MorphIt-rs/pages.yml?branch=master&label=Pages&logo=github)](https://kevingliewe.github.io/MorphIt-rs/)
+[![Release](https://img.shields.io/github/v/release/KevinGliewe/MorphIt-rs?logo=github)](https://github.com/KevinGliewe/MorphIt-rs/releases/latest)
+[![crates.io](https://img.shields.io/crates/v/morphit?logo=rust)](https://crates.io/crates/morphit)
+[![docs.rs](https://img.shields.io/docsrs/morphit?logo=docs.rs)](https://docs.rs/morphit)
+[![MSRV](https://img.shields.io/crates/msrv/morphit?logo=rust)](https://github.com/KevinGliewe/MorphIt-rs/blob/master/Cargo.toml)
+[![License: MIT](https://img.shields.io/crates/l/morphit)](https://github.com/KevinGliewe/MorphIt-rs/blob/master/LICENSE)
+[![arXiv](https://img.shields.io/badge/arXiv-2507.14061-b31b1b?logo=arxiv)](https://arxiv.org/abs/2507.14061)
+
+[![Try it in your browser](https://img.shields.io/badge/Try_it-in_your_browser-2358c9?style=for-the-badge&logo=webassembly&logoColor=white)](https://kevingliewe.github.io/MorphIt-rs/?example=valkyrie&pack)
+
+[**Studio**](https://kevingliewe.github.io/MorphIt-rs/) ·
+[wasm demo](https://kevingliewe.github.io/MorphIt-rs/wasm/) ·
+[Downloads](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) ·
+[API docs](https://docs.rs/morphit) ·
+[crates.io](https://crates.io/crates/morphit) ·
+[Paper](https://arxiv.org/abs/2507.14061) ·
+[Python original](https://github.com/HIRO-group/MorphIt-1)
+
+<img alt="MorphIt Studio packing the 55 collision meshes of the NASA Valkyrie humanoid: link after link fills with spheres while the progress bar and the loss curve advance" src="assets/hero.gif" width="860">
+
+</div>
+
+MorphIt-rs is a Rust port of [MorphIt](https://github.com/HIRO-group/MorphIt-1)
+([paper](https://arxiv.org/abs/2507.14061)): it approximates a triangle mesh
+with a fixed budget of spheres by gradient-based optimization, for collision
+checking, simulation and motion planning. It comes as a Rust crate, a C
+library, a command-line tool, an HTTP server, a WebAssembly package and an
+interactive desktop and browser app.
+
+> [!TIP]
+> Nothing to install: [open MorphIt Studio in your browser](https://kevingliewe.github.io/MorphIt-rs/),
+> pick one of the 20 objects or 10 robots and press *Pack*.
+
+<details>
+<summary><b>Contents</b></summary>
+
+- [Features](#features)
+- [Why MorphIt-rs?](#why-morphit-rs)
+- [Gallery](#gallery)
+- [Packages and platforms](#packages-and-platforms)
+- [Quick start](#quick-start)
+- [How it works](#how-it-works)
+- [Build](#build)
+- [Command line](#command-line)
+- [Input mesh requirements](#input-mesh-requirements)
+- [Rust](#rust)
+- [C](#c)
+  - [Using the release package from CMake](#using-the-release-package-from-cmake)
+- [GPU](#gpu)
+- [HTTP API](#http-api)
+- [Docker](#docker)
+- [WebAssembly](#webassembly)
+- [MorphIt Studio](#morphit-studio)
+- [Validation against the Python implementation](#validation-against-the-python-implementation)
+- [Performance](#performance)
+- [Differences from the Python code](#differences-from-the-python-code)
+- [CI and releases](#ci-and-releases)
+  - [Running the workflows locally](#running-the-workflows-locally)
+- [Layout](#layout)
+- [Citation](#citation)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
+
+</details>
+
+## Features
+
+- **Faithful port.** Same losses, presets (MorphIt-V, -S, -B, -Obj,
+  -Obj-mass), density control and result JSON as the Python code, checked
+  against it down to 1e-8 ([Validation](#validation-against-the-python-implementation)).
+- **15–30× faster** than the Python version on the CPU, and still 3.5–8×
+  faster on a single thread ([Performance](#performance)).
+- **Any GPU.** The distance searches run on Vulkan, Metal, DirectX 12 or
+  WebGPU through wgpu: NVIDIA, AMD, Intel and Apple, nothing to install ([GPU](#gpu)).
+- **Bit-identical everywhere.** A seed gives the same bytes on 1 or 64
+  threads, and on the CPU or the GPU.
+- **Robots.** Inspect a URDF package, pack every collision mesh and write a
+  spherical URDF; URDF and MJCF export for single objects.
+- **Mesh preparation.** Overlapping CAD bodies are merged, optionally
+  replaced by their convex hulls, and the prepared mesh can be exported
+  ([Input mesh requirements](#input-mesh-requirements)).
+- **Everywhere you need it.** Rust crate, thread-safe C library with a CMake
+  package, CLI, Python-compatible HTTP server with Docker images,
+  WebAssembly with TypeScript types, and a desktop/browser app.
 
 It reproduces the Python optimizer: voxel-grid initialization, the eleven
 weighted losses (coverage, overlap, boundary, surface, containment, SQEM, soft
 Hausdorff, mesh containment, mass, center of mass, inertia), Adam with gradient
 clipping, count-preserving annealed density control, escaped-center projection
-and the final prune. The presets MorphIt-V, -S, -B, -Obj and -Obj-mass are
-included, and results use the same JSON schema, so the Python URDF/MJCF scripts
-and the web viewer can read them.
+and the final prune. Results use the same JSON schema, so the Python URDF/MJCF
+scripts and the web viewer can read them. Gradients are derived by hand (no ML
+framework) and checked against finite differences and against PyTorch
+autograd. The optimizer runs on the CPU with rayon; the distance searches,
+which are all of the cost, can run on any GPU through wgpu.
 
-Gradients are derived by hand (no ML framework) and checked against finite
-differences and against PyTorch autograd. The optimizer runs on the CPU with
-rayon; the distance searches, which are all of the cost, can run on any GPU
-through wgpu. A seed makes a run bit-for-bit reproducible regardless of the
-thread count *and* of the device (see [GPU](#gpu)).
+## Why MorphIt-rs?
+
+| | Python MorphIt | MorphIt-rs |
+|---|---|---|
+| Algorithm, presets, result JSON | ✓ | ✓ same, validated against Python |
+| Time for 256 spheres, 300 iterations | 16–35 s (CPU), 4–22 s (CUDA) | about 1 s (CPU) |
+| GPU | CUDA (NVIDIA) | any GPU: Vulkan, Metal, DirectX 12, WebGPU |
+| Reproducible with a seed | per device | bit-identical across threads and devices |
+| Install | Python, PyTorch, trimesh, manifold3d, … | one binary, or `cargo add morphit` |
+| C/C++ API | ✗ | ✓ shared/static library, header, CMake package |
+| Runs in the browser | ✗ | ✓ WebAssembly + WebGPU |
+| Desktop app | ✗ | ✓ MorphIt Studio |
+| Robot pipeline and web UI | ✓ | ✓ same HTTP API, the Python UI runs unchanged |
+| Convex hulls, prepared-mesh export | ✗ | ✓ |
+| Visualization scripts | ✓ | ✗ (use the Studio or the web UI) |
+
+The full list is in [Differences from the Python code](#differences-from-the-python-code).
+
+## Gallery
+
+Every picture links to the example in the browser Studio, which packs it on the spot.
+
+| | | |
+|:---:|:---:|:---:|
+| [<img alt="The Stanford bunny packed with spheres" src="assets/gallery/bunny.png" width="280">](https://kevingliewe.github.io/MorphIt-rs/?example=bunny&pack) | [<img alt="A mug packed with spheres" src="assets/gallery/mug.png" width="280">](https://kevingliewe.github.io/MorphIt-rs/?example=mug&pack) | [<img alt="A teapot packed with spheres" src="assets/gallery/teapot.png" width="280">](https://kevingliewe.github.io/MorphIt-rs/?example=teapot&pack) |
+| **bunny** | **mug** | **teapot** |
+| [<img alt="A Franka Emika Panda arm with every link packed with spheres" src="assets/gallery/panda.png" width="280">](https://kevingliewe.github.io/MorphIt-rs/?example=panda&pack) | [<img alt="The Boston Dynamics Spot quadruped packed with spheres" src="assets/gallery/spot.png" width="280">](https://kevingliewe.github.io/MorphIt-rs/?example=spot&pack) | [<img alt="The NASA Valkyrie humanoid packed with spheres" src="assets/gallery/valkyrie.png" width="280">](https://kevingliewe.github.io/MorphIt-rs/?example=valkyrie&pack) |
+| **Franka Emika Panda** | **Boston Dynamics Spot** | **NASA Valkyrie** |
+
+## Packages and platforms
+
+| Package | What it is | Get it |
+|---|---|---|
+| [`morphit`](https://crates.io/crates/morphit) | the optimizer as a Rust library | [![crates.io](https://img.shields.io/crates/v/morphit?label=)](https://crates.io/crates/morphit) [![docs.rs](https://img.shields.io/docsrs/morphit?label=docs)](https://docs.rs/morphit) |
+| [`morphit-robot`](https://crates.io/crates/morphit-robot) | object URDF/MJCF, robot inspection, per-link packing, spherical URDF assembly | [![crates.io](https://img.shields.io/crates/v/morphit-robot?label=)](https://crates.io/crates/morphit-robot) [![docs.rs](https://img.shields.io/docsrs/morphit-robot?label=docs)](https://docs.rs/morphit-robot) |
+| [`morphit-capi`](https://crates.io/crates/morphit-capi) | thread-safe C library, `morphit.h`, CMake package ([C](#c)) | [![crates.io](https://img.shields.io/crates/v/morphit-capi?label=)](https://crates.io/crates/morphit-capi) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
+| [`morphit-cli`](https://crates.io/crates/morphit-cli) | the `morphit` command-line tool ([Command line](#command-line)) | [![crates.io](https://img.shields.io/crates/v/morphit-cli?label=)](https://crates.io/crates/morphit-cli) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
+| [`morphit-server`](https://crates.io/crates/morphit-server) | HTTP API and web UI, compatible with the Python service ([HTTP API](#http-api), [Docker](#docker)) | [![crates.io](https://img.shields.io/crates/v/morphit-server?label=)](https://crates.io/crates/morphit-server) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
+| `morphit-wasm` | WebAssembly build with a JavaScript/TypeScript API and WebGPU ([WebAssembly](#webassembly)) | [release archive](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) · [demo](https://kevingliewe.github.io/MorphIt-rs/wasm/) |
+| `morphit-studio` | interactive app for meshes and robots, desktop and browser ([MorphIt Studio](#morphit-studio)) | [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) · [open in the browser](https://kevingliewe.github.io/MorphIt-rs/) |
+
+Every [release](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) has
+ready-made archives:
+
+| Platform | CLI | Studio | Server | C library |
+|---|:---:|:---:|:---:|:---:|
+| Windows x64 | ✓ | ✓ | ✓ | ✓ |
+| Linux x64 | ✓ | ✓ | ✓ | ✓ |
+| Linux arm64 | ✓ | ✓ | ✓ | ✓ |
+| macOS Apple silicon | ✓ | ✓ | ✓ | ✓ |
+| macOS Intel | ✓ | ✓ | ✓ | ✓ |
+| Browser (WebAssembly) | | ✓ | | JS/TS package |
+
+## Quick start
+
+**Command line**, from a [release archive](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) or with Cargo:
+
+```sh
+cargo install morphit-cli
+morphit pack bunny.obj --spheres 64 -o bunny.json   # sphere centers and radii
+morphit export bunny.json -o bunny.urdf               # or .xml for MuJoCo
+```
+
+**Rust:**
+
+```sh
+cargo add morphit
+```
+
+```rust
+use std::sync::Arc;
+use morphit::{Config, Mesh, Preset};
+
+let mesh = Arc::new(Mesh::load("bunny.obj")?);
+let mut config = Config::from_preset(Preset::B);
+config.model.num_spheres = 64;
+let result = morphit::pack(config, mesh)?;
+result.save("bunny.json")?;
+```
+
+**C and C++** with the `morphit-capi` release archive
+([details](#using-the-release-package-from-cmake)):
+
+```cmake
+find_package(morphit 0.1 CONFIG REQUIRED)
+target_link_libraries(app PRIVATE morphit::morphit)
+```
+
+**Browser:** [MorphIt Studio](https://kevingliewe.github.io/MorphIt-rs/), or
+the [`morphit-wasm`](#webassembly) package in your own page.
+
+## How it works
+
+```mermaid
+flowchart LR
+    mesh[/"mesh<br>OBJ · STL · PLY · DAE"/] --> prep["mesh preparation<br>convex hulls, union of<br>overlapping bodies"]
+    prep --> sample["samples<br>inside + surface"]
+    sample --> init["initial spheres<br>voxel grid"]
+    init --> loop
+    subgraph loop ["optimizer loop"]
+        direction TB
+        search["nearest-sphere searches<br>CPU or GPU"] --> loss["11 weighted losses<br>+ analytic gradients"]
+        loss --> adam["Adam step,<br>projection"]
+        adam --> density["density control<br>(periodic)"]
+        density --> search
+    end
+    loop --> prune["prune"] --> result[/"result JSON<br>URDF · MJCF"/]
+```
+
+```mermaid
+flowchart BT
+    capi["morphit-capi<br>C library"] --> core["morphit"]
+    robot["morphit-robot"] --> core
+    cli["morphit-cli"] --> robot
+    server["morphit-server"] --> robot
+    wasm["morphit-wasm"] --> robot
+    studio["morphit-studio"] --> robot
+```
+
+> [!NOTE]
+> Only the searches (which sphere is nearest to each sample, and which pairs
+> of spheres overlap) run on the GPU, in f32. The CPU checks every answer in
+> f64, so the losses, gradients and results are the same bytes on either device.
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
 
 ## Build
 
@@ -52,6 +250,8 @@ Outputs land in `target/release`: `morphit(.exe)`, `morphit_capi.dll` +
 static `morphit_capi.lib` / `libmorphit_capi.a`. The header
 `crates/morphit-capi/include/morphit.h` is regenerated by cbindgen on every
 build and checked in.
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
 
 ## Command line
 
@@ -80,7 +280,14 @@ floats freely unless `--anchored`. The format follows the output extension
 `metrics` scores the prepared mesh, the one packing used; `--raw-mesh` scores
 the file as loaded, as `debug_quick_eval.py` does.
 
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## Input mesh requirements
+
+> [!IMPORTANT]
+> Inside and outside are decided by ray parity, so meshes should be closed
+> (watertight). Overlapping closed bodies are merged automatically; open
+> bodies are packed as they are, with a warning.
 
 MorphIt decides what is inside the mesh with a ray-parity test, which needs a
 closed surface. CAD exports that contain several overlapping solids, such as a
@@ -114,6 +321,8 @@ decisions, warnings, face counts and volumes. On two overlapping boxes packed
 with MorphIt-S (20 spheres, 200 iterations) the union keeps all 20 spheres;
 the raw mesh loses 16 of them to the final prune.
 
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## Rust
 
 ```rust
@@ -137,6 +346,8 @@ session.run(|step| {
 session.finalize();
 session.result().save("spheres.json")?;
 ```
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
 
 ## C
 
@@ -175,6 +386,9 @@ as a new handle, `morphit_mesh_prep_report_json` what was done, and
 
 **Threading.** Every function may be called from any thread.
 
+<details>
+<summary><b>Threading rules</b></summary>
+
 - Meshes are immutable and can be shared by any number of sessions.
 - Configs lock internally.
 - Independent sessions run fully in parallel.
@@ -190,6 +404,8 @@ as a new handle, `morphit_mesh_prep_report_json` what was done, and
 - `morphit_set_num_threads` sizes the worker pool before first use.
 - `morphit_set_log_callback` forwards the library's log messages. Nothing is
   printed otherwise.
+
+</details>
 
 `crates/morphit-capi/examples/c` contains `pack.c`, `threads.c` (four
 concurrent sessions, polling and cancelling a live run) and a CMake project.
@@ -236,6 +452,8 @@ library), and `tools/ci/test_capi_package.sh <archive>` builds and runs them
 against an archive, as the release workflow does on every platform it can
 run.
 
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## GPU
 
 `model.device` (CLI `--device`) is `auto` by default: a GPU is used when one is
@@ -244,6 +462,9 @@ present and the problem is large enough (`spheres × samples ≥ 4·10^6`, e.g.
 a device. Python's `cuda`, `cuda:N` and `mps` are accepted as aliases. wgpu runs
 on Vulkan, DirectX 12 and Metal, so NVIDIA, AMD, Intel and Apple GPUs all work
 and nothing needs to be installed.
+
+> [!TIP]
+> `morphit devices` lists the adapters wgpu finds; `--device gpu:N` picks one.
 
 **Results do not depend on the device.** The GPU kernels run in f32 and only
 propose, for every sample, which sphere is nearest and by what margin (and the
@@ -277,6 +498,8 @@ after control returns to the browser, so the optimizer step is written as
 `Session::step` stays synchronous. GPU sessions in the browser are checked to
 be bit-identical to CPU sessions (`crates/morphit-wasm/tests/browser.rs`).
 
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## HTTP API
 
 `morphit-server` serves the web UI and the HTTP API of the Python version
@@ -303,6 +526,9 @@ cargo run --release -p morphit-server -- --bind 127.0.0.1:9000 --device cpu
 `morphit-server --healthcheck` requests `/healthz` on the bind address and
 exits 0 when it answers, which is what the Docker health check runs.
 
+<details>
+<summary><b>All routes</b></summary>
+
 | Route | Purpose |
 |---|---|
 | `GET /`, `GET /healthz` | web UI, `{"ok":true}` |
@@ -320,6 +546,8 @@ exits 0 when it answers, which is what the Docker health check runs.
 | `POST /api/mesh/prepare` | form: `mesh`, `union_overlapping_bodies` (default `true`), `convex_hull` (default `false`), `format` (`obj` default, or `stl`). The prepared mesh as a download, with the report in `X-Morphit-Mesh-Prep` |
 | `GET /api/robot/prepared-mesh?session_id=&link_name=&collision_index=` | the prepared mesh of one collision of a robot session; same `union_overlapping_bodies`, `convex_hull` and `format` options as query parameters |
 
+</details>
+
 `union_overlapping_bodies` and `convex_hull` are additions to the Python API
 (which always merges and never builds hulls): `union_overlapping_bodies=false`
 packs the mesh exactly as loaded (the `X-Morphit-Mesh-Prep` report then says
@@ -333,7 +561,8 @@ object mesh and 200 MB per robot package (50 MB per file), as in Python.
 The URDF generation, robot inspection, per-link packing and URDF rewrite live
 in the `morphit-robot` crate, usable without the server.
 
-Differences from the Python service:
+<details>
+<summary><b>Differences from the Python service</b></summary>
 
 - `/docs` and `/openapi.json` (FastAPI's generated docs) are not served.
 - 422 responses have FastAPI's `detail` list shape for missing and
@@ -346,11 +575,19 @@ Differences from the Python service:
   names, colors and joint origins are the same.
 - `device` defaults to `auto` (GPU for large problems) instead of CUDA-or-CPU.
 
+</details>
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## Docker
 
 The `Dockerfile` builds the server in a Rust image and copies the binary and
 `web/` into a small runtime image (non-root user `morphit`, port 8000, health
 check on `/healthz`).
+
+> [!TIP]
+> `docker compose up` builds and starts the server with its web UI on
+> <http://localhost:8000>.
 
 ```sh
 docker build -t morphit-server .                     # CPU image (default target)
@@ -376,6 +613,8 @@ Behind a proxy that re-signs TLS, give the build its CA chain as a secret:
 ```sh
 docker build --secret id=ca_certs,src=corp-ca.pem -t morphit-server .
 ```
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
 
 ## WebAssembly
 
@@ -430,6 +669,8 @@ wasm32-unknown-unknown` runs the API tests in Node.js (it needs
 in a browser with `NO_HEADLESS=1 cargo test -p morphit-wasm --target
 wasm32-unknown-unknown --test browser` and opening the printed address.
 
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## MorphIt Studio
 
 `apps/morphit-studio` is an interactive app built with Bevy 0.18, egui and
@@ -481,6 +722,8 @@ with WebGL2 (the `webgpu` feature switches its renderer to WebGPU too).
 Folders are opened with the browser's folder picker, and saves become
 downloads. The `dev` feature links Bevy dynamically for faster desktop
 rebuilds.
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
 
 ## Validation against the Python implementation
 
@@ -547,6 +790,8 @@ the Python reference implementation and are checked in, so the parity tests
 run without Python; the scripts that produced them work against a local clone
 of the Python repository and are not part of this repository.
 
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## Performance
 
 Wall time of one pack against the Python reference (PyTorch 2.7.1 on the CPU
@@ -595,6 +840,8 @@ one-time device setup per process; ¹ optimizer loop only.
   faster than Python's CUDA loop at 256 spheres and overtakes the Rust CPU
   build from about 256 spheres; CPU and GPU give identical results.
 
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## Differences from the Python code
 
 - Mesh preparation can be switched off (`model.union_overlapping_bodies`) and
@@ -616,6 +863,8 @@ one-time device setup per process; ¹ optimizer loop only.
 - Voxel-grid initialization and `morphit_mesh_contains` use a rotated-ray
   containment test, the role `trimesh.contains` plays in Python. The optimizer
   itself uses an exact port of Python's Cython test.
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
 
 ## CI and releases
 
@@ -643,7 +892,10 @@ request, deploy the browser builds to GitHub Pages and cut releases:
   and publishes `morphit`, `morphit-robot`, `morphit-capi`, `morphit-cli` and
   `morphit-server` to crates.io (`tools/ci/publish_crates.sh`, which skips a
   version that is already published); a manual run publishes only when
-  `publish-crates` is ticked.
+  `publish-crates` is ticked, and only once the tag `v<version>` is pushed.
+  The crates share this README; their packaged copy gets its relative image
+  and file links rewritten to absolute URLs at that tag, since crates.io
+  would resolve them against the crate folder.
 
 To release, bump `version` in the root `Cargo.toml`, commit, then
 `git tag v0.2.0 && git push origin v0.2.0`; the tag must match the version.
@@ -656,6 +908,9 @@ token. `cargo install morphit-server` installs only the binary: point
 which has it next to the executable.
 
 ### Running the workflows locally
+
+<details>
+<summary><b>Details: act, event files, dry runs, proxies</b></summary>
 
 `actionlint` checks the workflow files (and, with shellcheck installed, their
 scripts). [act](https://github.com/nektos/act) runs the Linux jobs in Docker
@@ -675,11 +930,18 @@ tools/act.ps1 release -Event tag -DryRun     # job graph of a tag push
 
 Windows and macOS jobs cannot run in act; `-DryRun` shows their plan and the
 scripts behind them run directly (`tools/ci/package.sh`, `tools/build_pages.sh`,
-`tools/ci/publish_crates.sh --dry-run --allow-dirty`). Behind a proxy that
+`tools/ci/publish_crates.sh --dry-run`). Behind a proxy that
 re-signs TLS, set `MORPHIT_CA_PEM` to its CA chain (a PEM file outside the
 repository); the containers then trust it.
 
+</details>
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## Layout
+
+<details>
+<summary><b>Repository layout</b></summary>
 
 ```
 crates/morphit/        optimizer library (config, device, mesh, mesh_prep, contains, sampling,
@@ -697,6 +959,59 @@ tools/                 build_studio_web.sh, build_pages.sh,
 .github/               CI, Pages and release workflows, shared setup action
 ```
 
+</details>
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
+## Citation
+
+MorphIt was developed by the Human Interaction and Robotics Group (HIRO) at
+the University of Colorado Boulder. If you use it in your research, please
+cite their paper (GitHub's *Cite this repository* button, from
+[`CITATION.cff`](CITATION.cff), gives it in several formats):
+
+```bibtex
+@misc{nechyporenko2025morphit,
+      title={MorphIt: Flexible Spherical Approximation of Robot Morphology for Representation-driven Adaptation},
+      author={Nataliya Nechyporenko and Yutong Zhang and Sean Campbell and Alessandro Roncone},
+      year={2025},
+      eprint={2507.14061},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2507.14061},
+}
+```
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
+## Acknowledgements
+
+- [MorphIt](https://github.com/HIRO-group/MorphIt-1) by the HIRO group: the
+  method, the reference implementation this port is validated against, and
+  the web UI, example meshes and robots bundled in `web/`.
+- [wgpu](https://wgpu.rs), [Bevy](https://bevy.org),
+  [egui](https://github.com/emilk/egui),
+  [bevy_editor_cam](https://github.com/aevyrie/bevy_editor_cam),
+  [manifold-rust](https://crates.io/crates/manifold-rust),
+  [axum](https://github.com/tokio-rs/axum),
+  [rayon](https://github.com/rayon-rs/rayon) and
+  [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen), which do much of the heavy lifting.
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
 ## License
 
 MIT, like the original MorphIt. See `LICENSE`.
+
+---
+
+<div align="center">
+
+[Studio](https://kevingliewe.github.io/MorphIt-rs/) ·
+[Releases](https://github.com/KevinGliewe/MorphIt-rs/releases) ·
+[crates.io](https://crates.io/crates/morphit) ·
+[docs.rs](https://docs.rs/morphit) ·
+[Paper](https://arxiv.org/abs/2507.14061) ·
+[↑ Back to top](#readme-top)
+
+</div>
