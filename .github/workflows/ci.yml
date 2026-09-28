@@ -129,6 +129,38 @@ jobs:
             | tee webdriver.json crates/morphit-wasm/webdriver.json
           cargo test -p morphit-wasm --target wasm32-unknown-unknown --test browser --locked
 
+  # The Python package (crates/morphit-py): build the wheel, install it, run
+  # the pytest suite against the installed package, and check the type stubs.
+  python:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: python-${{ matrix.os }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build and install the wheel
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip maturin
+          maturin build --release --locked -m crates/morphit-py/Cargo.toml --out dist
+          python -m pip install dist/*.whl pytest mypy
+      - name: pytest
+        # Run from outside the source folder so the installed package is tested.
+        working-directory: crates/morphit-py/tests
+        run: python -m pytest -q -p no:cacheprovider
+      - name: Type stubs match the extension, package type-checks
+        if: runner.os == 'Linux'
+        run: |
+          python -m mypy.stubtest morphit_rs._native
+          python -m mypy --strict crates/morphit-py/python/morphit_rs
+
   # Packages and verifies every publishable crate as crates.io would build it.
   package:
     runs-on: ubuntu-latest

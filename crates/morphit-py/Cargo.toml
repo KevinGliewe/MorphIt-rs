@@ -1,0 +1,32 @@
+[package]
+name = "morphit-py"
+description = "Python bindings of the MorphIt sphere-packing optimizer (the morphit-rs package on PyPI)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+# Published to PyPI as `morphit-rs` (maturin), not to crates.io.
+publish = false
+
+[lib]
+name = "_native"
+crate-type = ["cdylib"]
+
+[features]
+default = ["gpu", "union", "parallel"]
+gpu = ["morphit/gpu", "morphit-robot/gpu"]
+union = ["morphit/union", "morphit-robot/union"]
+parallel = ["morphit/parallel", "morphit-robot/parallel"]
+
+[dependencies]
+morphit = { workspace = true, default-features = false }
+morphit-robot = { workspace = true, default-features = false, features = ["zip"] }
+pyo3.workspace = true
+numpy.workspace = true
+pythonize.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true

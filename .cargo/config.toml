@@ -4,5 +4,6 @@ rustflags = ['--cfg', 'getrandom_backend="wasm_js"']
 runner = "wasm-bindgen-test-runner"
 
 [alias]
-# Every native suite except the Bevy app (heavy to build).
-t = "test --workspace --exclude morphit-studio"
+# Every native suite except the Bevy app (heavy to build) and the Python
+# extension (tested with pytest after `maturin develop`).
+t = "test --workspace --exclude morphit-studio --exclude morphit-py"

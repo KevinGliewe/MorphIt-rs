@@ -11,6 +11,7 @@
 [![Pages](https://img.shields.io/github/actions/workflow/status/KevinGliewe/MorphIt-rs/pages.yml?branch=master&label=Pages&logo=github)](https://kevingliewe.github.io/MorphIt-rs/)
 [![Release](https://img.shields.io/github/v/release/KevinGliewe/MorphIt-rs?logo=github)](https://github.com/KevinGliewe/MorphIt-rs/releases/latest)
 [![crates.io](https://img.shields.io/crates/v/morphit?logo=rust)](https://crates.io/crates/morphit)
+[![PyPI](https://img.shields.io/pypi/v/morphit-rs?logo=python&logoColor=white)](https://pypi.org/project/morphit-rs/)
 [![docs.rs](https://img.shields.io/docsrs/morphit?logo=docs.rs)](https://docs.rs/morphit)
 [![MSRV](https://img.shields.io/crates/msrv/morphit?logo=rust)](https://github.com/KevinGliewe/MorphIt-rs/blob/master/Cargo.toml)
 [![License: MIT](https://img.shields.io/crates/l/morphit)](https://github.com/KevinGliewe/MorphIt-rs/blob/master/LICENSE)
@@ -33,9 +34,9 @@
 MorphIt-rs is a Rust port of [MorphIt](https://github.com/HIRO-group/MorphIt-1)
 ([paper](https://arxiv.org/abs/2507.14061)): it approximates a triangle mesh
 with a fixed budget of spheres by gradient-based optimization, for collision
-checking, simulation and motion planning. It comes as a Rust crate, a C
-library, a command-line tool, an HTTP server, a WebAssembly package and an
-interactive desktop and browser app.
+checking, simulation and motion planning. It comes as a Rust crate, a Python
+package, a C library, a command-line tool, an HTTP server, a WebAssembly
+package and an interactive desktop and browser app.
 
 > [!TIP]
 > Nothing to install: [open MorphIt Studio in your browser](https://kevingliewe.github.io/MorphIt-rs/),
@@ -54,6 +55,8 @@ interactive desktop and browser app.
 - [Command line](#command-line)
 - [Input mesh requirements](#input-mesh-requirements)
 - [Rust](#rust)
+- [Python](#python)
+  - [Coming from the Python MorphIt](#coming-from-the-python-morphit)
 - [C](#c)
   - [Using the release package from CMake](#using-the-release-package-from-cmake)
 - [GPU](#gpu)
@@ -89,8 +92,8 @@ interactive desktop and browser app.
 - **Mesh preparation.** Overlapping CAD bodies are merged, optionally
   replaced by their convex hulls, and the prepared mesh can be exported
   ([Input mesh requirements](#input-mesh-requirements)).
-- **Everywhere you need it.** Rust crate, thread-safe C library with a CMake
-  package, CLI, Python-compatible HTTP server with Docker images,
+- **Everywhere you need it.** Rust crate, Python package (NumPy, with the
+  original's API as a drop-in), thread-safe C library with a CMake package, CLI, Python-compatible HTTP server with Docker images,
   WebAssembly with TypeScript types, and a desktop/browser app.
 
 It reproduces the Python optimizer: voxel-grid initialization, the eleven
@@ -111,7 +114,8 @@ which are all of the cost, can run on any GPU through wgpu.
 | Time for 256 spheres, 300 iterations | 16–35 s (CPU), 4–22 s (CUDA) | about 1 s (CPU) |
 | GPU | CUDA (NVIDIA) | any GPU: Vulkan, Metal, DirectX 12, WebGPU |
 | Reproducible with a seed | per device | bit-identical across threads and devices |
-| Install | Python, PyTorch, trimesh, manifold3d, … | one binary, or `cargo add morphit` |
+| Install | Python, PyTorch, trimesh, manifold3d, … | `pip install morphit-rs`, one binary, or `cargo add morphit` |
+| Python API | ✓ (PyTorch) | ✓ NumPy, releases the GIL; the original's API in `morphit_rs.compat` |
 | C/C++ API | ✗ | ✓ shared/static library, header, CMake package |
 | Runs in the browser | ✗ | ✓ WebAssembly + WebGPU |
 | Desktop app | ✗ | ✓ MorphIt Studio |
@@ -141,20 +145,21 @@ Every picture links to the example in the browser Studio, which packs it on the 
 | [`morphit-capi`](https://crates.io/crates/morphit-capi) | thread-safe C library, `morphit.h`, CMake package ([C](#c)) | [![crates.io](https://img.shields.io/crates/v/morphit-capi?label=)](https://crates.io/crates/morphit-capi) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
 | [`morphit-cli`](https://crates.io/crates/morphit-cli) | the `morphit` command-line tool ([Command line](#command-line)) | [![crates.io](https://img.shields.io/crates/v/morphit-cli?label=)](https://crates.io/crates/morphit-cli) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
 | [`morphit-server`](https://crates.io/crates/morphit-server) | HTTP API and web UI, compatible with the Python service ([HTTP API](#http-api), [Docker](#docker)) | [![crates.io](https://img.shields.io/crates/v/morphit-server?label=)](https://crates.io/crates/morphit-server) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
+| [`morphit-rs`](https://pypi.org/project/morphit-rs/) (Python) | the optimizer, robot pipeline, URDF/MJCF export and metrics for Python ([Python](#python)) | [![PyPI](https://img.shields.io/pypi/v/morphit-rs?label=)](https://pypi.org/project/morphit-rs/) |
 | `morphit-wasm` | WebAssembly build with a JavaScript/TypeScript API and WebGPU ([WebAssembly](#webassembly)) | [release archive](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) · [demo](https://kevingliewe.github.io/MorphIt-rs/wasm/) |
 | `morphit-studio` | interactive app for meshes and robots, desktop and browser ([MorphIt Studio](#morphit-studio)) | [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) · [open in the browser](https://kevingliewe.github.io/MorphIt-rs/) |
 
 Every [release](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) has
 ready-made archives:
 
-| Platform | CLI | Studio | Server | C library |
-|---|:---:|:---:|:---:|:---:|
-| Windows x64 | ✓ | ✓ | ✓ | ✓ |
-| Linux x64 | ✓ | ✓ | ✓ | ✓ |
-| Linux arm64 | ✓ | ✓ | ✓ | ✓ |
-| macOS Apple silicon | ✓ | ✓ | ✓ | ✓ |
-| macOS Intel | ✓ | ✓ | ✓ | ✓ |
-| Browser (WebAssembly) | | ✓ | | JS/TS package |
+| Platform | CLI | Studio | Server | C library | Python wheel |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Windows x64 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Linux x64 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Linux arm64 | ✓ | ✓ | ✓ | ✓ | ✓ |
+| macOS Apple silicon | ✓ | ✓ | ✓ | ✓ | ✓ |
+| macOS Intel | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Browser (WebAssembly) | | ✓ | | JS/TS package | |
 
 ## Quick start
 
@@ -164,6 +169,20 @@ ready-made archives:
 cargo install morphit-cli
 morphit pack bunny.obj --spheres 64 -o bunny.json   # sphere centers and radii
 morphit export bunny.json -o bunny.urdf               # or .xml for MuJoCo
+```
+
+**Python** (3.9+, [PyPI](https://pypi.org/project/morphit-rs/)):
+
+```sh
+pip install morphit-rs
+```
+
+```python
+import morphit_rs as mi
+
+result = mi.pack(mi.Mesh.load("bunny.obj"), mi.Config.preset("MorphIt-B", num_spheres=64))
+result.centers, result.radii                     # NumPy arrays
+result.save("bunny.json")
 ```
 
 **Rust:**
@@ -215,6 +234,7 @@ flowchart LR
 ```mermaid
 flowchart BT
     capi["morphit-capi<br>C library"] --> core["morphit"]
+    py["morphit-py<br>Python (morphit-rs)"] --> robot
     robot["morphit-robot"] --> core
     cli["morphit-cli"] --> robot
     server["morphit-server"] --> robot
@@ -345,6 +365,100 @@ session.run(|step| {
 })?;
 session.finalize();
 session.result().save("spheres.json")?;
+```
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
+## Python
+
+`pip install morphit-rs` installs wheels for Windows x64, Linux x64/arm64
+(glibc 2.28+) and macOS (Apple silicon and Intel), one per platform for
+Python 3.9 and newer; NumPy is the only dependency. The package is
+`crates/morphit-py` (PyO3, built with maturin) and covers the whole library:
+
+```python
+import morphit_rs as mi
+
+mesh = mi.Mesh.load("bunny.obj")                 # or Mesh.from_arrays(vertices, faces), Mesh.from_bytes(...)
+config = mi.Config.preset("MorphIt-B", num_spheres=64, seed=42, device="auto")
+config["training.center_lr"] = 0.001             # any dotted key, as the CLI's --set
+result = mi.pack(mesh, config)                   # PackResult: centers (n, 3), radii, masses, save(), to_dict()
+
+session = mi.Session(mesh, config)               # step by step
+for step in session:                             # StepInfo: iteration, total_loss, weighted_losses, ...
+    pass
+session.finalize()
+
+hull = mesh.prepared(union=True, convex_hull=True)          # mesh preparation, prep_report(...)
+urdf, centroid = mi.object_urdf(result.centers, result.radii, name="bunny")
+mjcf, _ = mi.object_mjcf(result.centers, result.radii, anchored=True)
+metrics = mi.evaluate_packing(mesh, result)
+
+pkg = mi.RobotPackage.from_folder("franka_panda")           # or from_zip / from_files
+report = pkg.inspect()
+pkg.pack_all(num_spheres=20, iterations=200, seed=0)        # or pack_link(item) -> Session
+urdf, stats = pkg.assemble(base_color="#3399ff", color_variation=0.6)
+```
+
+- **Threads:** packing, sampling, mesh preparation and loading release the
+  GIL, so other Python threads keep running and several sessions pack in
+  parallel. A `Session` follows the C API's rules: `centers`, `radii`,
+  `iteration` and `state` can be read from any thread during a run,
+  `cancel()` stops a `run()` from another thread, and a second `run`, `step`
+  or `finalize` meanwhile raises `BusyError` instead of blocking.
+- **Ctrl+C** stops `for step in session` and `session.run()` between two
+  steps with `KeyboardInterrupt`; the session stays usable and can continue.
+- **Errors** are `MorphItError` subclasses: `ConfigError` (also a
+  `ValueError`, with the offending `.key`), `MeshError`, `MorphItIOError`
+  (also an `OSError`), `StateError`/`BusyError` and `RobotError`.
+- **Logging:** `morphit_rs.enable_logging("INFO")` forwards the library's
+  messages (mesh preparation, GPU fallback, pruning) to `logging`, under
+  `morphit_rs`.
+- **Types:** the package ships type stubs (`py.typed`).
+
+Results are the same bytes as from the CLI, the C API or Rust for the same
+config and seed (`crates/morphit-py/tests/test_export.py` checks it against
+the `morphit` binary).
+
+### Coming from the Python MorphIt
+
+`morphit_rs.compat` is the part of the original API that its scripts and web
+service use. Change the imports and keep the script:
+
+```python
+# from config import get_config, update_config_from_dict
+# from morphit import MorphIt
+# from training import train_morphit
+from morphit_rs.compat import get_config, update_config_from_dict, MorphIt, train_morphit
+
+config = get_config("MorphIt-B")
+config = update_config_from_dict(config, {"model.num_spheres": 20, "model.mesh_path": "link0.obj"})
+model = MorphIt(config)
+tracker = train_morphit(model, iteration_callback=lambda i, model, loss_info: print(i, loss_info["total_loss"]))
+model.save_results()          # results/output/morphit_results.json, the same keys
+tracker.save()                # results/training_logs/link0_training_log.json
+```
+
+The configs behave as the original's (attribute access, dotted updates in
+place, `ValueError` for unknown keys), `MorphIt` exposes `centers`, `radii`,
+`masses`, the samples, `mesh_prep_report` and `get_sphere_statistics()`, and
+the callback gets the same `loss_info` keys. The differences:
+
+- `centers`, `radii` and the other arrays are torch tensors when torch is
+  installed, NumPy arrays otherwise. They are read-only snapshots, and the
+  model is not an `nn.Module`.
+- `model.device` defaults to `auto` instead of CUDA-or-CPU.
+- PyVista visualization (`pv_init`, ...) and the `results/evolution` logs are
+  not included.
+- Random streams differ, so a seed gives statistically, not bitwise, equal
+  results to the original's (see [Differences](#differences-from-the-python-code)).
+
+To build the package from the repository:
+
+```sh
+pip install maturin
+maturin develop --release -m crates/morphit-py/Cargo.toml    # into the active virtualenv
+pytest crates/morphit-py/tests
 ```
 
 <div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
@@ -875,7 +989,9 @@ request, deploy the browser builds to GitHub Pages and cut releases:
   `cargo t` on Linux, Windows and macOS, plus the sequential (no rayon) build
   and the studio's library tests on Linux; the GPU tests on Mesa's software
   Vulkan (lavapipe), so CPU = GPU bit identity is checked without a GPU; the
-  wasm builds and the JavaScript API tests in Node and headless Chrome; and
+  wasm builds and the JavaScript API tests in Node and headless Chrome; the
+  Python wheel built, installed and tested with pytest on Linux, Windows and
+  macOS (plus `mypy.stubtest` for the type stubs); and
   `cargo publish --dry-run` of every crate.
 - **Pages** (`pages.yml`, pushes to `master`): MorphIt Studio at
   <https://kevingliewe.github.io/MorphIt-rs/> and the morphit-wasm example
@@ -895,7 +1011,11 @@ request, deploy the browser builds to GitHub Pages and cut releases:
   `publish-crates` is ticked, and only once the tag `v<version>` is pushed.
   The crates share this README; their packaged copy gets its relative image
   and file links rewritten to absolute URLs at that tag, since crates.io
-  would resolve them against the crate folder.
+  would resolve them against the crate folder. The Python package is built
+  as abi3 wheels for the same five targets (maturin, Linux in the
+  manylinux_2_28 container) plus an sdist, attached to the GitHub Release and
+  published to PyPI as `morphit-rs` on a tag, or on a manual run with
+  `publish-pypi` ticked once the tag exists.
 
 To release, bump `version` in the root `Cargo.toml`, commit, then
 `git tag v0.2.0 && git push origin v0.2.0`; the tag must match the version.
@@ -903,7 +1023,10 @@ One-time repository setup: Settings > Pages > Source "GitHub Actions"; a
 `CARGO_REGISTRY_TOKEN` secret (crates.io API token with publish rights) in an
 environment named `crates-io` (add required reviewers there to approve each
 publish). Once the crates exist, crates.io Trusted Publishing can replace the
-token. `cargo install morphit-server` installs only the binary: point
+token. For PyPI, add a *pending trusted publisher* on pypi.org (project
+`morphit-rs`, this repository, workflow `release.yml`, environment `pypi`)
+and create an environment named `pypi`; no token is needed.
+`cargo install morphit-server` installs only the binary: point
 `--web-dir`/`MORPHIT_WEB_DIR` at a copy of `web/`, or use the release archive,
 which has it next to the executable.
 
@@ -951,6 +1074,7 @@ crates/morphit-cli/    `morphit` binary
 crates/morphit-robot/  object URDF/MJCF, robot inspection/packing/assembly, quality metrics
 crates/morphit-server/ HTTP API (axum), integration tests
 crates/morphit-wasm/   WebAssembly bindings (JS/TS API), Node and browser tests, www/ example page
+crates/morphit-py/     Python bindings (PyO3, maturin): src/, python/morphit_rs (incl. compat), tests/ (pytest)
 apps/morphit-studio/   Bevy + egui app for desktop and browser (index.html, Trunk.toml)
 web/                   web UI and example library (from the Python repository)
 Dockerfile, docker-compose.yml, docker/
@@ -995,7 +1119,9 @@ cite their paper (GitHub's *Cite this repository* button, from
   [manifold-rust](https://crates.io/crates/manifold-rust),
   [axum](https://github.com/tokio-rs/axum),
   [rayon](https://github.com/rayon-rs/rayon) and
-  [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen), which do much of the heavy lifting.
+  [wasm-bindgen](https://github.com/rustwasm/wasm-bindgen),
+  [PyO3](https://pyo3.rs) with [maturin](https://www.maturin.rs) and
+  [rust-numpy](https://github.com/PyO3/rust-numpy), which do much of the heavy lifting.
 
 <div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
 

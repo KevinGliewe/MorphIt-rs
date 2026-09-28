@@ -6,9 +6,11 @@ members = [
     "crates/morphit-robot",
     "crates/morphit-server",
     "crates/morphit-wasm",
+    "crates/morphit-py",
     "apps/morphit-studio",
 ]
-# `cargo build`/`cargo test` without `-p` skip the (heavy) Bevy app.
+# `cargo build`/`cargo test` without `-p` skip the (heavy) Bevy app and the
+# Python extension (built with maturin, see crates/morphit-py).
 default-members = [
     "crates/morphit",
     "crates/morphit-capi",
@@ -72,6 +74,9 @@ serde-wasm-bindgen = "0.6"
 wasm-bindgen-test = "0.3"
 console_error_panic_hook = "0.1"
 tracing-wasm = "0.2"
+pyo3 = { version = "0.29", features = ["abi3-py39"] }
+numpy = "0.29"
+pythonize = "0.29"
 zip = { version = "8", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
 [profile.test]

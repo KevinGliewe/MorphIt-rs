@@ -1,0 +1,43 @@
+[build-system]
+requires = ["maturin>=1.9,<2"]
+build-backend = "maturin"
+
+[project]
+name = "morphit-rs"
+description = "Approximate triangle meshes and robots with spheres: the MorphIt optimizer in Rust, for Python"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.21"]
+dynamic = ["version"]
+keywords = ["sphere-packing", "collision", "robotics", "urdf", "mesh", "morphit"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+
+[project.optional-dependencies]
+# morphit_rs.compat returns torch tensors when torch is installed.
+torch = ["torch"]
+# ConvergenceTracker.plot_training_metrics (morphit_rs.compat).
+plot = ["matplotlib"]
+test = ["pytest>=7"]
+
+[project.urls]
+Homepage = "https://kevingliewe.github.io/MorphIt-rs/"
+Repository = "https://github.com/KevinGliewe/MorphIt-rs"
+Documentation = "https://github.com/KevinGliewe/MorphIt-rs#python"
+Paper = "https://arxiv.org/abs/2507.14061"
+
+[tool.maturin]
+python-source = "python"
+module-name = "morphit_rs._native"
+# Only maturin builds link as an extension module; plain cargo builds stay normal.
+features = ["pyo3/extension-module"]

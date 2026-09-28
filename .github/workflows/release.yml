@@ -1,8 +1,8 @@
 name: Release
 
 # A `v*` tag builds every artifact, creates the GitHub Release and publishes
-# the crates. Started by hand it builds the artifacts (downloadable from the
-# run) and publishes the crates only when asked.
+# the crates and the Python package. Started by hand it builds the artifacts
+# (downloadable from the run) and publishes only when asked.
 on:
   push:
     tags: ["v*"]
@@ -10,6 +10,10 @@ on:
     inputs:
       publish-crates:
         description: Publish the crates to crates.io
+        type: boolean
+        default: false
+      publish-pypi:
+        description: Publish the Python package to PyPI (the tag v<version> must exist)
         type: boolean
         default: false
 
@@ -85,6 +89,63 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  # Python wheels (abi3: one per platform for Python 3.9+), built by maturin;
+  # Linux in the manylinux_2_28 container (glibc 2.28+).
+  wheels:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-pc-windows-msvc, os: windows-latest }
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest, manylinux: "2_28" }
+          - { target: aarch64-unknown-linux-gnu, os: ubuntu-24.04-arm, manylinux: "2_28" }
+          - { target: aarch64-apple-darwin, os: macos-latest }
+          # Cross-compiled on Apple silicon: built, not installed.
+          - { target: x86_64-apple-darwin, os: macos-latest, cross: true }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux || 'auto' }}
+          args: --release --locked --out dist -m crates/morphit-py/Cargo.toml
+      - name: The wheel installs and packs a mesh
+        if: ${{ !matrix.cross }}
+        shell: bash
+        run: |
+          python -m pip install dist/*.whl
+          python -c "import morphit_rs as mi; r = mi.pack(mi.Mesh.load('crates/morphit/tests/fixtures/link0.obj'), mi.Config.preset(num_spheres=8, iterations=20, seed=0)); print(mi.__version__, r)"
+      - name: Checksums
+        shell: bash
+        run: cd dist && for f in *.whl; do sha256sum "$f" > "$f.sha256"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.target }}
+          path: dist/*
+          if-no-files-found: error
+
+  sdist:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist -m crates/morphit-py/Cargo.toml
+      - name: Checksum
+        run: cd dist && for f in *.tar.gz; do sha256sum "$f" > "$f.sha256"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*
+          if-no-files-found: error
+
   web:
     needs: version
     runs-on: ubuntu-latest
@@ -116,7 +177,7 @@ jobs:
 
   github-release:
     if: github.ref_type == 'tag' && !github.event.act
-    needs: [ci, native, web]
+    needs: [ci, native, web, wheels, sdist]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -155,3 +216,34 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: bash tools/ci/publish_crates.sh
+
+  # PyPI Trusted Publishing: no token. One-time setup on pypi.org: a (pending)
+  # trusted publisher for project morphit-rs, this repository, workflow
+  # release.yml, environment pypi.
+  pypi:
+    if: (github.ref_type == 'tag' || inputs.publish-pypi) && !github.event.act
+    needs: [ci, version, wheels, sdist]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: The release tag exists
+        run: |
+          git ls-remote --exit-code --tags origin "refs/tags/v${{ needs.version.outputs.version }}" >/dev/null             || { echo "::error::tag v${{ needs.version.outputs.version }} is not on origin; push it first"; exit 1; }
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: wheels-*
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          name: sdist
+      - name: Only the packages
+        run: rm -f dist/*.sha256 && ls -l dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true

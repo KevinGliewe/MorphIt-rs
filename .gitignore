@@ -14,3 +14,7 @@ __pycache__/
 /tools/setup_python_env.ps1
 # Written by CI for the browser tests.
 webdriver.json
+# The compiled extension that `maturin develop` puts next to the Python sources.
+/crates/morphit-py/python/morphit_rs/_native.*
+!/crates/morphit-py/python/morphit_rs/_native.pyi
+.pytest_cache/
