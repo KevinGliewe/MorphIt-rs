@@ -1,0 +1,11 @@
+<Project>
+  <!-- .NET Framework does not resolve runtimes/<rid>/native: copy the Windows x64
+       library next to the application. -->
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <None Include="$(MSBuildThisFileDirectory)../../runtimes/win-x64/native/morphit_capi.dll">
+      <Link>morphit_capi.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </None>
+  </ItemGroup>
+</Project>

@@ -12,6 +12,8 @@
 [![Release](https://img.shields.io/github/v/release/KevinGliewe/MorphIt-rs?logo=github)](https://github.com/KevinGliewe/MorphIt-rs/releases/latest)
 [![crates.io](https://img.shields.io/crates/v/morphit?logo=rust)](https://crates.io/crates/morphit)
 [![PyPI](https://img.shields.io/pypi/v/morphit-rs?logo=python&logoColor=white)](https://pypi.org/project/morphit-rs/)
+[![npm](https://img.shields.io/npm/v/morphit-rs?logo=npm)](https://www.npmjs.com/package/morphit-rs)
+[![NuGet](https://img.shields.io/nuget/v/MorphIt?logo=nuget)](https://www.nuget.org/packages/MorphIt)
 [![docs.rs](https://img.shields.io/docsrs/morphit?logo=docs.rs)](https://docs.rs/morphit)
 [![MSRV](https://img.shields.io/crates/msrv/morphit?logo=rust)](https://github.com/KevinGliewe/MorphIt-rs/blob/master/Cargo.toml)
 [![License: MIT](https://img.shields.io/crates/l/morphit)](https://github.com/KevinGliewe/MorphIt-rs/blob/master/LICENSE)
@@ -35,8 +37,9 @@ MorphIt-rs is a Rust port of [MorphIt](https://github.com/HIRO-group/MorphIt-1)
 ([paper](https://arxiv.org/abs/2507.14061)): it approximates a triangle mesh
 with a fixed budget of spheres by gradient-based optimization, for collision
 checking, simulation and motion planning. It comes as a Rust crate, a Python
-package, a C library, a command-line tool, an HTTP server, a WebAssembly
-package and an interactive desktop and browser app.
+package, a C library with a C++ wrapper, a .NET package, an npm package
+(WebAssembly, TypeScript), a command-line tool, an HTTP server and an
+interactive desktop and browser app.
 
 > [!TIP]
 > Nothing to install: [open MorphIt Studio in your browser](https://kevingliewe.github.io/MorphIt-rs/),
@@ -59,6 +62,8 @@ package and an interactive desktop and browser app.
   - [Coming from the Python MorphIt](#coming-from-the-python-morphit)
 - [C](#c)
   - [Using the release package from CMake](#using-the-release-package-from-cmake)
+- [C++](#c-1)
+- [C#](#c-2)
 - [GPU](#gpu)
 - [HTTP API](#http-api)
 - [Docker](#docker)
@@ -93,7 +98,8 @@ package and an interactive desktop and browser app.
   replaced by their convex hulls, and the prepared mesh can be exported
   ([Input mesh requirements](#input-mesh-requirements)).
 - **Everywhere you need it.** Rust crate, Python package (NumPy, with the
-  original's API as a drop-in), thread-safe C library with a CMake package, CLI, Python-compatible HTTP server with Docker images,
+  original's API as a drop-in), thread-safe C library with a C++ wrapper and a
+  CMake package, C# (NuGet), TypeScript (npm), CLI, Python-compatible HTTP server with Docker images,
   WebAssembly with TypeScript types, and a desktop/browser app.
 
 It reproduces the Python optimizer: voxel-grid initialization, the eleven
@@ -116,7 +122,8 @@ which are all of the cost, can run on any GPU through wgpu.
 | Reproducible with a seed | per device | bit-identical across threads and devices |
 | Install | Python, PyTorch, trimesh, manifold3d, … | `pip install morphit-rs`, one binary, or `cargo add morphit` |
 | Python API | ✓ (PyTorch) | ✓ NumPy, releases the GIL; the original's API in `morphit_rs.compat` |
-| C/C++ API | ✗ | ✓ shared/static library, header, CMake package |
+| C/C++ API | ✗ | ✓ shared/static library, C header, C++ wrapper, CMake package |
+| C# / .NET, TypeScript | ✗ | ✓ NuGet, npm |
 | Runs in the browser | ✗ | ✓ WebAssembly + WebGPU |
 | Desktop app | ✗ | ✓ MorphIt Studio |
 | Robot pipeline and web UI | ✓ | ✓ same HTTP API, the Python UI runs unchanged |
@@ -142,24 +149,28 @@ Every picture links to the example in the browser Studio, which packs it on the 
 |---|---|---|
 | [`morphit`](https://crates.io/crates/morphit) | the optimizer as a Rust library | [![crates.io](https://img.shields.io/crates/v/morphit?label=)](https://crates.io/crates/morphit) [![docs.rs](https://img.shields.io/docsrs/morphit?label=docs)](https://docs.rs/morphit) |
 | [`morphit-robot`](https://crates.io/crates/morphit-robot) | object URDF/MJCF, robot inspection, per-link packing, spherical URDF assembly | [![crates.io](https://img.shields.io/crates/v/morphit-robot?label=)](https://crates.io/crates/morphit-robot) [![docs.rs](https://img.shields.io/docsrs/morphit-robot?label=docs)](https://docs.rs/morphit-robot) |
-| [`morphit-capi`](https://crates.io/crates/morphit-capi) | thread-safe C library, `morphit.h`, CMake package ([C](#c)) | [![crates.io](https://img.shields.io/crates/v/morphit-capi?label=)](https://crates.io/crates/morphit-capi) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
+| [`morphit-capi`](https://crates.io/crates/morphit-capi) | thread-safe C library, `morphit.h`, the C++ wrapper `morphit.hpp`, CMake package ([C](#c), [C++](#c-1)) | [![crates.io](https://img.shields.io/crates/v/morphit-capi?label=)](https://crates.io/crates/morphit-capi) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
 | [`morphit-cli`](https://crates.io/crates/morphit-cli) | the `morphit` command-line tool ([Command line](#command-line)) | [![crates.io](https://img.shields.io/crates/v/morphit-cli?label=)](https://crates.io/crates/morphit-cli) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
 | [`morphit-server`](https://crates.io/crates/morphit-server) | HTTP API and web UI, compatible with the Python service ([HTTP API](#http-api), [Docker](#docker)) | [![crates.io](https://img.shields.io/crates/v/morphit-server?label=)](https://crates.io/crates/morphit-server) · [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) |
 | [`morphit-rs`](https://pypi.org/project/morphit-rs/) (Python) | the optimizer, robot pipeline, URDF/MJCF export and metrics for Python ([Python](#python)) | [![PyPI](https://img.shields.io/pypi/v/morphit-rs?label=)](https://pypi.org/project/morphit-rs/) |
-| `morphit-wasm` | WebAssembly build with a JavaScript/TypeScript API and WebGPU ([WebAssembly](#webassembly)) | [release archive](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) · [demo](https://kevingliewe.github.io/MorphIt-rs/wasm/) |
+| [`MorphIt`](https://www.nuget.org/packages/MorphIt) (.NET) | the C library for C#, with the native libraries of every platform ([C#](#c-2)) | [![NuGet](https://img.shields.io/nuget/v/MorphIt?label=)](https://www.nuget.org/packages/MorphIt) |
+| [`morphit-rs`](https://www.npmjs.com/package/morphit-rs) (npm) | the WebAssembly build with TypeScript types, for browsers, bundlers and Node ([WebAssembly](#webassembly)) | [![npm](https://img.shields.io/npm/v/morphit-rs?label=)](https://www.npmjs.com/package/morphit-rs) · [demo](https://kevingliewe.github.io/MorphIt-rs/wasm/) |
 | `morphit-studio` | interactive app for meshes and robots, desktop and browser ([MorphIt Studio](#morphit-studio)) | [release archives](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) · [open in the browser](https://kevingliewe.github.io/MorphIt-rs/) |
 
 Every [release](https://github.com/KevinGliewe/MorphIt-rs/releases/latest) has
 ready-made archives:
 
-| Platform | CLI | Studio | Server | C library | Python wheel |
-|---|:---:|:---:|:---:|:---:|:---:|
-| Windows x64 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Linux x64 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Linux arm64 | ✓ | ✓ | ✓ | ✓ | ✓ |
-| macOS Apple silicon | ✓ | ✓ | ✓ | ✓ | ✓ |
-| macOS Intel | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Browser (WebAssembly) | | ✓ | | JS/TS package | |
+| Platform | CLI | Studio | Server | C/C++ library | Python | .NET | npm |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Windows x64 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Linux x64 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Linux arm64 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| macOS Apple silicon | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| macOS Intel | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Browser | | ✓ | | | | | ✓ |
+
+The npm package is WebAssembly, so it runs wherever Node.js or a browser does
+(on the CPU, plus WebGPU in browsers).
 
 ## Quick start
 
@@ -202,16 +213,61 @@ let result = morphit::pack(config, mesh)?;
 result.save("bunny.json")?;
 ```
 
-**C and C++** with the `morphit-capi` release archive
+**C++** (or C) with the `morphit-capi` release archive
 ([details](#using-the-release-package-from-cmake)):
 
 ```cmake
 find_package(morphit 0.1 CONFIG REQUIRED)
-target_link_libraries(app PRIVATE morphit::morphit)
+target_link_libraries(app PRIVATE morphit::morphit_cpp)   # C: morphit::morphit
+```
+
+```cpp
+#include "morphit.hpp"
+
+auto mesh = morphit::Mesh::load("bunny.obj");
+morphit::Config config("MorphIt-B");
+config.set("model.num_spheres", 64);
+morphit::Session session(mesh, config);
+session.run();
+auto centers = session.centers();                   // std::vector<std::array<double, 3>>
+session.save("bunny.json");
+```
+
+**C#** ([NuGet](https://www.nuget.org/packages/MorphIt)):
+
+```sh
+dotnet add package MorphIt
+```
+
+```csharp
+using MorphIt;
+
+using var mesh = Mesh.Load("bunny.obj");
+using var config = new Config("MorphIt-B").Set("model.num_spheres", 64);
+using var session = new Session(mesh, config);
+session.Run();
+double[,] centers = session.Centers;                // n x 3
+session.Save("bunny.json");
+```
+
+**TypeScript / JavaScript** ([npm](https://www.npmjs.com/package/morphit-rs)):
+
+```sh
+npm install morphit-rs
+```
+
+```ts
+import init, { Config, Mesh, Session } from "morphit-rs";
+
+await init();
+const session = new Session(Config.fromPreset("MorphIt-B"), Mesh.fromBytes(bytes, "obj"));
+while (!session.isDone) await session.stepMany({ budgetMs: 12 });
+session.finalize();
+const result = JSON.parse(session.resultJson());
 ```
 
 **Browser:** [MorphIt Studio](https://kevingliewe.github.io/MorphIt-rs/), or
-the [`morphit-wasm`](#webassembly) package in your own page.
+the npm package in your own page.
 
 ## How it works
 
@@ -496,7 +552,28 @@ its capacity; `NULL` with capacity 0 asks for the size.
 union is computed once per mesh handle and shared by its sessions.
 `morphit_mesh_prepare(mesh, union, hull, &prepared)` returns the prepared mesh
 as a new handle, `morphit_mesh_prep_report_json` what was done, and
-`morphit_mesh_save(mesh, "out.obj")` writes any mesh as .obj or .stl.
+`morphit_mesh_save(mesh, "out.obj")` writes any mesh as .obj or .stl;
+`morphit_mesh_from_bytes` loads one from memory.
+
+The rest of the library is there too, without JSON parsing on the C side:
+
+- **Export:** `morphit_object_urdf` / `morphit_object_mjcf` write spheres as a
+  URDF or MJCF model (`morphit_object_options`: name, color, total mass,
+  anchored, decimals; `morphit_object_options_default` fills the defaults).
+- **Metrics:** `morphit_evaluate_packing` scores spheres against a mesh and
+  `morphit_session_evaluate` a session's current spheres against its
+  prepared mesh (`morphit_session_mesh`), into `morphit_quality_metrics`
+  (coverage ratios, surface distances, mass/COM/inertia errors).
+- **Robots:** `morphit_robot_from_folder` / `_from_zip` / `_new` +
+  `_add_file` hold a URDF package; `morphit_robot_inspect` gives a report
+  (`morphit_report_json`, and the collisions to pack through
+  `morphit_report_pack_count` / `morphit_report_pack_item`);
+  `morphit_robot_pack_link` returns an ordinary session for pack item *i*
+  (`morphit_pack_params`: the web API's variant, counts, seed and mesh
+  preparation); `morphit_robot_set_link_result` records its spheres and
+  `morphit_robot_assemble` writes the spherical URDF with
+  `morphit_assemble_stats`. Robot handles lock internally; reports are
+  immutable.
 
 **Threading.** Every function may be called from any thread.
 
@@ -522,7 +599,8 @@ as a new handle, `morphit_mesh_prep_report_json` what was done, and
 </details>
 
 `crates/morphit-capi/examples/c` contains `pack.c`, `threads.c` (four
-concurrent sessions, polling and cancelling a live run) and a CMake project.
+concurrent sessions, polling and cancelling a live run) and a CMake project
+that also builds the [C++](#c-1) examples.
 With MSVC:
 
 ```bat
@@ -538,7 +616,7 @@ Each [release](https://github.com/KevinGliewe/MorphIt-rs/releases) has a
 and macOS arm64/x64:
 
 ```
-include/morphit.h
+include/morphit.h, include/morphit.hpp      (C header, C++ wrapper)
 bin/morphit_capi.dll                        (Windows)
 lib/morphit_capi.dll.lib, morphit_capi.lib  (Windows: import and static library)
 lib/libmorphit_capi.so | .dylib, lib/libmorphit_capi.a
@@ -551,6 +629,7 @@ Unpack it anywhere and point `CMAKE_PREFIX_PATH` at the folder:
 find_package(morphit 0.1 CONFIG REQUIRED)
 target_link_libraries(app PRIVATE morphit::morphit)           # shared library
 # target_link_libraries(app PRIVATE morphit::morphit_static)  # static, with its system libraries
+# target_link_libraries(app PRIVATE morphit::morphit_cpp)     # C++17 wrapper (also _cpp_static)
 ```
 
 ```sh
@@ -565,6 +644,91 @@ examples in `crates/morphit-capi/examples/c` use the package when
 library), and `tools/ci/test_capi_package.sh <archive>` builds and runs them
 against an archive, as the release workflow does on every platform it can
 run.
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
+## C++
+
+`crates/morphit-capi/include/morphit.hpp` is a header-only C++17 wrapper of
+the C API, shipped in the same release archive (CMake target
+`morphit::morphit_cpp`):
+
+```cpp
+#include "morphit.hpp"
+
+auto mesh = morphit::Mesh::load("link0.obj");        // Mesh is copyable (shared, immutable)
+morphit::Config config("MorphIt-B");
+config.set("model.num_spheres", 20).set("random_seed", 42);
+
+morphit::Session session(mesh, config);               // move-only, RAII
+auto outcome = session.run([](const morphit::StepInfo& s) {
+    return s.total_loss > 1e-3;                       // false stops; exceptions propagate
+});
+auto centers = session.centers();                     // std::vector<std::array<double, 3>>
+auto radii = session.radii();
+auto urdf = morphit::object_urdf(centers, radii).text;
+auto quality = session.evaluate();                    // morphit::QualityMetrics
+
+auto robot = morphit::RobotPackage::from_folder("franka_panda");
+auto report = robot.inspect();
+for (std::size_t i = 0; i < report.pack_items().size(); ++i) {
+    auto s = robot.pack_link(report, i);
+    s.run();
+    robot.set_link_result(report, i, s);
+}
+auto spherical = robot.assemble(report, "#3399ff", 0.6).urdf;
+```
+
+Failed calls throw `morphit::Error` (with the C `status()`). The threading
+rules are the C API's: `cancel()`, `state()`, `centers()` and the other reads
+work while `run()` is active on another thread. `examples/cpp` has `pack.cpp`,
+`robot.cpp` and the wrapper's test program; the CMake project in
+`examples/c` builds them, and CI and the release package test run them on
+Linux, Windows and macOS.
+
+<div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
+
+## C#
+
+The NuGet package [`MorphIt`](https://www.nuget.org/packages/MorphIt)
+(`bindings/dotnet`, .NET Standard 2.0 and .NET 8) wraps the C API with
+`SafeHandle`s and ships the native library of every release platform
+(`runtimes/<rid>/native`):
+
+```csharp
+using MorphIt;
+
+using var mesh = Mesh.Load("link0.obj");
+using var config = new Config("MorphIt-B").Set("model.num_spheres", 20).Set("random_seed", 42);
+using var session = new Session(mesh, config);
+
+var outcome = await session.RunAsync(new Progress<StepInfo>(s => Console.WriteLine(s.TotalLoss)), token);
+double[,] centers = session.Centers;
+double[] radii = session.Radii;
+string urdf = ObjectModel.Urdf(centers, radii, new ObjectOptions { Name = "link0" }).Text;
+QualityMetrics quality = session.Evaluate();
+
+using var robot = RobotPackage.FromFolder("franka_panda");
+using var report = robot.Inspect();
+foreach (var item in report.PackItems)
+{
+    using var s = robot.PackLink(report, item.Index, new PackParams { NumSpheres = 20, Seed = 0 });
+    s.Run();
+    robot.SetLinkResult(report, item.Index, s);
+}
+string spherical = robot.Assemble(report, "#3399ff", 0.6).Urdf;
+```
+
+- `Run(Func<StepInfo, bool>)` runs on the calling thread (return false to
+  stop); `RunAsync(progress, cancellationToken)` on a worker thread, where
+  cancelling the token stops the run. `Cancel()` and the reads work from any
+  thread during a run; a second run throws with `Status.Busy`.
+- Errors throw `MorphItException` with the C `Status`; `FinalizeSpheres()` is
+  the C API's `morphit_finalize` (the final prune).
+- `MorphItLibrary.SetLogHandler` receives the library's log messages.
+
+Tests: `cargo build --release -p morphit-capi`, then
+`dotnet test bindings/dotnet/MorphIt.Tests`.
 
 <div align="right"><sub><a href="#readme-top">↑ back to top</a></sub></div>
 
@@ -734,16 +898,16 @@ docker build --secret id=ca_certs,src=corp-ca.pem -t morphit-server .
 
 `crates/morphit-wasm` compiles the optimizer, the object URDF/MJCF writers, the
 quality metrics and the robot pipeline to WebAssembly, with a JavaScript API
-modelled on the C API and TypeScript declarations:
+modelled on the C API and TypeScript declarations. It is published to npm as
+[`morphit-rs`](https://www.npmjs.com/package/morphit-rs), which picks the
+right build for browsers/bundlers and for Node.js:
 
 ```sh
-cargo build -p morphit-wasm --target wasm32-unknown-unknown --profile wasm-release
-wasm-bindgen --target web --out-dir pkg target/wasm32-unknown-unknown/wasm-release/morphit_wasm.wasm
-# or: wasm-pack build crates/morphit-wasm --target web
+npm install morphit-rs
 ```
 
 ```js
-import init, { Config, Mesh, Session, initGpu, objectUrdf } from "./pkg/morphit_wasm.js";
+import init, { Config, Mesh, Session, initGpu, objectUrdf } from "morphit-rs";
 await init();
 await initGpu();                               // optional: WebGPU for the searches
 const mesh = Mesh.fromBytes(bytes, "obj", "bunny.obj");
@@ -775,6 +939,14 @@ const urdf = objectUrdf(session.centers(), session.radii(), { name: "bunny" }).t
 - **Results across platforms:** a browser run is reproducible with a seed and
   identical on the CPU and WebGPU, but may differ in the last bits from a
   native run, because WebAssembly uses its own `exp`/`ln`/`sin`.
+
+To build it yourself: `tools/build_npm.sh` writes the package to
+`target/npm/morphit-rs` (wasm-bindgen `--target web` and `--target nodejs`,
+needs `wasm-bindgen-cli` at the `Cargo.lock` version), and
+`node tools/ci/test_npm_package.mjs` installs it into a fresh project, packs a
+mesh and a robot in Node and type-checks a TypeScript file against it. The
+classes implement `Symbol.dispose`; TypeScript needs 5.2+ with
+`esnext.disposable` in `lib` (or `skipLibCheck`).
 
 `crates/morphit-wasm/www` is a small example page (pick a mesh, pack it, watch
 it, download the result). Tests: `cargo test -p morphit-wasm --target
@@ -991,7 +1163,9 @@ request, deploy the browser builds to GitHub Pages and cut releases:
   Vulkan (lavapipe), so CPU = GPU bit identity is checked without a GPU; the
   wasm builds and the JavaScript API tests in Node and headless Chrome; the
   Python wheel built, installed and tested with pytest on Linux, Windows and
-  macOS (plus `mypy.stubtest` for the type stubs); and
+  macOS (plus `mypy.stubtest` for the type stubs); the C++ wrapper's tests and
+  examples (CMake) and the C# tests (`dotnet test`) on the same three; the npm
+  package installed and used from Node with a TypeScript type check; and
   `cargo publish --dry-run` of every crate.
 - **Pages** (`pages.yml`, pushes to `master`): MorphIt Studio at
   <https://kevingliewe.github.io/MorphIt-rs/> and the morphit-wasm example
@@ -1015,7 +1189,11 @@ request, deploy the browser builds to GitHub Pages and cut releases:
   as abi3 wheels for the same five targets (maturin, Linux in the
   manylinux_2_28 container) plus an sdist, attached to the GitHub Release and
   published to PyPI as `morphit-rs` on a tag, or on a manual run with
-  `publish-pypi` ticked once the tag exists.
+  `publish-pypi` ticked once the tag exists. Likewise the npm package
+  `morphit-rs` (built and tested once, it is platform independent) and the
+  NuGet package `MorphIt` (the C# library with the C library of all five
+  targets, smoke-tested from a fresh console app) are attached to the release
+  and published on a tag or with `publish-npm` / `publish-nuget`.
 
 To release, bump `version` in the root `Cargo.toml`, commit, then
 `git tag v0.2.0 && git push origin v0.2.0`; the tag must match the version.
@@ -1025,7 +1203,15 @@ environment named `crates-io` (add required reviewers there to approve each
 publish). Once the crates exist, crates.io Trusted Publishing can replace the
 token. For PyPI, add a *pending trusted publisher* on pypi.org (project
 `morphit-rs`, this repository, workflow `release.yml`, environment `pypi`)
-and create an environment named `pypi`; no token is needed.
+and create an environment named `pypi`; no token is needed. npm publishes
+only through trusted publishing (2FA-bypass tokens are being deprecated), and
+a trusted publisher can only be added to an existing package: publish the
+first version by hand (`npm publish morphit-rs-<version>.tgz --access public`
+with the `npm` artifact of a release run), then add a trusted publisher for
+`morphit-rs` on npmjs.com (workflow `release.yml`, environment `npm`) and
+create an environment named `npm`. For NuGet, create an API key with push rights for
+`MorphIt` on nuget.org and store it as `NUGET_API_KEY` in an environment named
+`nuget`.
 `cargo install morphit-server` installs only the binary: point
 `--web-dir`/`MORPHIT_WEB_DIR` at a copy of `web/`, or use the release archive,
 which has it next to the executable.
@@ -1069,12 +1255,13 @@ repository); the containers then trust it.
 ```
 crates/morphit/        optimizer library (config, device, mesh, mesh_prep, contains, sampling,
                        search/, loss/, optim, density, trainer, quality, result)
-crates/morphit-capi/   C API (src/), generated header (include/), C examples, FFI tests
+crates/morphit-capi/   C API (src/), generated header and C++ wrapper (include/), C/C++ examples, FFI tests
 crates/morphit-cli/    `morphit` binary
 crates/morphit-robot/  object URDF/MJCF, robot inspection/packing/assembly, quality metrics
 crates/morphit-server/ HTTP API (axum), integration tests
 crates/morphit-wasm/   WebAssembly bindings (JS/TS API), Node and browser tests, www/ example page
 crates/morphit-py/     Python bindings (PyO3, maturin): src/, python/morphit_rs (incl. compat), tests/ (pytest)
+bindings/dotnet/       C# library over the C API (MorphIt, NuGet) and its xUnit tests
 apps/morphit-studio/   Bevy + egui app for desktop and browser (index.html, Trunk.toml)
 web/                   web UI and example library (from the Python repository)
 Dockerfile, docker-compose.yml, docker/

@@ -243,6 +243,8 @@ pub struct morphit_session {
     pub(crate) device: String,
     /// What mesh preparation did (fixed at creation).
     pub(crate) mesh_prep: Arc<MeshPrepReport>,
+    /// The mesh as packed (after mesh preparation).
+    pub(crate) mesh: Arc<Mesh>,
 }
 
 impl morphit_session {
@@ -251,6 +253,7 @@ impl morphit_session {
         let mesh_prep = Arc::new(session.mesh_prep().clone());
         let snap = Snapshot::of(&session, &config, &mesh_prep);
         let device = session.device().to_string();
+        let mesh = Arc::clone(session.mesh());
         morphit_session {
             inner: Mutex::new(session),
             snapshot: RwLock::new(Arc::new(snap)),
@@ -259,6 +262,7 @@ impl morphit_session {
             config,
             device,
             mesh_prep,
+            mesh,
         }
     }
 

@@ -4208,6 +4208,7 @@ version = "0.1.0"
 dependencies = [
  "cbindgen",
  "morphit",
+ "morphit-robot",
  "rayon",
  "serde_json",
  "tempfile",

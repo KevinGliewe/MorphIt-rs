@@ -75,6 +75,16 @@ impl From<morphit::Error> for FfiError {
     }
 }
 
+impl From<morphit_robot::Error> for FfiError {
+    fn from(e: morphit_robot::Error) -> Self {
+        match e {
+            morphit_robot::Error::Invalid(m) => FfiError::new(MORPHIT_ERR_INVALID_ARG, m),
+            morphit_robot::Error::Io(m) => FfiError::new(MORPHIT_ERR_IO, m),
+            morphit_robot::Error::Morphit(e) => e.into(),
+        }
+    }
+}
+
 pub(crate) type FfiResult<T = morphit_status> = Result<T, FfiError>;
 
 thread_local! {

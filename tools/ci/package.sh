@@ -3,7 +3,7 @@
 #   morphit-cli-<v>-<target>      the `morphit` command-line tool
 #   morphit-studio-<v>-<target>   MorphIt Studio with its example library
 #   morphit-server-<v>-<target>   the HTTP server with the web UI (web/)
-#   morphit-capi-<v>-<target>     C library (shared + static), morphit.h and a CMake package
+#   morphit-capi-<v>-<target>     C library (shared + static), morphit.h, the C++ wrapper morphit.hpp and a CMake package
 # Each holds README.md and LICENSE; Windows targets get .zip, others .tar.gz,
 # every archive a .sha256 next to it. Run after
 #   cargo build --release --locked --target <target> -p morphit-cli -p morphit-studio -p morphit-server -p morphit-capi
@@ -67,7 +67,7 @@ archive "$dir"
 # (find_package(morphit CONFIG), see crates/morphit-capi/cmake).
 dir=$(stage morphit-capi)
 mkdir -p "$dir/include" "$dir/lib/cmake/morphit"
-cp crates/morphit-capi/include/morphit.h "$dir/include/"
+cp crates/morphit-capi/include/morphit.h crates/morphit-capi/include/morphit.hpp "$dir/include/"
 case "$TARGET" in
   *windows*) mkdir -p "$dir/bin" && cp "$BIN/$SHARED" "$dir/bin/" ;;
   *)         cp "$BIN/$SHARED" "$dir/lib/" ;;

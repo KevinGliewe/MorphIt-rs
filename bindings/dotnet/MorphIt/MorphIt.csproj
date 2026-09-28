@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>MorphIt</RootNamespace>
+    <AssemblyName>MorphIt</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- Overridden by the release: dotnet pack -p:Version=<workspace version> -->
+    <Version>0.1.0</Version>
+    <PackageId>MorphIt</PackageId>
+    <Authors>Kevin Gliewe</Authors>
+    <Description>Approximate triangle meshes and robots with spheres: the MorphIt optimizer (Rust) for .NET, with URDF/MJCF export, quality metrics and the robot pipeline.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/KevinGliewe/MorphIt-rs</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/KevinGliewe/MorphIt-rs</RepositoryUrl>
+    <PackageTags>sphere-packing;collision;robotics;urdf;mjcf;mesh;morphit</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <!-- Native libraries per runtime identifier, staged by the release workflow
+         (runtimes/win-x64/native/morphit_capi.dll, runtimes/linux-x64/native/libmorphit_capi.so, ...). -->
+    <None Include="runtimes/**/*" Pack="true" PackagePath="runtimes/" />
+    <!-- .NET Framework consumers do not read runtimes/: copy the host's library. -->
+    <None Include="build/MorphIt.targets" Pack="true" PackagePath="buildTransitive/net462/MorphIt.targets" />
+  </ItemGroup>
+
+</Project>

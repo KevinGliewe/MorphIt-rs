@@ -143,6 +143,20 @@ typedef struct morphit_config morphit_config;
 typedef struct morphit_mesh morphit_mesh;
 
 /**
+ * A robot description package (URDF plus meshes) held in memory, and the
+ * sphere results recorded for its links. Locks internally; may be used from
+ * several threads.
+ */
+typedef struct morphit_robot morphit_robot;
+
+/**
+ * The inspection of one URDF: every `<collision>` and what to do with it.
+ * Immutable. The "pack items" are the collisions to replace with spheres,
+ * numbered `0 .. morphit_report_pack_count()`.
+ */
+typedef struct morphit_robot_report morphit_robot_report;
+
+/**
  * A packing session. See the module docs for the locking scheme.
  */
 typedef struct morphit_session morphit_session;
@@ -263,6 +277,139 @@ typedef struct morphit_state_info {
   uint64_t seed;
 } morphit_state_info;
 
+/**
+ * Options of `morphit_object_urdf` / `morphit_object_mjcf`. Fill with
+ * `morphit_object_options_default`, then change fields.
+ */
+typedef struct morphit_object_options {
+  /**
+   * `<robot name>` / `<mujoco model>`; NULL means "object".
+   */
+  const char *name;
+  /**
+   * Sphere color, RGBA in 0..1.
+   */
+  double rgba[4];
+  /**
+   * Total mass in kg, split over the spheres in proportion to r^3.
+   */
+  double total_mass;
+  /**
+   * Nonzero welds the object to the world instead of letting it float.
+   */
+  int anchored;
+  /**
+   * Decimal places of every number written.
+   */
+  int decimals;
+} morphit_object_options;
+
+/**
+ * Sampling settings of `morphit_evaluate_packing` (defaults match the
+ * Python `debug_quick_eval.py`).
+ */
+typedef struct morphit_quality_options {
+  uint64_t seed;
+  size_t surface_samples;
+  size_t volume_samples;
+  /**
+   * Volume samples come from the mesh bounding box scaled by this factor.
+   */
+  double bounds_expand;
+  /**
+   * Density used for the sphere masses when none are given.
+   */
+  double density;
+} morphit_quality_options;
+
+/**
+ * Quality of a packing (the `debug_quick_eval` metrics).
+ */
+typedef struct morphit_quality_metrics {
+  size_t actual_n;
+  /**
+   * Spheres whose center lies outside the mesh.
+   */
+  size_t n_out;
+  /**
+   * Spheres with radius below 0.001 x mesh scale.
+   */
+  size_t n_tiny;
+  /**
+   * Volume covered by spheres inside the mesh, relative to the mesh volume.
+   */
+  double r_in;
+  /**
+   * Volume covered by spheres outside the mesh, relative to the mesh volume.
+   */
+  double r_out;
+  /**
+   * Union volume of the spheres relative to the mesh volume.
+   */
+  double r_uni;
+  /**
+   * Mean absolute surface distance in millimetres (mesh units x 1000).
+   */
+  double d_avg_mm;
+  /**
+   * Maximum absolute surface distance in millimetres.
+   */
+  double d_max_mm;
+  double mass_abs;
+  double mass_rel;
+  double com_abs;
+  double com_rel;
+  double i_abs;
+  double i_rel;
+} morphit_quality_metrics;
+
+/**
+ * Parameters of `morphit_robot_pack_link` (the web API's pack request). Fill
+ * with `morphit_pack_params_default`, then change fields.
+ */
+typedef struct morphit_pack_params {
+  /**
+   * "MorphIt-V", "MorphIt-S" or "MorphIt-B"; NULL means MorphIt-B.
+   */
+  const char *variant;
+  /**
+   * 1 to 200.
+   */
+  size_t num_spheres;
+  /**
+   * 1 to 1000.
+   */
+  size_t iterations;
+  /**
+   * Random seed; negative draws one at random.
+   */
+  int64_t seed;
+  /**
+   * Mesh preparation: merge overlapping bodies (nonzero = on).
+   */
+  int union_overlapping_bodies;
+  /**
+   * Mesh preparation: convex hull of each body first (nonzero = on).
+   */
+  int convex_hull;
+  /**
+   * The web UI's advanced overrides as a JSON object (e.g.
+   * `{"coverage_weight": 2000}`), or NULL.
+   */
+  const char *advanced_json;
+} morphit_pack_params;
+
+/**
+ * What `morphit_robot_assemble` changed.
+ */
+typedef struct morphit_assemble_stats {
+  size_t links_with_collisions_replaced;
+  size_t mesh_collisions_replaced;
+  size_t primitive_collisions_removed;
+  size_t sphere_collisions_removed;
+  size_t sphere_children_added;
+} morphit_assemble_stats;
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -322,6 +469,17 @@ enum morphit_status morphit_mesh_from_arrays(const double *xyz,
                                              const uint32_t *triangles,
                                              size_t num_triangles,
                                              struct morphit_mesh **out_mesh);
+
+/**
+ * Load a mesh from file contents in memory: `ext` names the format ("obj",
+ * "stl", "ply" or "dae"), `name` (may be NULL) is recorded as the source
+ * path. On failure `*out` is set to NULL.
+ */
+enum morphit_status morphit_mesh_from_bytes(const uint8_t *data,
+                                            size_t len,
+                                            const char *ext,
+                                            const char *name,
+                                            struct morphit_mesh **out_mesh);
 
 /**
  * Fill `*out` with the mesh's properties.
@@ -606,6 +764,199 @@ enum morphit_status morphit_history_json(const struct morphit_session *session,
                                          char *buf,
                                          size_t capacity,
                                          size_t *needed);
+
+/**
+ * Fill `*out` with the default object-model options.
+ */
+enum morphit_status morphit_object_options_default(struct morphit_object_options *out_options);
+
+/**
+ * The spheres as a URDF: one link per sphere on fixed joints, masses split
+ * by volume (as the Python `create_object_urdf.py`). `centers` holds
+ * `3 * count` doubles; `options` may be NULL for the defaults. `centroid`
+ * (NULL or room for 3 doubles) receives the point the positions are relative
+ * to. String buffer rules as everywhere.
+ */
+enum morphit_status morphit_object_urdf(const double *centers,
+                                        const double *radii,
+                                        size_t count,
+                                        const struct morphit_object_options *options,
+                                        char *buf,
+                                        size_t capacity,
+                                        size_t *needed,
+                                        double *centroid);
+
+/**
+ * The spheres as MJCF for MuJoCo: a body with one sphere geom per sphere.
+ * Arguments as for `morphit_object_urdf`.
+ */
+enum morphit_status morphit_object_mjcf(const double *centers,
+                                        const double *radii,
+                                        size_t count,
+                                        const struct morphit_object_options *options,
+                                        char *buf,
+                                        size_t capacity,
+                                        size_t *needed,
+                                        double *centroid);
+
+/**
+ * Fill `*out` with the default quality options.
+ */
+enum morphit_status morphit_quality_options_default(struct morphit_quality_options *out_options);
+
+/**
+ * Score `count` spheres against `mesh` (pass the prepared mesh the spheres
+ * were packed on, e.g. from `morphit_session_mesh`). `masses` may be NULL to
+ * derive masses from the density; `options` may be NULL for the defaults.
+ */
+enum morphit_status morphit_evaluate_packing(const struct morphit_mesh *mesh,
+                                             const double *centers,
+                                             const double *radii,
+                                             const double *masses,
+                                             size_t count,
+                                             const struct morphit_quality_options *options,
+                                             struct morphit_quality_metrics *out_metrics);
+
+/**
+ * Score a session's current spheres against its prepared mesh. Reads the
+ * snapshot, so it may be called while the session runs on another thread.
+ */
+enum morphit_status morphit_session_evaluate(const struct morphit_session *session,
+                                             const struct morphit_quality_options *options,
+                                             struct morphit_quality_metrics *out_metrics);
+
+/**
+ * The mesh a session packs (after mesh preparation), as a new handle to be
+ * released with `morphit_mesh_free`. Never waits for a running iteration.
+ */
+enum morphit_status morphit_session_mesh(const struct morphit_session *session,
+                                         struct morphit_mesh **out_mesh);
+
+/**
+ * An empty package; add files with `morphit_robot_add_file`.
+ */
+enum morphit_status morphit_robot_new(struct morphit_robot **out_robot);
+
+/**
+ * Every file under the folder `path` (the package root).
+ */
+enum morphit_status morphit_robot_from_folder(const char *path, struct morphit_robot **out_robot);
+
+/**
+ * A package from the bytes of a `.zip` archive.
+ */
+enum morphit_status morphit_robot_from_zip(const uint8_t *data,
+                                           size_t len,
+                                           struct morphit_robot **out_robot);
+
+/**
+ * Add (or replace) a file under its path relative to the package root.
+ */
+enum morphit_status morphit_robot_add_file(struct morphit_robot *robot,
+                                           const char *path,
+                                           const uint8_t *data,
+                                           size_t len);
+
+/**
+ * Release a package. NULL is ignored. Sessions created from it stay valid.
+ */
+void morphit_robot_free(struct morphit_robot *robot);
+
+/**
+ * Inspect a URDF of the package: `urdf` selects one by file name, NULL
+ * takes the only one. `*out` receives a report to release with
+ * `morphit_report_free`.
+ */
+enum morphit_status morphit_robot_inspect(const struct morphit_robot *robot,
+                                          const char *urdf,
+                                          struct morphit_robot_report **out_report);
+
+/**
+ * The full inspection report as JSON (the web API's `/api/robot/inspect`
+ * response: `urdf_path`, `collisions`, `warnings`, ...).
+ */
+enum morphit_status morphit_report_json(const struct morphit_robot_report *report,
+                                        char *buf,
+                                        size_t capacity,
+                                        size_t *needed);
+
+/**
+ * Number of collisions to pack.
+ */
+enum morphit_status morphit_report_pack_count(const struct morphit_robot_report *report,
+                                              size_t *out_count);
+
+/**
+ * Pack item `index`: its link name (string buffer rules) and the index of
+ * the collision within the link (`collision_index`, may be NULL).
+ */
+enum morphit_status morphit_report_pack_item(const struct morphit_robot_report *report,
+                                             size_t index,
+                                             char *link_buf,
+                                             size_t capacity,
+                                             size_t *needed,
+                                             size_t *collision_index);
+
+/**
+ * Release a report. NULL is ignored.
+ */
+void morphit_report_free(struct morphit_robot_report *report);
+
+/**
+ * Fill `*out` with the web API's defaults: MorphIt-B, 20 spheres, 200
+ * iterations, random seed, union on, convex hull off.
+ */
+enum morphit_status morphit_pack_params_default(struct morphit_pack_params *out_params);
+
+/**
+ * A session packing pack item `index` of `report`. `params` may be NULL for
+ * the defaults; `device` may be NULL for "auto". Run it like any session,
+ * then record its spheres with `morphit_robot_set_link_result`.
+ */
+enum morphit_status morphit_robot_pack_link(const struct morphit_robot *robot,
+                                            const struct morphit_robot_report *report,
+                                            size_t index,
+                                            const struct morphit_pack_params *params,
+                                            const char *device,
+                                            struct morphit_session **out_session);
+
+/**
+ * Record the current spheres of `session` as the result of pack item
+ * `index` (reads the snapshot; typically after the run finished).
+ */
+enum morphit_status morphit_robot_set_link_result(const struct morphit_robot *robot,
+                                                  const struct morphit_robot_report *report,
+                                                  size_t index,
+                                                  const struct morphit_session *session);
+
+/**
+ * Record the spheres of `link[collision_index]` from a result JSON (the
+ * format of `morphit_result_json`, or a Python MorphIt result file).
+ */
+enum morphit_status morphit_robot_set_link_result_json(const struct morphit_robot *robot,
+                                                       const char *link,
+                                                       size_t collision_index,
+                                                       const char *result_json);
+
+/**
+ * Forget every recorded link result.
+ */
+enum morphit_status morphit_robot_clear_link_results(const struct morphit_robot *robot);
+
+/**
+ * The URDF of `report` with every packed collision replaced by sphere links
+ * (pack items without a recorded result keep their mesh). `base_color` is
+ * "#rrggbb" or NULL; `color_variation` (0..1) spreads the hue over the links.
+ * The URDF text follows the string buffer rules; `stats` may be NULL.
+ */
+enum morphit_status morphit_robot_assemble(const struct morphit_robot *robot,
+                                           const struct morphit_robot_report *report,
+                                           const char *base_color,
+                                           double color_variation,
+                                           char *buf,
+                                           size_t capacity,
+                                           size_t *needed,
+                                           struct morphit_assemble_stats *stats);
 
 #ifdef __cplusplus
 }  // extern "C"

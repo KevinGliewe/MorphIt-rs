@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
 # Check a morphit-capi release archive the way a C project uses it: unpack it,
-# build crates/morphit-capi/examples/c against it with find_package(morphit),
-# once with the shared and once with the static library, and pack a mesh.
+# build crates/morphit-capi/examples/c (C and C++) against it with
+# find_package(morphit), once with the shared and once with the static
+# library, pack a mesh and run the C++ wrapper's tests.
 #   tools/ci/test_capi_package.sh dist/morphit-capi-<v>-<target>.(zip|tar.gz)
 set -eu
 [ $# -eq 1 ] || { echo "usage: $0 <morphit-capi archive>" >&2; exit 2; }
@@ -37,5 +38,14 @@ for kind in shared static; do
   exe=$(find "$build" -type f \( -name pack -o -name pack.exe \) | head -n 1)
   "$exe" "$MESH" MorphIt-B 8 10 1 "$build/out.json"
   grep -q '"radii"' "$build/out.json"
+  # The C++ wrapper: its test program and the robot example.
+  run() {
+    prog=$(find "$build" -type f \( -name "$1" -o -name "$1.exe" \) | head -n 1)
+    shift
+    "$prog" "$@"
+  }
+  run test_morphit "$ROOT"
+  run robot_cpp "$ROOT/web/examples/kinova_description" 4 10 "$build/robot.urdf"
+  grep -q "<sphere" "$build/robot.urdf"
   echo "$kind library: ok"
 done

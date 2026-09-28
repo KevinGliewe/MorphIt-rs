@@ -128,6 +128,55 @@ jobs:
           printf '{ "goog:chromeOptions": { "binary": "%s" } }\n' "$CHROME" \
             | tee webdriver.json crates/morphit-wasm/webdriver.json
           cargo test -p morphit-wasm --target wasm32-unknown-unknown --test browser --locked
+      - name: npm package (morphit-rs) in Node, TypeScript types
+        run: |
+          bash tools/build_npm.sh
+          node tools/ci/test_npm_package.mjs
+
+  # The C++ wrapper (morphit.hpp) and the C examples, built with CMake against
+  # the release build of the C library; the wrapper's test program runs.
+  cpp:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: cpp-${{ matrix.os }}
+      - run: cargo build --release --locked -p morphit-capi
+      - name: Build the C and C++ examples
+        run: |
+          cmake -S crates/morphit-capi/examples/c -B build/examples -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/examples --config Release
+      - name: C++ wrapper tests and examples
+        shell: bash
+        run: |
+          run() { prog=$(find build/examples -type f \( -name "$1" -o -name "$1.exe" \) | head -n 1); shift; "$prog" "$@"; }
+          run test_morphit "$PWD"
+          run pack_cpp crates/morphit/tests/fixtures/link0.obj MorphIt-B 8 20 1 build/out.json
+          run robot_cpp web/examples/kinova_description 4 10 build/robot.urdf
+          grep -q "<sphere" build/robot.urdf
+
+  # The C# library (bindings/dotnet) over the release build of the C library.
+  dotnet:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          cache-key: dotnet-${{ matrix.os }}
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - run: cargo build --release --locked -p morphit-capi
+      - run: dotnet test bindings/dotnet/MorphIt.Tests -c Release
 
   # The Python package (crates/morphit-py): build the wheel, install it, run
   # the pytest suite against the installed package, and check the type stubs.

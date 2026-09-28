@@ -1,4 +1,5 @@
-# Builds the C examples against the MorphIt C library, either a release
+# Builds the C and C++ examples (../cpp: the header-only morphit.hpp wrapper,
+# plus its test program) against the MorphIt C library, either a release
 # package (morphit-capi-<version>-<target> archive, found with find_package)
 # or this repository's build:
 #
@@ -10,12 +11,11 @@
 #
 #   cmake --build build/c-examples --config Release
 #
-# -DMORPHIT_STATIC=ON links the static library instead of the shared one. With
-# the package the DLL is copied next to the executables on Windows; with the
-# repository build, copy target/release/morphit_capi.dll or put it on PATH.
+# -DMORPHIT_STATIC=ON links the static library instead of the shared one. On
+# Windows the DLL is copied next to the executables.
 
 cmake_minimum_required(VERSION 3.21)
-project(morphit_c_examples C)
+project(morphit_c_examples C CXX)
 
 option(MORPHIT_STATIC "Link the static MorphIt library" OFF)
 find_package(Threads REQUIRED)
@@ -25,8 +25,10 @@ if(morphit_FOUND)
   message(STATUS "MorphIt ${morphit_VERSION} package: ${morphit_DIR}")
   if(MORPHIT_STATIC)
     set(MORPHIT_TARGET morphit::morphit_static)
+    set(MORPHIT_CPP_TARGET morphit::morphit_cpp_static)
   else()
     set(MORPHIT_TARGET morphit::morphit)
+    set(MORPHIT_CPP_TARGET morphit::morphit_cpp)
   endif()
 else()
   get_filename_component(MORPHIT_REPO "${CMAKE_CURRENT_SOURCE_DIR}/../../../.." ABSOLUTE)
@@ -44,15 +46,41 @@ else()
   add_library(morphit_repo INTERFACE)
   target_include_directories(morphit_repo INTERFACE "${MORPHIT_INCLUDE_DIR}")
   target_link_libraries(morphit_repo INTERFACE "${MORPHIT_LIB}")
+  add_library(morphit_repo_cpp INTERFACE)
+  target_link_libraries(morphit_repo_cpp INTERFACE morphit_repo)
+  target_compile_features(morphit_repo_cpp INTERFACE cxx_std_17)
   set(MORPHIT_TARGET morphit_repo)
+  set(MORPHIT_CPP_TARGET morphit_repo_cpp)
 endif()
+
+# Put the DLL next to an executable (Windows; elsewhere the rpath finds it).
+function(morphit_runtime target)
+  if(NOT WIN32 OR MORPHIT_STATIC)
+    return()
+  endif()
+  if(morphit_FOUND)
+    add_custom_command(TARGET ${target} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${target}> $<TARGET_FILE_DIR:${target}>
+      COMMAND_EXPAND_LISTS)
+  elseif(EXISTS "${MORPHIT_LIB_DIR}/morphit_capi.dll")
+    add_custom_command(TARGET ${target} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different "${MORPHIT_LIB_DIR}/morphit_capi.dll" $<TARGET_FILE_DIR:${target}>)
+  endif()
+endfunction()
 
 foreach(example pack threads)
   add_executable(${example} ${example}.c)
   target_link_libraries(${example} PRIVATE ${MORPHIT_TARGET} Threads::Threads)
-  if(WIN32 AND morphit_FOUND AND NOT MORPHIT_STATIC)
-    add_custom_command(TARGET ${example} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_RUNTIME_DLLS:${example}> $<TARGET_FILE_DIR:${example}>
-      COMMAND_EXPAND_LISTS)
+  morphit_runtime(${example})
+endforeach()
+
+# C++ (morphit.hpp): pack_cpp, robot_cpp and the wrapper's test program.
+foreach(example pack robot test_morphit)
+  set(target ${example})
+  if(NOT example STREQUAL "test_morphit")
+    set(target ${example}_cpp)
   endif()
+  add_executable(${target} ../cpp/${example}.cpp)
+  target_link_libraries(${target} PRIVATE ${MORPHIT_CPP_TARGET} Threads::Threads)
+  morphit_runtime(${target})
 endforeach()

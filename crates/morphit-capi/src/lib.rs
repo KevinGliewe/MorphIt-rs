@@ -29,9 +29,11 @@
 // Every exported function documents its pointer requirements in the header.
 #![allow(clippy::missing_safety_doc)]
 
+mod export;
 mod ffi;
 mod handles;
 mod log;
+mod robot;
 
 use std::ffi::{c_char, c_int, c_void};
 use std::ptr::null_mut;
@@ -41,6 +43,11 @@ use std::sync::atomic::Ordering;
 use morphit::{Config, Mesh, Session};
 use serde_json::Value;
 
+pub use crate::export::{
+    morphit_evaluate_packing, morphit_object_mjcf, morphit_object_options, morphit_object_options_default,
+    morphit_object_urdf, morphit_quality_metrics, morphit_quality_options, morphit_quality_options_default,
+    morphit_session_evaluate, morphit_session_mesh,
+};
 pub use crate::ffi::morphit_status;
 use crate::ffi::morphit_status::*;
 use crate::ffi::{FfiError, FfiResult, cstr, guard, out, write_slice, write_string};
@@ -50,6 +57,14 @@ pub use crate::handles::{
     morphit_session_state, morphit_state_info, morphit_step_info,
 };
 pub use crate::log::morphit_log_fn;
+pub use crate::robot::{
+    morphit_assemble_stats, morphit_pack_params, morphit_pack_params_default, morphit_report_free,
+    morphit_report_json, morphit_report_pack_count, morphit_report_pack_item, morphit_robot,
+    morphit_robot_add_file, morphit_robot_assemble, morphit_robot_clear_link_results, morphit_robot_free,
+    morphit_robot_from_folder, morphit_robot_from_zip, morphit_robot_inspect, morphit_robot_new,
+    morphit_robot_pack_link, morphit_robot_report, morphit_robot_set_link_result,
+    morphit_robot_set_link_result_json,
+};
 
 /// Called after every iteration of `morphit_run` with no locks held. Return
 /// nonzero to cancel the run. `info` is only valid during the call.
@@ -202,6 +217,33 @@ pub unsafe extern "C" fn morphit_mesh_from_arrays(
         let (v, t) =
             unsafe { (std::slice::from_raw_parts(xyz, nv), std::slice::from_raw_parts(triangles, nt)) };
         let mesh = Mesh::from_flat(v, t)?;
+        *o = Box::into_raw(Box::new(morphit_mesh { mesh: Arc::new(mesh) }));
+        Ok(MORPHIT_OK)
+    })
+}
+
+/// Load a mesh from file contents in memory: `ext` names the format ("obj",
+/// "stl", "ply" or "dae"), `name` (may be NULL) is recorded as the source
+/// path. On failure `*out` is set to NULL.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn morphit_mesh_from_bytes(
+    data: *const u8,
+    len: usize,
+    ext: *const c_char,
+    name: *const c_char,
+    out_mesh: *mut *mut morphit_mesh,
+) -> morphit_status {
+    guard(|| {
+        let o = unsafe { out(out_mesh, "out") }?;
+        *o = null_mut();
+        if data.is_null() && len > 0 {
+            return Err(FfiError::null("data"));
+        }
+        let ext = unsafe { cstr(ext, "ext") }?;
+        let name = if name.is_null() { None } else { Some(unsafe { cstr(name, "name") }?.to_string()) };
+        // SAFETY: the caller provides `len` readable bytes.
+        let bytes = if len == 0 { &[][..] } else { unsafe { std::slice::from_raw_parts(data, len) } };
+        let mesh = Mesh::load_from_bytes(bytes, ext, name)?;
         *o = Box::into_raw(Box::new(morphit_mesh { mesh: Arc::new(mesh) }));
         Ok(MORPHIT_OK)
     })

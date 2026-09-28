@@ -18,3 +18,9 @@ webdriver.json
 /crates/morphit-py/python/morphit_rs/_native.*
 !/crates/morphit-py/python/morphit_rs/_native.pyi
 .pytest_cache/
+# .NET build output and the native libraries staged for `dotnet pack`.
+/bindings/dotnet/**/bin/
+/bindings/dotnet/**/obj/
+/bindings/dotnet/MorphIt/runtimes/
+# npm package build output
+node_modules/

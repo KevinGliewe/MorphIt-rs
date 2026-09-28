@@ -4,10 +4,13 @@
 #   find_package(morphit 0.1 CONFIG REQUIRED)
 #   target_link_libraries(app PRIVATE morphit::morphit)          # shared library
 #   target_link_libraries(app PRIVATE morphit::morphit_static)   # or the static one
+#   target_link_libraries(app PRIVATE morphit::morphit_cpp)      # C++17 wrapper, morphit.hpp
 #
 # Targets:
 #   morphit::morphit         shared library (morphit_capi.dll / libmorphit_capi.so / .dylib)
 #   morphit::morphit_static  static library with the system libraries it needs
+#   morphit::morphit_cpp, morphit::morphit_cpp_static
+#                            the same plus C++17 for the header-only wrapper morphit.hpp
 # Both carry the include directory with morphit.h. On Windows the DLL is in
 # bin/; copy it next to your executables, for example with
 #   add_custom_command(TARGET app POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -56,6 +59,18 @@ if(NOT TARGET morphit::morphit_static)
     INTERFACE_LINK_LIBRARIES "${MORPHIT_NATIVE_STATIC_LIBS}")
   unset(_morphit_static)
 endif()
+
+# The C++ wrapper (include/morphit.hpp) is header-only: interface targets
+# that add C++17 to the libraries above.
+foreach(_morphit_kind "" "_static")
+  if(NOT TARGET morphit::morphit_cpp${_morphit_kind})
+    add_library(morphit::morphit_cpp${_morphit_kind} INTERFACE IMPORTED)
+    set_target_properties(morphit::morphit_cpp${_morphit_kind} PROPERTIES
+      INTERFACE_LINK_LIBRARIES morphit::morphit${_morphit_kind}
+      INTERFACE_COMPILE_FEATURES cxx_std_17)
+  endif()
+endforeach()
+unset(_morphit_kind)
 
 set(morphit_LIBRARIES morphit::morphit)
 unset(_morphit_prefix)

@@ -17,14 +17,15 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 
 [features]
 default = ["gpu", "union", "parallel"]
-parallel = ["morphit/parallel"]
-gpu = ["morphit/gpu"]
-union = ["morphit/union"]
+parallel = ["morphit/parallel", "morphit-robot/parallel"]
+gpu = ["morphit/gpu", "morphit-robot/gpu"]
+union = ["morphit/union", "morphit-robot/union"]
 # Exposes morphit__panic_for_test() so tests can exercise the panic guard.
 test-hooks = []
 
 [dependencies]
 morphit = { workspace = true, default-features = false }
+morphit-robot = { workspace = true, default-features = false, features = ["zip"] }
 rayon.workspace = true
 serde_json.workspace = true
 tracing.workspace = true

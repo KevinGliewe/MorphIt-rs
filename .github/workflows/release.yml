@@ -1,8 +1,8 @@
 name: Release
 
 # A `v*` tag builds every artifact, creates the GitHub Release and publishes
-# the crates and the Python package. Started by hand it builds the artifacts
-# (downloadable from the run) and publishes only when asked.
+# the crates and the Python, npm and NuGet packages. Started by hand it builds
+# the artifacts (downloadable from the run) and publishes only when asked.
 on:
   push:
     tags: ["v*"]
@@ -14,6 +14,14 @@ on:
         default: false
       publish-pypi:
         description: Publish the Python package to PyPI (the tag v<version> must exist)
+        type: boolean
+        default: false
+      publish-npm:
+        description: Publish the npm package to npmjs.com (the tag v<version> must exist)
+        type: boolean
+        default: false
+      publish-nuget:
+        description: Publish the NuGet package to nuget.org (the tag v<version> must exist)
         type: boolean
         default: false
 
@@ -146,6 +154,87 @@ jobs:
           path: dist/*
           if-no-files-found: error
 
+  # npm package morphit-rs: the wasm build for browsers/bundlers and for Node.
+  npm:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./.github/actions/setup
+        with:
+          wasm-tools: "true"
+          cache-key: npm
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build and test the package
+        run: |
+          bash tools/build_npm.sh
+          node tools/ci/test_npm_package.mjs
+      - name: Pack
+        run: |
+          mkdir -p dist
+          npm pack target/npm/morphit-rs --pack-destination dist
+          cd dist && for f in *.tgz; do sha256sum "$f" > "$f.sha256"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm
+          path: dist/*
+          if-no-files-found: error
+
+  # NuGet package MorphIt: the C# library with the C library of every target
+  # (runtimes/<rid>/native) from the native job's archives.
+  nuget:
+    needs: [version, native]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          path: native
+          pattern: native-*
+          merge-multiple: true
+      - name: Stage the native libraries
+        env:
+          V: ${{ needs.version.outputs.version }}
+        run: |
+          stage() {  # <target> <rid> <file inside the archive>
+            dest=bindings/dotnet/MorphIt/runtimes/$2/native
+            mkdir -p "$dest" tmp
+            case "$1" in
+              *windows*) unzip -q -o "native/morphit-capi-$V-$1.zip" -d tmp ;;
+              *) tar -xzf "native/morphit-capi-$V-$1.tar.gz" -C tmp ;;
+            esac
+            cp "tmp/morphit-capi-$V-$1/$3" "$dest/"
+          }
+          stage x86_64-pc-windows-msvc win-x64 bin/morphit_capi.dll
+          stage x86_64-unknown-linux-gnu linux-x64 lib/libmorphit_capi.so
+          stage aarch64-unknown-linux-gnu linux-arm64 lib/libmorphit_capi.so
+          stage aarch64-apple-darwin osx-arm64 lib/libmorphit_capi.dylib
+          stage x86_64-apple-darwin osx-x64 lib/libmorphit_capi.dylib
+          find bindings/dotnet/MorphIt/runtimes -type f
+      - name: Pack
+        run: dotnet pack bindings/dotnet/MorphIt -c Release -p:Version=${{ needs.version.outputs.version }} -o dist
+      - name: The package installs and packs a mesh
+        env:
+          V: ${{ needs.version.outputs.version }}
+        run: |
+          dotnet new console -o smoke -f net8.0
+          cp tools/ci/nuget_smoke.cs smoke/Program.cs
+          cd smoke
+          dotnet add package MorphIt --version "$V" --source "$GITHUB_WORKSPACE/dist"
+          dotnet run -- "$GITHUB_WORKSPACE/crates/morphit/tests/fixtures/link0.obj"
+      - name: Checksum
+        run: cd dist && for f in *.nupkg; do sha256sum "$f" > "$f.sha256"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nuget
+          path: dist/*
+          if-no-files-found: error
+
   web:
     needs: version
     runs-on: ubuntu-latest
@@ -177,7 +266,7 @@ jobs:
 
   github-release:
     if: github.ref_type == 'tag' && !github.event.act
-    needs: [ci, native, web, wheels, sdist]
+    needs: [ci, native, web, wheels, sdist, npm, nuget]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -247,3 +336,69 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
+
+  # npm trusted publishing (OIDC, no token; provenance is automatic). npm
+  # deprecates publishing with 2FA-bypass tokens, so there is no token
+  # fallback. One-time setup on npmjs.com: a trusted publisher for morphit-rs
+  # (this repository, workflow release.yml, environment npm). The package must
+  # exist for that, so its first version is published by hand; this job then
+  # skips that version.
+  npm-publish:
+    if: (github.ref_type == 'tag' || inputs.publish-npm) && !github.event.act
+    needs: [ci, version, npm]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: The release tag exists
+        run: |
+          git ls-remote --exit-code --tags origin "refs/tags/v${{ needs.version.outputs.version }}" >/dev/null \
+            || { echo "::error::tag v${{ needs.version.outputs.version }} is not on origin; push it first"; exit 1; }
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: npm with trusted publishing (11.5.1 or later)
+        run: npm install -g npm@latest
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm
+          path: dist
+      - name: Publish (skipped when the version exists)
+        env:
+          V: ${{ needs.version.outputs.version }}
+        run: |
+          if npm view "morphit-rs@$V" version >/dev/null 2>&1; then
+            echo "morphit-rs $V is already on npm; skipping"
+          else
+            npm publish "dist/morphit-rs-$V.tgz" --access public
+          fi
+
+  # NuGet: an API key (push rights for MorphIt) as NUGET_API_KEY in the nuget
+  # environment.
+  nuget-publish:
+    if: (github.ref_type == 'tag' || inputs.publish-nuget) && !github.event.act
+    needs: [ci, version, nuget]
+    runs-on: ubuntu-latest
+    environment: nuget
+    steps:
+      - uses: actions/checkout@v5
+      - name: The release tag exists
+        run: |
+          git ls-remote --exit-code --tags origin "refs/tags/v${{ needs.version.outputs.version }}" >/dev/null \
+            || { echo "::error::tag v${{ needs.version.outputs.version }} is not on origin; push it first"; exit 1; }
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/download-artifact@v4
+        with:
+          name: nuget
+          path: dist
+      - name: Publish
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: >
+          dotnet nuget push "dist/*.nupkg" --api-key "$NUGET_API_KEY"
+          --source https://api.nuget.org/v3/index.json --skip-duplicate
