@@ -1207,11 +1207,14 @@ and create an environment named `pypi`; no token is needed. npm publishes
 only through trusted publishing (2FA-bypass tokens are being deprecated), and
 a trusted publisher can only be added to an existing package: publish the
 first version by hand (`npm publish morphit-rs-<version>.tgz --access public`
-with the `npm` artifact of a release run), then add a trusted publisher for
-`morphit-rs` on npmjs.com (workflow `release.yml`, environment `npm`) and
-create an environment named `npm`. For NuGet, create an API key with push rights for
-`MorphIt` on nuget.org and store it as `NUGET_API_KEY` in an environment named
-`nuget`.
+with the tarball from the GitHub Release; the release's `npm-publish` job
+fails until then and can be re-run afterwards), then add a trusted publisher
+for `morphit-rs` on npmjs.com (workflow `release.yml`, environment `npm`,
+allowed actions including `npm publish`) and create an environment named
+`npm`. NuGet uses trusted publishing as well: on nuget.org add a trusted
+publishing policy (this repository, workflow `release.yml`, environment
+`nuget`), create an environment named `nuget` and store your nuget.org
+username (not the email) in it as the secret `NUGET_USER`.
 `cargo install morphit-server` installs only the binary: point
 `--web-dir`/`MORPHIT_WEB_DIR` at a copy of `web/`, or use the release archive,
 which has it next to the executable.
