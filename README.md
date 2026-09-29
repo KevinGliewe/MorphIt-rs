@@ -633,7 +633,7 @@ target_link_libraries(app PRIVATE morphit::morphit)           # shared library
 ```
 
 ```sh
-cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/morphit-capi-0.1.0-x86_64-unknown-linux-gnu
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/morphit-capi-0.2.0-x86_64-unknown-linux-gnu
 ```
 
 On Windows copy `morphit_capi.dll` next to the executable

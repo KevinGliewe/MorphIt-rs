@@ -11,7 +11,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 
     <!-- Overridden by the release: dotnet pack -p:Version=<workspace version> -->
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <PackageId>MorphIt</PackageId>
     <Authors>Kevin Gliewe</Authors>
     <Description>Approximate triangle meshes and robots with spheres: the MorphIt optimizer (Rust) for .NET, with URDF/MJCF export, quality metrics and the robot pipeline.</Description>

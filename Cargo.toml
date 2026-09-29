@@ -22,7 +22,7 @@ default-members = [
 resolver = "3"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "MIT"
 rust-version = "1.85"
@@ -33,8 +33,8 @@ keywords = ["sphere-packing", "collision", "robotics", "urdf", "mesh"]
 categories = ["science::robotics", "graphics", "simulation"]
 
 [workspace.dependencies]
-morphit = { path = "crates/morphit", version = "0.1.0", default-features = false }
-morphit-robot = { path = "crates/morphit-robot", version = "0.1.0", default-features = false }
+morphit = { path = "crates/morphit", version = "0.2.0", default-features = false }
+morphit-robot = { path = "crates/morphit-robot", version = "0.2.0", default-features = false }
 glam = "0.33"
 rand = "0.9"
 rand_chacha = "0.9"

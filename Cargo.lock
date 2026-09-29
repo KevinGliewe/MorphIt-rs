@@ -4178,7 +4178,7 @@ dependencies = [
 
 [[package]]
 name = "morphit"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bytemuck",
  "futures-channel",
@@ -4204,7 +4204,7 @@ dependencies = [
 
 [[package]]
 name = "morphit-capi"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "cbindgen",
  "morphit",
@@ -4218,7 +4218,7 @@ dependencies = [
 
 [[package]]
 name = "morphit-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "assert_cmd",
  "clap",
@@ -4233,7 +4233,7 @@ dependencies = [
 
 [[package]]
 name = "morphit-py"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "morphit",
  "morphit-robot",
@@ -4249,7 +4249,7 @@ dependencies = [
 
 [[package]]
 name = "morphit-robot"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "morphit",
  "rand 0.9.5",
@@ -4265,7 +4265,7 @@ dependencies = [
 
 [[package]]
 name = "morphit-server"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "axum",
  "clap",
@@ -4287,7 +4287,7 @@ dependencies = [
 
 [[package]]
 name = "morphit-studio"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bevy",
  "bevy_editor_cam",
@@ -4312,7 +4312,7 @@ dependencies = [
 
 [[package]]
 name = "morphit-wasm"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "console_error_panic_hook",
  "js-sys",
