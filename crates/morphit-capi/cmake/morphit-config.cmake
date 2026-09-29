@@ -1,7 +1,7 @@
 # CMake package of the MorphIt C library (release archive morphit-capi-<version>-<target>).
 #
 #   list(APPEND CMAKE_PREFIX_PATH "/path/to/morphit-capi-<version>-<target>")
-#   find_package(morphit 0.1 CONFIG REQUIRED)
+#   find_package(morphit 0.2 CONFIG REQUIRED)
 #   target_link_libraries(app PRIVATE morphit::morphit)          # shared library
 #   target_link_libraries(app PRIVATE morphit::morphit_static)   # or the static one
 #   target_link_libraries(app PRIVATE morphit::morphit_cpp)      # C++17 wrapper, morphit.hpp

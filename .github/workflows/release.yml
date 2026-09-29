@@ -375,7 +375,7 @@ jobs:
           if [ "$(npm view "morphit-rs@$V" version 2>/dev/null)" = "$V" ]; then
             echo "morphit-rs $V is already on npm; skipping"
           else
-            npm publish "dist/morphit-rs-$V.tgz" --access public --provenance
+            npm publish "./dist/morphit-rs-$V.tgz" --access public --provenance
           fi
 
   # NuGet trusted publishing (OIDC exchanged for a 1-hour API key; works for the

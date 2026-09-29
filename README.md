@@ -217,7 +217,7 @@ result.save("bunny.json")?;
 ([details](#using-the-release-package-from-cmake)):
 
 ```cmake
-find_package(morphit 0.1 CONFIG REQUIRED)
+find_package(morphit 0.2 CONFIG REQUIRED)
 target_link_libraries(app PRIVATE morphit::morphit_cpp)   # C: morphit::morphit
 ```
 
@@ -626,7 +626,7 @@ lib/cmake/morphit/morphit-config.cmake      (+ version file, system libraries of
 Unpack it anywhere and point `CMAKE_PREFIX_PATH` at the folder:
 
 ```cmake
-find_package(morphit 0.1 CONFIG REQUIRED)
+find_package(morphit 0.2 CONFIG REQUIRED)
 target_link_libraries(app PRIVATE morphit::morphit)           # shared library
 # target_link_libraries(app PRIVATE morphit::morphit_static)  # static, with its system libraries
 # target_link_libraries(app PRIVATE morphit::morphit_cpp)     # C++17 wrapper (also _cpp_static)
@@ -638,7 +638,7 @@ cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/morphit-capi-0.2.0-x86_64-unkno
 
 On Windows copy `morphit_capi.dll` next to the executable
 (`$<TARGET_RUNTIME_DLLS:app>` lists it); the static library there is built
-against the DLL runtime (`/MD`). A `0.1` request accepts any `0.1.x`. The
+against the DLL runtime (`/MD`). A `0.2` request accepts any `0.2.x`. The
 examples in `crates/morphit-capi/examples/c` use the package when
 `CMAKE_PREFIX_PATH` points at one (`-DMORPHIT_STATIC=ON` for the static
 library), and `tools/ci/test_capi_package.sh <archive>` builds and runs them
@@ -1206,7 +1206,7 @@ token. For PyPI, add a *pending trusted publisher* on pypi.org (project
 and create an environment named `pypi`; no token is needed. npm publishes
 only through trusted publishing (2FA-bypass tokens are being deprecated), and
 a trusted publisher can only be added to an existing package: publish the
-first version by hand (`npm publish morphit-rs-<version>.tgz --access public`
+first version by hand (`npm publish ./morphit-rs-<version>.tgz --access public`
 with the tarball from the GitHub Release; the release's `npm-publish` job
 fails until then and can be re-run afterwards), then add a trusted publisher
 for `morphit-rs` on npmjs.com (workflow `release.yml`, environment `npm`,

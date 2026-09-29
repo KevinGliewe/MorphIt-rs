@@ -20,7 +20,7 @@ project(morphit_c_examples C CXX)
 option(MORPHIT_STATIC "Link the static MorphIt library" OFF)
 find_package(Threads REQUIRED)
 
-find_package(morphit 0.1 CONFIG QUIET)
+find_package(morphit CONFIG QUIET)
 if(morphit_FOUND)
   message(STATUS "MorphIt ${morphit_VERSION} package: ${morphit_DIR}")
   if(MORPHIT_STATIC)
