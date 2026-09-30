@@ -1310,6 +1310,14 @@
         </fieldset>
 
         <fieldset>
+          <legend>Final prune <span class="info" data-tip="After the last iteration, spheres whose centers escaped the mesh are always removed."></span></legend>
+          <label class="field check">
+            <input type="checkbox" name="prune_contained_spheres" checked>
+            <span>Remove spheres inside another sphere <span class="info" data-tip="On by default. A sphere entirely inside another adds nothing to the covered volume; off keeps them, as the Python version does."></span></span>
+          </label>
+        </fieldset>
+
+        <fieldset>
           <legend>Loss weights <span class="info" data-tip="Auto-filled from the chosen variant. The first six are the paper's core losses; hausdorff and mesh_containment are off by default and useful for tail-error reduction or strict outside-mesh suppression."></span></legend>
           <div class="grid">
             <label class="field">
@@ -3053,6 +3061,7 @@ const ADVANCED_KEYS = [
   'coverage_weight', 'overlap_weight', 'boundary_weight', 'surface_weight',
   'containment_weight', 'sqem_weight',
   'hausdorff_weight', 'mesh_containment_weight',
+  'prune_contained_spheres',
 ];
 
 // Mesh preparation switches (their own form fields): merge overlapping

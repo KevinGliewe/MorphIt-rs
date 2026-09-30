@@ -21,7 +21,7 @@ use crate::metrics::{DensityEvent, History, IterationRecord};
 use crate::optim::{Optimizer, clip_grad_norm, clip_grad_norm_vec3};
 use crate::result::PackResult;
 use crate::sampling::{MorphRng, lognormal_radii, sample_inside, sample_surface, voxel_grid_centers};
-use crate::state::Spheres;
+use crate::state::{Spheres, contained_in_another};
 
 /// Lifecycle of a session.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -32,7 +32,7 @@ pub enum SessionState {
     Converged,
     /// All configured iterations ran.
     Completed,
-    /// The final escaped-sphere prune ran; no more steps.
+    /// The final prune (escaped and nested spheres) ran; no more steps.
     Finalized,
 }
 
@@ -400,8 +400,10 @@ impl Session {
     }
 
     /// Remove spheres whose centers ended outside the mesh
-    /// (`_finalize_training`) and end the session. Idempotent; returns the
-    /// number of spheres removed. At least one sphere is always kept.
+    /// (`_finalize_training`), then, with `training.prune_contained_spheres`
+    /// (not in Python), spheres lying entirely inside another one, and end the
+    /// session. Idempotent; returns the number of spheres removed. At least
+    /// one sphere is always kept.
     pub fn finalize(&mut self) -> usize {
         if self.state == SessionState::Finalized {
             return self.pruned;
@@ -412,10 +414,26 @@ impl Session {
             tracing::warn!("every sphere center is outside the mesh; keeping the first sphere");
             keep.push(0);
         }
+        let escaped = self.spheres.len() - keep.len();
+        if escaped > 0 {
+            tracing::info!(removed = escaped, "final prune removed spheres whose centers escaped the mesh");
+        }
+        if self.config.training.prune_contained_spheres {
+            // Only among the survivors: an escaped container does not take its contents along.
+            let radii = self.spheres.radii();
+            let centers: Vec<_> = keep.iter().map(|&i| self.spheres.centers[i]).collect();
+            let r: Vec<f64> = keep.iter().map(|&i| radii[i]).collect();
+            let nested = contained_in_another(&centers, &r);
+            let before = keep.len();
+            keep = keep.into_iter().zip(nested).filter_map(|(i, n)| (!n).then_some(i)).collect();
+            let contained = before - keep.len();
+            if contained > 0 {
+                tracing::info!(removed = contained, "final prune removed spheres inside another sphere");
+            }
+        }
         let removed = self.spheres.len() - keep.len();
         if removed > 0 {
             self.spheres = self.spheres.select(&keep);
-            tracing::info!(removed, "final prune removed spheres whose centers escaped the mesh");
         }
         self.pruned = removed;
         self.state = SessionState::Finalized;
@@ -743,6 +761,46 @@ mod tests {
         }
         assert_eq!(s.finalize(), 2);
         assert_eq!(s.spheres().len(), 1);
+    }
+
+    /// A session on `cube()` whose spheres are replaced by `spheres`.
+    fn with_spheres(prune_contained: bool, spheres: &[([f64; 3], f64)]) -> Session {
+        let mut cfg = small_config(Preset::B, 5, spheres.len());
+        cfg.training.prune_contained_spheres = prune_contained;
+        let mut s = Session::new(cfg, cube()).unwrap();
+        let centers = spheres.iter().map(|(c, _)| DVec3::from_array(*c)).collect();
+        let radii: Vec<f64> = spheres.iter().map(|(_, r)| *r).collect();
+        s.spheres = Spheres::from_real(centers, &radii, None);
+        s
+    }
+
+    #[test]
+    fn finalize_prunes_spheres_inside_another() {
+        let spheres = [
+            ([0.3, 0.4, 0.3], 0.25), // big
+            ([0.35, 0.4, 0.3], 0.1), // inside the big one
+            ([0.7, 0.4, 0.3], 0.2),  // overlaps the big one partly
+            ([0.3, 0.4, 0.3], 0.25), // duplicate of the big one
+        ];
+        let mut s = with_spheres(true, &spheres);
+        let radii = s.spheres.radii();
+        assert_eq!(s.finalize(), 2);
+        assert_eq!(s.spheres().centers, vec![DVec3::new(0.3, 0.4, 0.3), DVec3::new(0.7, 0.4, 0.3)]);
+        assert_eq!(s.spheres().radii(), vec![radii[0], radii[2]]);
+        assert_eq!(s.finalize(), 2);
+        assert_eq!(s.result().num_spheres, 2);
+
+        let mut s = with_spheres(false, &spheres);
+        assert_eq!(s.finalize(), 0);
+        assert_eq!(s.spheres().len(), 4);
+    }
+
+    #[test]
+    fn escaped_container_keeps_its_contents() {
+        // The container's center is outside the box; the nested sphere's is inside.
+        let mut s = with_spheres(true, &[([1.1, 0.4, 0.3], 0.5), ([0.9, 0.4, 0.3], 0.1)]);
+        assert_eq!(s.finalize(), 1);
+        assert_eq!(s.spheres().centers, vec![DVec3::new(0.9, 0.4, 0.3)]);
     }
 
     #[test]

@@ -70,9 +70,47 @@ impl Spheres {
     }
 }
 
+/// Spheres lying entirely inside another one (`|c_i - c_j| + r_j <= r_i`;
+/// touching from inside counts). Of spheres that contain each other
+/// (identical ones) the first is kept, so the largest always survives and the
+/// union of the kept spheres equals the union of all.
+pub fn contained_in_another(centers: &[DVec3], radii: &[f64]) -> Vec<bool> {
+    assert_eq!(centers.len(), radii.len());
+    let n = centers.len();
+    (0..n)
+        .map(|j| {
+            (0..n).any(|i| {
+                if i == j {
+                    return false;
+                }
+                // Same argument order for (i,j) and (j,i), as in `distances::pairwise`.
+                let d = crate::distances::dist(centers[i.min(j)], centers[i.max(j)]);
+                d + radii[j] <= radii[i] && (i < j || d + radii[i] > radii[j])
+            })
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn contained_spheres_are_found() {
+        let x = |v: f64| DVec3::new(v, 0.0, 0.0);
+        // Nested chain: all but the outermost go.
+        assert_eq!(contained_in_another(&[x(0.0), x(0.1), x(0.15)], &[1.0, 0.5, 0.2]), [false, true, true]);
+        // Partial overlap: both stay.
+        assert_eq!(contained_in_another(&[x(0.0), x(0.8)], &[0.5, 0.5]), [false, false]);
+        // Touching from inside counts as contained.
+        assert_eq!(contained_in_another(&[x(0.0), x(0.5)], &[1.0, 0.5]), [false, true]);
+        // Identical spheres: the first is kept.
+        assert_eq!(contained_in_another(&[x(1.0); 3], &[0.3; 3]), [false, true, true]);
+        // Order does not matter: the largest is kept.
+        assert_eq!(contained_in_another(&[x(0.15), x(0.1), x(0.0)], &[0.2, 0.5, 1.0]), [true, true, false]);
+        assert!(contained_in_another(&[], &[]).is_empty());
+        assert_eq!(contained_in_another(&[x(0.0)], &[0.1]), [false]);
+    }
 
     #[test]
     fn real_round_trip() {

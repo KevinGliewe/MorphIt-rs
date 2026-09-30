@@ -335,7 +335,8 @@ public:
     /// Stop a running `run()` after the current iteration (any thread).
     void cancel() { detail::check(morphit_cancel(get())); }
 
-    /// Remove spheres whose centers ended outside the mesh; returns how many.
+    /// Remove spheres whose centers ended outside the mesh and spheres inside
+    /// another sphere (see `training.prune_contained_spheres`); returns how many.
     std::size_t finalize() {
         std::size_t pruned = 0;
         detail::check(morphit_finalize(get(), &pruned));

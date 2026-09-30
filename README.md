@@ -831,6 +831,9 @@ exits 0 when it answers, which is what the Docker health check runs.
 packs the mesh exactly as loaded (the `X-Morphit-Mesh-Prep` report then says
 `disabled`), and `convex_hull=true` packs the convex hull of each body. The
 web UI has both under Advanced settings, Mesh preparation.
+`advanced` also accepts `prune_contained_spheres` (default `true`; see
+[Differences from the Python code](#differences-from-the-python-code)), under
+Advanced settings, Final prune.
 
 Robot sessions live in the server's memory and in the session directory, and
 expire after the TTL. Run a single instance. Uploads are capped at 100 MB per
@@ -1133,6 +1136,12 @@ one-time device setup per process; ¹ optimizer loop only.
 - Mesh preparation can be switched off (`model.union_overlapping_bodies`) and
   extended with convex hulls (`model.convex_hull`); Python always merges and
   never builds hulls. Both keys are stored in the result's config.
+- The final prune also removes spheres that lie entirely inside another
+  sphere (`training.prune_contained_spheres`, on by default; `false` keeps
+  them as Python does). They add nothing to the covered volume, so coverage
+  and surface distance are unchanged, but they no longer count twice in the
+  per-sphere masses. The key is stored in the result's config, and the HTTP
+  API accepts it in `advanced`.
 - Float64 throughout. GPU support is a search accelerator with CPU-identical
   results rather than a float32 port; `model.device` therefore never changes
   the output.

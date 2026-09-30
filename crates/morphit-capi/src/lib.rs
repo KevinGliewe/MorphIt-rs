@@ -628,11 +628,11 @@ pub unsafe extern "C" fn morphit_step(
 }
 
 /// Run all remaining iterations, then finalize (remove spheres whose centers
-/// escaped the mesh), like Python's `train()`. `progress` (may be NULL) is
-/// called after every iteration without any lock held; it may call the read
-/// functions and `morphit_cancel` on this session. Returns `MORPHIT_OK`, or
-/// `MORPHIT_ERR_CANCELLED` if cancelled (the session is then not finalized and
-/// can be resumed with another `morphit_run`).
+/// escaped the mesh, and spheres inside another sphere), like Python's
+/// `train()`. `progress` (may be NULL) is called after every iteration without
+/// any lock held; it may call the read functions and `morphit_cancel` on this
+/// session. Returns `MORPHIT_OK`, or `MORPHIT_ERR_CANCELLED` if cancelled (the
+/// session is then not finalized and can be resumed with another `morphit_run`).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn morphit_run(
     session: *mut morphit_session,
@@ -692,8 +692,10 @@ pub unsafe extern "C" fn morphit_cancel(session: *mut morphit_session) -> morphi
     })
 }
 
-/// Remove spheres whose centers ended outside the mesh and end the session.
-/// Idempotent. `pruned` (may be NULL) receives the number removed.
+/// Remove spheres whose centers ended outside the mesh, then spheres lying
+/// entirely inside another sphere (unless `training.prune_contained_spheres`
+/// is false), and end the session. Idempotent. `pruned` (may be NULL)
+/// receives the number removed.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn morphit_finalize(
     session: *mut morphit_session,

@@ -35,7 +35,7 @@ namespace MorphIt
         }
 
         /// <summary>
-        /// Step until done, then remove escaped spheres. <paramref name="onStep"/>
+        /// Step until done, then remove escaped and nested spheres. <paramref name="onStep"/>
         /// returning false stops the run (it can be continued later); an exception it
         /// throws stops the run and is rethrown. <see cref="Cancel"/> stops it too.
         /// </summary>
@@ -92,7 +92,10 @@ namespace MorphIt
         /// <summary>Stop a running <see cref="Run"/> after the current iteration (any thread, never blocks).</summary>
         public void Cancel() => Api.Check(NativeMethods.morphit_cancel(Handle));
 
-        /// <summary>Remove spheres whose centers ended outside the mesh and end the session; returns how many.</summary>
+        /// <summary>
+        /// Remove spheres whose centers ended outside the mesh and spheres inside another sphere
+        /// (unless <c>training.prune_contained_spheres</c> is false), and end the session; returns how many.
+        /// </summary>
         public int FinalizeSpheres()
         {
             Api.Check(NativeMethods.morphit_finalize(Handle, out var pruned));

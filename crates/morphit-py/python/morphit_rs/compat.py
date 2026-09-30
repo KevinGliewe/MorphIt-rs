@@ -435,7 +435,8 @@ def train_morphit(
             print(f"Stopping at iteration {step.iteration}")
     removed = session.finalize()
     if removed:
-        print(f"\n[final prune] removed {removed} sphere(s) whose centers escaped the mesh")
+        print(f"\n[final prune] removed {removed} sphere(s) whose centers escaped the mesh "
+              f"or that lay inside another sphere")
     model.num_spheres = session.num_spheres
     print("\n=== Training Complete ===")
     print(f"Density control operations: {len(tracker.metrics['density_control_events'])}")

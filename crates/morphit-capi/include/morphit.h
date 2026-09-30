@@ -105,7 +105,7 @@ typedef enum morphit_session_state {
    */
   MORPHIT_STATE_COMPLETED = 2,
   /**
-   * The final escaped-sphere prune ran; the result is final.
+   * The final prune (escaped and nested spheres) ran; the result is final.
    */
   MORPHIT_STATE_FINALIZED = 3,
 } morphit_session_state;
@@ -268,7 +268,8 @@ typedef struct morphit_state_info {
   int32_t running;
   uint64_t density_control_passes;
   /**
-   * Spheres removed by the final prune.
+   * Spheres removed by the final prune (escaped centers, and spheres inside
+   * another sphere).
    */
   size_t pruned;
   /**
@@ -630,11 +631,11 @@ enum morphit_status morphit_step(struct morphit_session *session, struct morphit
 
 /**
  * Run all remaining iterations, then finalize (remove spheres whose centers
- * escaped the mesh), like Python's `train()`. `progress` (may be NULL) is
- * called after every iteration without any lock held; it may call the read
- * functions and `morphit_cancel` on this session. Returns `MORPHIT_OK`, or
- * `MORPHIT_ERR_CANCELLED` if cancelled (the session is then not finalized and
- * can be resumed with another `morphit_run`).
+ * escaped the mesh, and spheres inside another sphere), like Python's
+ * `train()`. `progress` (may be NULL) is called after every iteration without
+ * any lock held; it may call the read functions and `morphit_cancel` on this
+ * session. Returns `MORPHIT_OK`, or `MORPHIT_ERR_CANCELLED` if cancelled (the
+ * session is then not finalized and can be resumed with another `morphit_run`).
  */
 enum morphit_status morphit_run(struct morphit_session *session,
                                 morphit_progress_fn progress,
@@ -647,8 +648,10 @@ enum morphit_status morphit_run(struct morphit_session *session,
 enum morphit_status morphit_cancel(struct morphit_session *session);
 
 /**
- * Remove spheres whose centers ended outside the mesh and end the session.
- * Idempotent. `pruned` (may be NULL) receives the number removed.
+ * Remove spheres whose centers ended outside the mesh, then spheres lying
+ * entirely inside another sphere (unless `training.prune_contained_spheres`
+ * is false), and end the session. Idempotent. `pruned` (may be NULL)
+ * receives the number removed.
  */
 enum morphit_status morphit_finalize(struct morphit_session *session, size_t *pruned);
 

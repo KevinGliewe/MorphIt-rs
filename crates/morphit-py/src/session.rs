@@ -351,8 +351,9 @@ impl PySession {
         self.core.cancel.store(true, Ordering::Release);
     }
 
-    /// Remove spheres whose centers ended outside the mesh and end the
-    /// session; returns how many were removed. Idempotent.
+    /// Remove spheres whose centers ended outside the mesh and spheres inside
+    /// another sphere (unless `training.prune_contained_spheres` is false),
+    /// and end the session; returns how many were removed. Idempotent.
     fn finalize(&self, py: Python<'_>) -> PyResult<usize> {
         let _running = self.core.claim()?;
         let core = Arc::clone(&self.core);

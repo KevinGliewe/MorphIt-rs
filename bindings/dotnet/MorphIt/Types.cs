@@ -106,7 +106,7 @@ namespace MorphIt
         public double TotalLoss { get; }
         public bool Running { get; }
         public long DensityControlPasses { get; }
-        /// <summary>Spheres removed by the final prune.</summary>
+        /// <summary>Spheres removed by the final prune (escaped centers, and spheres inside another sphere).</summary>
         public int Pruned { get; }
         public ulong Seed { get; }
     }

@@ -10,8 +10,9 @@ use crate::{Error, Result};
 pub const ALLOWED_VARIANTS: [&str; 3] = ["MorphIt-V", "MorphIt-S", "MorphIt-B"];
 
 /// Flat `advanced` keys the UI sends, and the dotted config keys they set.
-/// Anything else is dropped silently, as in the Python API.
-pub const ADVANCED_OVERRIDE_MAP: [(&str, &str); 13] = [
+/// Anything else is dropped silently, as in the Python API
+/// (`prune_contained_spheres` is not in Python).
+pub const ADVANCED_OVERRIDE_MAP: [(&str, &str); 14] = [
     ("num_inside_samples", "model.num_inside_samples"),
     ("num_surface_samples", "model.num_surface_samples"),
     ("density_control_enabled", "training.density_control_enabled"),
@@ -25,6 +26,7 @@ pub const ADVANCED_OVERRIDE_MAP: [(&str, &str); 13] = [
     ("sqem_weight", "training.sqem_weight"),
     ("hausdorff_weight", "training.hausdorff_weight"),
     ("mesh_containment_weight", "training.mesh_containment_weight"),
+    ("prune_contained_spheres", "training.prune_contained_spheres"),
 ];
 
 /// `variant must be one of ('MorphIt-V', 'MorphIt-S', 'MorphIt-B')`.
@@ -135,7 +137,7 @@ mod tests {
     #[test]
     fn advanced_is_filtered_and_mapped() {
         let a = parse_advanced(
-            r#"{"coverage_weight": 2.5, "bogus": 1, "sqem_weight": null, "num_inside_samples": 100}"#,
+            r#"{"coverage_weight": 2.5, "bogus": 1, "sqem_weight": null, "num_inside_samples": 100, "prune_contained_spheres": false}"#,
         )
         .unwrap();
         assert_eq!(
@@ -143,6 +145,7 @@ mod tests {
             vec![
                 ("training.coverage_weight".to_string(), Value::from(2.5)),
                 ("model.num_inside_samples".to_string(), Value::from(100)),
+                ("training.prune_contained_spheres".to_string(), Value::from(false)),
             ]
         );
         assert!(parse_advanced("").unwrap().is_empty());
@@ -183,7 +186,10 @@ mod tests {
     fn config_applies_everything() {
         let mut p = params();
         p.seed = Some(7);
-        p.advanced = parse_advanced(r#"{"coverage_weight": 3, "density_control_enabled": false}"#).unwrap();
+        p.advanced = parse_advanced(
+            r#"{"coverage_weight": 3, "density_control_enabled": false, "prune_contained_spheres": false}"#,
+        )
+        .unwrap();
         let c = p.config("cpu", "/tmp/x", "a.json").unwrap();
         assert_eq!(c.model.num_spheres, 20);
         assert_eq!(c.training.iterations, 200);
@@ -191,6 +197,7 @@ mod tests {
         assert_eq!(c.model.device, "cpu");
         assert_eq!(c.training.coverage_weight, 3.0);
         assert!(!c.training.density_control_enabled);
+        assert!(!c.training.prune_contained_spheres);
         assert_eq!(c.output_filename, "a.json");
         p.advanced = vec![("model.num_inside_samples".into(), Value::from("many"))];
         assert!(matches!(p.config("cpu", "", ""), Err(Error::Invalid(_))));

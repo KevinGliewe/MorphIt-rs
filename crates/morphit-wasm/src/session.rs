@@ -223,8 +223,9 @@ impl JsSession {
         }
     }
 
-    /// Remove spheres whose centers left the mesh and end the session.
-    /// Returns how many were removed.
+    /// Remove spheres whose centers left the mesh and spheres inside another
+    /// sphere (unless `training.prune_contained_spheres` is false), and end
+    /// the session. Returns how many were removed.
     pub fn finalize(&self) -> Result<usize, JsError> {
         let mut guard = self.inner.borrow_mut();
         let s = guard.as_mut().ok_or_else(busy)?;

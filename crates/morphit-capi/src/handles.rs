@@ -53,7 +53,7 @@ pub enum morphit_session_state {
     MORPHIT_STATE_CONVERGED = 1,
     /// All configured iterations ran.
     MORPHIT_STATE_COMPLETED = 2,
-    /// The final escaped-sphere prune ran; the result is final.
+    /// The final prune (escaped and nested spheres) ran; the result is final.
     MORPHIT_STATE_FINALIZED = 3,
 }
 
@@ -153,7 +153,8 @@ pub struct morphit_state_info {
     /// Nonzero while `morphit_run` is active.
     pub running: i32,
     pub density_control_passes: u64,
-    /// Spheres removed by the final prune.
+    /// Spheres removed by the final prune (escaped centers, and spheres inside
+    /// another sphere).
     pub pruned: usize,
     /// Seed that drove all sampling (drawn at random when the config had none).
     pub seed: u64,

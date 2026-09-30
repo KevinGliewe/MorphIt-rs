@@ -257,6 +257,10 @@ pub struct TrainingConfig {
     pub density_control_warmup_steps: usize,
     pub density_control_cooling_factor: f64,
     pub density_control_min_radius_fraction: f64,
+    /// The final prune also removes spheres lying entirely inside another
+    /// sphere; they add nothing to the covered volume. Not in Python; on by
+    /// default.
+    pub prune_contained_spheres: bool,
 }
 
 impl Default for TrainingConfig {
@@ -291,6 +295,7 @@ impl Default for TrainingConfig {
             density_control_warmup_steps: 10,
             density_control_cooling_factor: 0.85,
             density_control_min_radius_fraction: 0.001,
+            prune_contained_spheres: true,
         }
     }
 }
@@ -668,6 +673,9 @@ mod tests {
         assert_eq!(c.random_seed, None);
         c.set("model.per_sphere_mass", json!(true)).unwrap();
         assert!(c.model.per_sphere_mass);
+        assert_eq!(c.get("training.prune_contained_spheres").unwrap(), json!(true));
+        c.set("training.prune_contained_spheres", json!(false)).unwrap();
+        assert!(!c.training.prune_contained_spheres);
         assert_eq!(c.get("training.iterations").unwrap(), json!(120));
     }
 
