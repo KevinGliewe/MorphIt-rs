@@ -267,7 +267,7 @@ fn prepare(
     }
 
     let n = kept.len();
-    let (uv, uf) = match union(&kept) {
+    let (uv, uf) = match union(&kept, !hulled) {
         Ok(u) => u,
         Err(UnionError::Unavailable(why)) => {
             report.skip(
@@ -631,9 +631,12 @@ enum UnionError {
 
 /// Boolean union of closed bodies, each converted to a Manifold from f32
 /// positions (as Python's manifold3d `Mesh`), combined left to right. The
-/// result's duplicate positions are merged like trimesh's `process=True`.
+/// result's duplicate positions are merged like trimesh's `process=True` when
+/// `weld` is set. Without it, Manifold's own indexing is kept: where two
+/// inputs only touch, Manifold leaves separate vertices at one position, and
+/// welding them would make the result non-manifold there.
 #[cfg(feature = "union")]
-fn union(bodies: &[Body]) -> Result<(Vec<DVec3>, Vec<[u32; 3]>), UnionError> {
+fn union(bodies: &[Body], weld: bool) -> Result<(Vec<DVec3>, Vec<[u32; 3]>), UnionError> {
     use manifold_rust::manifold::Manifold;
     use manifold_rust::types::{Error as MfError, MeshGL};
 
@@ -675,11 +678,11 @@ fn union(bodies: &[Body]) -> Result<(Vec<DVec3>, Vec<[u32; 3]>), UnionError> {
         .map(|p| DVec3::new(p[0] as f64, p[1] as f64, p[2] as f64))
         .collect();
     let faces: Vec<[u32; 3]> = out.tri_verts.chunks_exact(3).map(|t| [t[0], t[1], t[2]]).collect();
-    Ok(merge_positions(&vertices, &faces))
+    Ok(if weld { merge_positions(&vertices, &faces) } else { (vertices, faces) })
 }
 
 #[cfg(not(feature = "union"))]
-fn union(_bodies: &[Body]) -> Result<(Vec<DVec3>, Vec<[u32; 3]>), UnionError> {
+fn union(_bodies: &[Body], _weld: bool) -> Result<(Vec<DVec3>, Vec<[u32; 3]>), UnionError> {
     Err(UnionError::Unavailable("mesh union support is not built in (feature `union`)".into()))
 }
 
